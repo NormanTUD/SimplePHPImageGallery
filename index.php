@@ -391,6 +391,32 @@ function checkKey(e) {
 		$(fullscreen).remove();
 	}
 }
+
+var touchStartX = 0;
+var touchEndX = 0;
+
+document.addEventListener('touchstart', function(event) {
+    touchStartX = event.touches[0].clientX;
+}, false);
+
+document.addEventListener('touchend', function(event) {
+    touchEndX = event.changedTouches[0].clientX;
+    handleSwipe();
+}, false);
+
+function handleSwipe() {
+    var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
+
+    var deltaX = touchEndX - touchStartX;
+
+    if (Math.abs(deltaX) >= swipeThreshold) {
+        if (deltaX > 0) {
+            prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
+        } else {
+            next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
+        }
+    }
+}
 </script>
 
 <?php
