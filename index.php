@@ -277,7 +277,11 @@ function displayGallery($folderPath) {
 				$randomImage = getRandomImageFromSubfolders($filePath);
 				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 			} else {
+				if($seed) {
+					mt_srand($seed);
+				}
 				$randomImage = $folderImages[array_rand($folderImages)];
+				mt_srand();
 				$thumbnailPath = $randomImage['path'];
 			}
 
@@ -324,8 +328,7 @@ function displayGallery($folderPath) {
 	}
 }
 
-function getImagesInFolder($folderPath)
-{
+function getImagesInFolder($folderPath) {
 	$folderFiles = scandir($folderPath);
 
 	$images = [];
@@ -351,21 +354,29 @@ function getImagesInFolder($folderPath)
 	return $images;
 }
 
-function getRandomImageFromSubfolders($folderPath) {
+function getRandomImageFromSubfolders($folderPath, $seed="") {
 	$subfolders = glob($folderPath . '/*', GLOB_ONLYDIR);
 
 	if (count($subfolders) == 0) {
 		$images = getImagesInFolder($folderPath);
 
 		if (!empty($images)) {
+			if($seed) {
+				mt_srand($seed);
+			}
 			return $images[array_rand($images)];
+			mt_srand();
 		}
 	} else {
 		foreach ($subfolders as $subfolder) {
 			$images = getImagesInFolder($subfolder);
 
 			if (!empty($images)) {
+				if($seed) {
+					mt_srand($seed);
+				}
 				return $images[array_rand($images)];
+				mt_srand();
 			}
 		}
 	}
