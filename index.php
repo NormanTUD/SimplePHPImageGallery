@@ -569,11 +569,18 @@ document.addEventListener('keypress', function(event) {
 			searchInput.value = '';
 		}
 
-		// Füge den eingegebenen Buchstaben oder die Zahl in das Suchfeld ein
-		searchInput.value += charStr;
+		// Ersetze den markierten Text durch den eingegebenen Buchstaben oder die Zahl
+		var selectionStart = searchInput.selectionStart;
+		var selectionEnd = searchInput.selectionEnd;
+		var currentValue = searchInput.value;
+		var newValue = currentValue.substring(0, selectionStart) + charStr + currentValue.substring(selectionEnd);
+		searchInput.value = newValue;
+
+		// Aktualisiere die Position des Cursors
+		searchInput.selectionStart = searchInput.selectionEnd = selectionStart + 1;
 
 		// Fokussiere das Suchfeld
-		if(!$(searchInput).is(":focus")) {
+		if (!$(searchInput).is(":focus")) {
 			searchInput.focus();
 		}
 
@@ -588,6 +595,7 @@ document.addEventListener('keypress', function(event) {
 		}
 	}
 });
+
 </script>
 
 <?php
