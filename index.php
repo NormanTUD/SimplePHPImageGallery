@@ -369,15 +369,15 @@ function getRandomImageFromSubfolders($folderPath, $seed="") {
 		}
 	} else {
 		foreach ($subfolders as $subfolder) {
-			$images = getImagesInFolder($subfolder);
+			$images[] = getImagesInFolder($subfolder)[0];
+		}
 
-			if (!empty($images)) {
-				if($seed) {
-					mt_srand($seed);
-				}
-				return $images[array_rand($images)];
-				mt_srand();
+		if (!empty($images)) {
+			if($seed) {
+				mt_srand($seed);
 			}
+			return $images[array_rand($images)];
+			mt_srand();
 		}
 	}
 
