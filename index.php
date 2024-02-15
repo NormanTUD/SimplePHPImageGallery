@@ -108,47 +108,47 @@ if (isset($_GET['preview'])) {
 
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 function searchFiles($folderPath, $searchTerm) {
-    $results = [];
+	$results = [];
 
-    $files = scandir($folderPath);
+	$files = scandir($folderPath);
 
-    // Wandelt den Suchbegriff in Kleinbuchstaben um
-    $searchTermLower = strtolower($searchTerm);
+	// Wandelt den Suchbegriff in Kleinbuchstaben um
+	$searchTermLower = strtolower($searchTerm);
 
-    foreach ($files as $file) {
-        if ($file === '.' || $file === '..' || $file === '.git') {
-            continue;
-        }
+	foreach ($files as $file) {
+		if ($file === '.' || $file === '..' || $file === '.git' || $file === "thumbnails_cache") {
+			continue;
+		}
 
-        $filePath = $folderPath . '/' . $file;
+		$filePath = $folderPath . '/' . $file;
 
-        if (is_dir($filePath)) {
-            // Ordnername mit Suchbegriff vergleichen (ignoriert Groß- und Kleinschreibung)
-            if (stripos($file, $searchTermLower) !== false) {
-                $results[] = [
-                    'path' => $filePath,
-                    'type' => 'folder'
-                ];
-            }
+		if (is_dir($filePath)) {
+			// Ordnername mit Suchbegriff vergleichen (ignoriert Groß- und Kleinschreibung)
+			if (stripos($file, $searchTermLower) !== false) {
+				$results[] = [
+					'path' => $filePath,
+					'type' => 'folder'
+				];
+			}
 
-            // Rekursiver Aufruf für Unterverzeichnisse
-            $subResults = searchFiles($filePath, $searchTerm);
-            $results = array_merge($results, $subResults);
-        } else {
-            // Dateiname mit Suchbegriff vergleichen (nur für Bildtypen, ignoriert Groß- und Kleinschreibung)
-            $imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
-            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+			// Rekursiver Aufruf für Unterverzeichnisse
+			$subResults = searchFiles($filePath, $searchTerm);
+			$results = array_merge($results, $subResults);
+		} else {
+			// Dateiname mit Suchbegriff vergleichen (nur für Bildtypen, ignoriert Groß- und Kleinschreibung)
+			$imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
+			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-            if (in_array($fileExtension, $imageExtensions) && stripos($file, $searchTermLower) !== false) {
-                $results[] = [
-                    'path' => $filePath,
-                    'type' => 'file'
-                ];
-            }
-        }
-    }
+			if (in_array($fileExtension, $imageExtensions) && stripos($file, $searchTermLower) !== false) {
+				$results[] = [
+					'path' => $filePath,
+					'type' => 'file'
+				];
+			}
+		}
+	}
 
-    return $results;
+	return $results;
 }
 
 // AJAX-Handler für die Suche
@@ -352,6 +352,61 @@ function getRandomImageFromSubfolders($folderPath)
 ?>
 
 <script>
+var log = console.log;
+var l = log;
+
+function start_search () {
+	var searchTerm = $('#searchInput').val();
+
+	if(!/^\s*$/.test(searchTerm)) {
+		log("starting search");
+		$("#gallery").hide();
+		$.ajax({
+		url: 'index.php',
+			type: 'GET',
+			data: {
+			search: searchTerm
+		},
+			success: function(response) {
+				displaySearchResults(searchTerm, JSON.parse(response));
+			},
+			error: function(xhr, status, error) {
+				console.error(error);
+			}
+		});
+	} else {
+		log("stopping search");
+		$("#searchResults").hide();
+		$("#gallery").show();
+	}
+}
+
+// Funktion zur Anzeige der Suchergebnisse
+function displaySearchResults(searchTerm, results) {
+	var $searchResults = $('#searchResults');
+	$searchResults.empty();
+
+	if (results.length > 0) {
+		$searchResults.append('<h2>Suchergebnisse:</h2>');
+
+		results.forEach(function(result) {
+			// Link oder Vorschaubild für das Suchergebnis anzeigen
+			// Hier kannst du die Logik anpassen, um Links oder Vorschaubilder anzuzeigen
+			if (result.type === 'folder') {
+				var folder_line = `<div class="thumbnail_folder" onclick="showFolder('${result.path}')"><img draggable="false" src="index.php?preview=.//01_flug_hin/IMG_8872.JPG" alt="${result.path}"><h3>${result.path}</h3></div>`;
+				$searchResults.append(folder_line);
+			} else if (result.type === 'file') {
+				var fileName = result.path.split('/').pop(); // Dateiname aus dem Dateipfad extrahieren
+				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')"><img draggable="false" src="index.php?preview=${result.path}" alt="${fileName}"></div>`
+				$searchResults.append(image_line);
+				//$searchResults.append('<div><a href="' + result.path + '">' + fileName + '</a> (Bild)</div>');
+			}
+		});
+	} else {
+		$searchResults.append('<p>Keine Ergebnisse gefunden.</p>');
+	}
+}
+
 function showFolder(folderPath) {
 	window.location.href = '?folder=' + encodeURIComponent(folderPath);
 }
@@ -484,9 +539,16 @@ $folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
 if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 	$folderPath = $_GET['folder'];
 }
-
-displayGallery($folderPath);
 ?>
+
+<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Suche...">
+
+<!-- Ergebnisse der Suche hier einfügen -->
+<div id="searchResults"></div>
+
+<div id="gallery">
+<?php displayGallery($folderPath); ?>
+</div>
 </body>
 </html>
 
