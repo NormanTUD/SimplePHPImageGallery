@@ -178,6 +178,10 @@ if (isset($_GET['search'])) {
     <script src="jquery-3.7.1.min.js"></script>
 
     <style>
+	h3 {
+		line-break: anywhere;
+	}
+
 	.thumbnail_folder {
 	    display: inline-block;
 	    margin: 10px;
@@ -421,7 +425,7 @@ function displaySearchResults(searchTerm, results) {
 					folder_line += '<div>No Preview Available</div>';
 				}
 
-				folder_line += `<h3>${result.path}</h3></div>`;
+				folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div>`;
 				$searchResults.append(folder_line);
 			} else if (result.type === 'file') {
 				var fileName = result.path.split('/').pop(); // Dateiname aus dem Dateipfad extrahieren
