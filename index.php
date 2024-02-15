@@ -524,27 +524,46 @@ var touchStartX = 0;
 var touchEndX = 0;
 
 document.addEventListener('touchstart', function(event) {
-    touchStartX = event.touches[0].clientX;
+	touchStartX = event.touches[0].clientX;
 }, false);
 
 document.addEventListener('touchend', function(event) {
-    touchEndX = event.changedTouches[0].clientX;
-    handleSwipe();
+	touchEndX = event.changedTouches[0].clientX;
+	handleSwipe();
 }, false);
 
 function handleSwipe() {
-    var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
+	var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
 
-    var deltaX = touchEndX - touchStartX;
+	var deltaX = touchEndX - touchStartX;
 
-    if (Math.abs(deltaX) >= swipeThreshold) {
-        if (deltaX > 0) {
-            prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
-        } else {
-            next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
-        }
-    }
+	if (Math.abs(deltaX) >= swipeThreshold) {
+		if (deltaX > 0) {
+			prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
+		} else {
+			next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
+		}
+	}
 }
+
+document.addEventListener('keypress', function(event) {
+	var charCode = event.which || event.keyCode;
+	var charStr = String.fromCharCode(charCode);
+
+	// Überprüfe, ob der eingegebene Wert ein Buchstabe oder eine Zahl ist
+	if (/[a-zA-Z0-9]/.test(charStr)) {
+		// Füge den eingegebenen Buchstaben oder die Zahl in das Suchfeld ein
+		var searchInput = document.getElementById('searchInput');
+		searchInput.value += charStr;
+
+		// Fokussiere das Suchfeld
+		searchInput.focus();
+
+		// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
+		event.preventDefault();
+	}
+});
+
 </script>
 
 <?php
