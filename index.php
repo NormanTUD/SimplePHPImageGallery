@@ -614,7 +614,11 @@ function createBreadcrumb(currentFolderPath) {
 
 	pathArray.forEach(function(folderName, index) {
 		if (folderName !== '') {
-			fullPath += folderName + '/';
+			var originalFolderName = folderName;
+			if(folderName == '.') {
+				folderName = "Start";
+			}
+			fullPath += originalFolderName + '/';
 
 			var link = document.createElement('a');
 			link.href = '?folder=' + encodeURIComponent(fullPath);
