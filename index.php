@@ -126,7 +126,9 @@ if (isset($_GET['preview'])) {
 	    max-height: 100%;
 	}
 
-
+	body {
+		user-select: none;
+	}
 
 	.thumbnail {
 	    display: inline-block;
@@ -235,7 +237,7 @@ function displayGallery($folderPath)
 	foreach ($thumbnails as $thumbnail) {
 		echo '<div class="thumbnail_folder" onclick="showFolder(\'' . $thumbnail['path'] . '\')">';
 		if (!empty($thumbnail['thumbnail'])) {
-			echo '<img src="index.php?preview=' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
+			echo '<img draggable="false" src="index.php?preview=' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
 		} else {
 			echo '<div>No Preview Available</div>';
 		}
@@ -245,7 +247,7 @@ function displayGallery($folderPath)
 
 	foreach ($images as $image) {
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-		echo '<img src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
+		echo '<img draggable="false" src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
 		echo "</div>\n";
 	}
 }
@@ -311,6 +313,7 @@ function showImage(imagePath) {
 
 	var image = document.createElement('img');
 	image.src = imagePath;
+	image.setAttribute('draggable', false);
 
 	fullscreen.appendChild(image);
 	document.body.appendChild(fullscreen);
