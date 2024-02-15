@@ -559,8 +559,14 @@ document.addEventListener('keypress', function(event) {
 
 	// Überprüfe, ob der eingegebene Wert ein Buchstabe oder eine Zahl ist
 	if (/[a-zA-Z0-9]/.test(charStr)) {
-		// Füge den eingegebenen Buchstaben oder die Zahl in das Suchfeld ein
+		// Überprüfe, ob der Fokus nicht bereits im Suchfeld liegt
 		var searchInput = document.getElementById('searchInput');
+		if (document.activeElement !== searchInput) {
+			// Lösche die Suchanfrage, wenn der Fokus nicht im Suchfeld liegt
+			searchInput.value = '';
+		}
+
+		// Füge den eingegebenen Buchstaben oder die Zahl in das Suchfeld ein
 		searchInput.value += charStr;
 
 		// Fokussiere das Suchfeld
@@ -568,6 +574,13 @@ document.addEventListener('keypress', function(event) {
 
 		// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
 		event.preventDefault();
+	} else if (charCode === 8) { // Backspace-Taste (keyCode 8)
+		// Überprüfe, ob der Fokus im Suchfeld liegt
+		var searchInput = document.getElementById('searchInput');
+		if (document.activeElement === searchInput) {
+			// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
+			searchInput.value = '';
+		}
 	}
 });
 </script>
