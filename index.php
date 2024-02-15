@@ -235,12 +235,12 @@ function displayGallery($folderPath)
 	foreach ($thumbnails as $thumbnail) {
 		echo '<div class="thumbnail_folder" onclick="showFolder(\'' . $thumbnail['path'] . '\')">';
 		if (!empty($thumbnail['thumbnail'])) {
-			echo '<img src="' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
+			echo '<img src="index.php?preview=' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
 		} else {
 			echo '<div>No Preview Available</div>';
 		}
 		echo '<h3>' . $thumbnail['name'] . '</h3>';
-		echo '</div>';
+		echo "</div>\n";
 	}
 
 	foreach ($images as $image) {
