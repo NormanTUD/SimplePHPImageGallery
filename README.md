@@ -9,3 +9,10 @@ Nothing, except PHP and the JQuery file.
 
 To show links at the top, write a file called "links.txt" into the main directory where the index.php is. It has this structure:
 https://link.com/, name
+
+# Caching preview images
+
+```console
+mkdir ./thumbnails_cache/
+sudo chown www-data:www-data ./thumbnails_cache/
+```

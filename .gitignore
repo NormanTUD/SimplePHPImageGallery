@@ -4,3 +4,4 @@
 *.jpeg
 *.JPEG
 links.txt
+./thumbnails_cache/
