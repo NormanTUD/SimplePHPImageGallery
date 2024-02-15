@@ -173,7 +173,7 @@ if(file_exists($filename)) {
 			$link = trim($parts[0]);
 			$text = trim($parts[1]);
 
-			echo '<a href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
+			echo '<a target="_blank" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
 		}
 
 		fclose($file);
