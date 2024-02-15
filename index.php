@@ -53,6 +53,26 @@
 </head>
 <body>
 <?php
+$filename = 'links.txt';
+
+if(file_exists($filename)) {
+        $file = fopen($filename, 'r');
+
+        if ($file) {
+                while (($line = fgets($file)) !== false) {
+                        $parts = explode(',', $line);
+
+                        $link = trim($parts[0]);
+                        $text = trim($parts[1]);
+
+                        echo '<a href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
+                }
+
+                fclose($file);
+        }
+}
+?>
+<?php
 function displayGallery($folderPath)
 {
     $files = scandir($folderPath);

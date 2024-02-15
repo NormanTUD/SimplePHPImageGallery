@@ -3,4 +3,9 @@ This is a very simple .php-file that you can simply put into a folder and it wil
 
 # Requirements
 
-Nothing, except PHP.
+Nothing, except PHP and the JQuery file.
+
+# Showing links
+
+To show links at the top, write a file called "links.txt" into the main directory where the index.php is. It has this structure:
+https://link.com/, name
