@@ -340,15 +340,22 @@ function getImagesInFolder($folderPath)
 	return $images;
 }
 
-function getRandomImageFromSubfolders($folderPath)
-{
+function getRandomImageFromSubfolders($folderPath) {
 	$subfolders = glob($folderPath . '/*', GLOB_ONLYDIR);
 
-	foreach ($subfolders as $subfolder) {
-		$images = getImagesInFolder($subfolder);
+	if (count($subfolders) == 0) {
+		$images = getImagesInFolder($folderPath);
 
 		if (!empty($images)) {
 			return $images[array_rand($images)];
+		}
+	} else {
+		foreach ($subfolders as $subfolder) {
+			$images = getImagesInFolder($subfolder);
+
+			if (!empty($images)) {
+				return $images[array_rand($images)];
+			}
 		}
 	}
 
