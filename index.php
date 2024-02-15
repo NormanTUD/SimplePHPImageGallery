@@ -107,6 +107,7 @@ if (isset($_GET['preview'])) {
 }
 
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
+// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 function searchFiles($folderPath, $searchTerm) {
 	$results = [];
 
@@ -125,9 +126,14 @@ function searchFiles($folderPath, $searchTerm) {
 		if (is_dir($filePath)) {
 			// Ordnername mit Suchbegriff vergleichen (ignoriert Groß- und Kleinschreibung)
 			if (stripos($file, $searchTermLower) !== false) {
+				// Änderung hier: Zufälliges Bild aus den Unterverzeichnissen erhalten
+				$randomImage = getRandomImageFromSubfolders($filePath);
+				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
+
 				$results[] = [
 					'path' => $filePath,
-					'type' => 'folder'
+					'type' => 'folder',
+					'thumbnail' => $thumbnailPath // Pfad zum zufälligen Bild für den Ordner
 				];
 			}
 
@@ -393,12 +399,22 @@ function displaySearchResults(searchTerm, results) {
 			// Link oder Vorschaubild für das Suchergebnis anzeigen
 			// Hier kannst du die Logik anpassen, um Links oder Vorschaubilder anzuzeigen
 			if (result.type === 'folder') {
-				var folder_line = `<div class="thumbnail_folder" onclick="showFolder('${result.path}')"><img draggable="false" src="index.php?preview=.//01_flug_hin/IMG_8872.JPG" alt="${result.path}"><h3>${result.path}</h3></div>`;
+				var folderThumbnail = result.thumbnail;
+				var folder_line = `<div class="thumbnail_folder" onclick="showFolder('${result.path}')">`;
+
+				// Falls ein Vorschaubild vorhanden ist, verwenden wir es, sonst zeigen wir an, dass kein Vorschaubild verfügbar ist
+				if (folderThumbnail) {
+					folder_line += `<img draggable="false" src="index.php?preview=${folderThumbnail}" alt="${result.path}">`;
+				} else {
+					folder_line += '<div>No Preview Available</div>';
+				}
+
+				folder_line += `<h3>${result.path}</h3></div>`;
 				$searchResults.append(folder_line);
 			} else if (result.type === 'file') {
 				var fileName = result.path.split('/').pop(); // Dateiname aus dem Dateipfad extrahieren
 				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')"><img draggable="false" src="index.php?preview=${result.path}" alt="${fileName}"></div>`
-				$searchResults.append(image_line);
+					$searchResults.append(image_line);
 				//$searchResults.append('<div><a href="' + result.path + '">' + fileName + '</a> (Bild)</div>');
 			}
 		});
