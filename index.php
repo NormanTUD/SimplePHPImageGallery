@@ -189,7 +189,7 @@ function displayGallery($folderPath)
 	$images = [];
 
 	foreach ($files as $file) {
-		if ($file === '.' || $file === '..'  || preg_match("/^\./", $file)) {
+		if ($file === '.' || $file === '..'  || preg_match("/^\./", $file) || $file === "thumbnails_cache") {
 			continue;
 		}
 
@@ -246,7 +246,7 @@ function displayGallery($folderPath)
 	foreach ($images as $image) {
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
 		echo '<img src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
-		echo '</div>';
+		echo "</div>\n";
 	}
 }
 
