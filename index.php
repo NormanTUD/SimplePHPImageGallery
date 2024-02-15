@@ -570,7 +570,6 @@ document.addEventListener('keypress', function(event) {
 		event.preventDefault();
 	}
 });
-
 </script>
 
 <?php
