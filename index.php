@@ -1,3 +1,74 @@
+<?php
+if (isset($_GET['preview'])) {
+    $imagePath = $_GET['preview'];
+    $thumbnailMaxWidth = 150; // Define maximum thumbnail width
+    $thumbnailMaxHeight = 150; // Define maximum thumbnail height
+
+    // Check if the file exists
+    if (file_exists($imagePath)) {
+        // Get image dimensions and type
+        list($width, $height, $type) = getimagesize($imagePath);
+
+        // Load image based on type
+        switch ($type) {
+            case IMAGETYPE_JPEG:
+                $image = imagecreatefromjpeg($imagePath);
+                break;
+            case IMAGETYPE_PNG:
+                $image = imagecreatefrompng($imagePath);
+                break;
+            case IMAGETYPE_GIF:
+                $image = imagecreatefromgif($imagePath);
+                break;
+            default:
+                echo 'Unsupported image type.';
+                exit;
+        }
+
+        // Check and fix image orientation if necessary
+        $exif = exif_read_data($imagePath);
+        if (!empty($exif['Orientation'])) {
+            switch ($exif['Orientation']) {
+                case 3:
+                    $image = imagerotate($image, 180, 0);
+                    break;
+                case 6:
+                    $image = imagerotate($image, -90, 0);
+                    break;
+                case 8:
+                    $image = imagerotate($image, 90, 0);
+                    break;
+            }
+            // Update width and height after rotation
+            list($width, $height) = [$height, $width];
+        }
+
+        // Calculate thumbnail dimensions while maintaining aspect ratio
+        $aspectRatio = $width / $height;
+        $thumbnailWidth = min($thumbnailMaxWidth, $width, $height * $aspectRatio);
+        $thumbnailHeight = min($thumbnailMaxHeight, $height, $width / $aspectRatio);
+
+        // Create a new image with thumbnail dimensions
+        $thumbnail = imagecreatetruecolor($thumbnailWidth, $thumbnailHeight);
+
+        // Resize original image to thumbnail dimensions
+        imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, $thumbnailWidth, $thumbnailHeight, $width, $height);
+
+        // Output image directly to browser
+        header('Content-Type: image/jpeg'); // Adjust content type based on image type
+        imagejpeg($thumbnail); // Output JPEG thumbnail (change function call for PNG/GIF)
+
+        // Free up memory
+        imagedestroy($image);
+        imagedestroy($thumbnail);
+    } else {
+        echo 'File not found.';
+    }
+
+    // Terminate script execution
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -137,7 +208,7 @@ function displayGallery($folderPath)
 
 	foreach ($images as $image) {
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-		echo '<img src="' . $image['path'] . '" alt="' . $image['name'] . '">';
+		echo '<img src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
 		echo '</div>';
 	}
 }
