@@ -1,83 +1,88 @@
 <?php
+function dier ($msg) {
+	print(var_dump($msg));
+	exit(0);
+}
+
 if (isset($_GET['preview'])) {
-    $imagePath = $_GET['preview'];
-    $thumbnailMaxWidth = 150; // Definiere maximale Thumbnail-Breite
-    $thumbnailMaxHeight = 150; // Definiere maximale Thumbnail-Höhe
+	$imagePath = $_GET['preview'];
+	$thumbnailMaxWidth = 150; // Definiere maximale Thumbnail-Breite
+	$thumbnailMaxHeight = 150; // Definiere maximale Thumbnail-Höhe
 
-    // Überprüfe, ob die Datei existiert
-    if (file_exists($imagePath)) {
-        // Hole Bildabmessungen und Typ
-        list($width, $height, $type) = getimagesize($imagePath);
+	// Überprüfe, ob die Datei existiert
+	if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
+		// Hole Bildabmessungen und Typ
+		list($width, $height, $type) = getimagesize($imagePath);
 
-        // Lade Bild basierend auf dem Typ
-        switch ($type) {
-            case IMAGETYPE_JPEG:
-                $image = imagecreatefromjpeg($imagePath);
-                break;
-            case IMAGETYPE_PNG:
-                $image = imagecreatefrompng($imagePath);
-                break;
-            case IMAGETYPE_GIF:
-                $image = imagecreatefromgif($imagePath);
-                break;
-            default:
-                echo 'Unsupported image type.';
-                exit;
-        }
+		// Lade Bild basierend auf dem Typ
+		switch ($type) {
+		case IMAGETYPE_JPEG:
+			$image = imagecreatefromjpeg($imagePath);
+			break;
+		case IMAGETYPE_PNG:
+			$image = imagecreatefrompng($imagePath);
+			break;
+		case IMAGETYPE_GIF:
+			$image = imagecreatefromgif($imagePath);
+			break;
+		default:
+			echo 'Unsupported image type.';
+			exit;
+		}
 
-        // Überprüfe und korrigiere Bildausrichtung gegebenenfalls
-        $exif = exif_read_data($imagePath);
-        if (!empty($exif['Orientation'])) {
-            switch ($exif['Orientation']) {
-                case 3:
-                    $image = imagerotate($image, 180, 0);
-                    break;
-                case 6:
-                    $image = imagerotate($image, -90, 0);
-                    break;
-                case 8:
-                    $image = imagerotate($image, 90, 0);
-                    break;
-            }
-            // Aktualisiere Breite und Höhe nach der Rotation
-            list($width, $height) = [$height, $width];
-        }
+		// Überprüfe und korrigiere Bildausrichtung gegebenenfalls
+		$exif = exif_read_data($imagePath);
+		if (!empty($exif['Orientation'])) {
+			switch ($exif['Orientation']) {
+			case 3:
+				$image = imagerotate($image, 180, 0);
+				break;
+			case 6:
+				$image = imagerotate($image, -90, 0);
+				list($width, $height) = [$height, $width];
+				break;
+			case 8:
+				$image = imagerotate($image, 90, 0);
+				list($width, $height) = [$height, $width];
+				break;
+			}
+		}
 
-        // Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
-        $aspectRatio = $width / $height;
-        $thumbnailWidth = $thumbnailMaxWidth;
-        $thumbnailHeight = $thumbnailMaxHeight;
-        if ($width > $height) {
-            // Landscape orientation
-            $thumbnailHeight = $thumbnailWidth / $aspectRatio;
-        } else {
-            // Portrait or square orientation
-            $thumbnailWidth = $thumbnailHeight * $aspectRatio;
-        }
+		// Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
+		$aspectRatio = $width / $height;
+		$thumbnailWidth = $thumbnailMaxWidth;
+		$thumbnailHeight = $thumbnailMaxHeight;
+		if ($width > $height) {
+			// Landscape orientation
+			$thumbnailHeight = $thumbnailWidth / $aspectRatio;
+		} else {
+			// Portrait or square orientation
+			$thumbnailWidth = $thumbnailHeight * $aspectRatio;
+		}
 
-        // Erstelle ein neues Bild mit Thumbnail-Abmessungen
-        $thumbnail = imagecreatetruecolor($thumbnailWidth, $thumbnailHeight);
+		// Erstelle ein neues Bild mit Thumbnail-Abmessungen
+		$thumbnail = imagecreatetruecolor($thumbnailWidth, $thumbnailHeight);
 
-        // Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
-        $backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
-        imagefill($thumbnail, 0, 0, $backgroundColor);
+		// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
+		$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
+		imagefill($thumbnail, 0, 0, $backgroundColor);
 
-        // Verkleinere Originalbild auf Thumbnail-Abmessungen
-        imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, $thumbnailWidth, $thumbnailHeight, $width, $height);
+		// Verkleinere Originalbild auf Thumbnail-Abmessungen
+		imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, $thumbnailWidth, $thumbnailHeight, $width, $height);
 
-        // Gib Bild direkt im Browser aus
-        header('Content-Type: image/jpeg'); // Passe den Inhaltstyp basierend auf dem Bildtyp an
-        imagejpeg($thumbnail); // Gib JPEG-Thumbnail aus (ändern Sie den Funktionsaufruf für PNG/GIF)
+		// Gib Bild direkt im Browser aus
+		header('Content-Type: image/jpeg'); // Passe den Inhaltstyp basierend auf dem Bildtyp an
+		imagejpeg($thumbnail); // Gib JPEG-Thumbnail aus (ändern Sie den Funktionsaufruf für PNG/GIF)
 
-        // Freigabe des Speichers
-        imagedestroy($image);
-        imagedestroy($thumbnail);
-    } else {
-        echo 'File not found.';
-    }
+		// Freigabe des Speichers
+		imagedestroy($image);
+		imagedestroy($thumbnail);
+	} else {
+		echo 'File not found.';
+	}
 
-    // Beende die Skriptausführung
-    exit;
+	// Beende die Skriptausführung
+	exit;
 }
 ?>
 <!DOCTYPE html>
