@@ -244,6 +244,9 @@ if(file_exists($filename)) {
 	}
 }
 ?>
+
+<div id="breadcrumb"></div>
+
 <?php
 function displayGallery($folderPath) {
 	$files = scandir($folderPath);
@@ -601,6 +604,32 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 <div id="gallery">
 <?php displayGallery($folderPath); ?>
 </div>
+<script>
+function createBreadcrumb(currentFolderPath) {
+	var breadcrumb = document.getElementById('breadcrumb');
+	breadcrumb.innerHTML = '';
+
+	var pathArray = currentFolderPath.split('/');
+	var fullPath = '';
+
+	pathArray.forEach(function(folderName, index) {
+		if (folderName !== '') {
+			fullPath += folderName + '/';
+
+			var link = document.createElement('a');
+			link.href = '?folder=' + encodeURIComponent(fullPath);
+			link.textContent = folderName;
+
+			breadcrumb.appendChild(link);
+
+			// Füge ein Trennzeichen hinzu, außer beim letzten Element
+			breadcrumb.appendChild(document.createTextNode(' / '));
+		}
+	});
+}
+
+// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
+createBreadcrumb('<?php echo $folderPath; ?>');
+</script>
 </body>
 </html>
-
