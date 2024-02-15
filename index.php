@@ -245,8 +245,7 @@ if(file_exists($filename)) {
 }
 ?>
 <?php
-function displayGallery($folderPath)
-{
+function displayGallery($folderPath) {
 	$files = scandir($folderPath);
 
 	$thumbnails = [];
