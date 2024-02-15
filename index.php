@@ -105,6 +105,61 @@ if (isset($_GET['preview'])) {
 	// Beende die Skriptausführung
 	exit;
 }
+
+// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
+function searchFiles($folderPath, $searchTerm) {
+    $results = [];
+
+    $files = scandir($folderPath);
+
+    // Wandelt den Suchbegriff in Kleinbuchstaben um
+    $searchTermLower = strtolower($searchTerm);
+
+    foreach ($files as $file) {
+        if ($file === '.' || $file === '..' || $file === '.git') {
+            continue;
+        }
+
+        $filePath = $folderPath . '/' . $file;
+
+        if (is_dir($filePath)) {
+            // Ordnername mit Suchbegriff vergleichen (ignoriert Groß- und Kleinschreibung)
+            if (stripos($file, $searchTermLower) !== false) {
+                $results[] = [
+                    'path' => $filePath,
+                    'type' => 'folder'
+                ];
+            }
+
+            // Rekursiver Aufruf für Unterverzeichnisse
+            $subResults = searchFiles($filePath, $searchTerm);
+            $results = array_merge($results, $subResults);
+        } else {
+            // Dateiname mit Suchbegriff vergleichen (nur für Bildtypen, ignoriert Groß- und Kleinschreibung)
+            $imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
+            $fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+            if (in_array($fileExtension, $imageExtensions) && stripos($file, $searchTermLower) !== false) {
+                $results[] = [
+                    'path' => $filePath,
+                    'type' => 'file'
+                ];
+            }
+        }
+    }
+
+    return $results;
+}
+
+// AJAX-Handler für die Suche
+if (isset($_GET['search'])) {
+	$searchTerm = $_GET['search'];
+	$results = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
+
+	// Ausgabe der Ergebnisse als JSON
+	echo json_encode($results);
+	exit;
+}
 ?>
 <!DOCTYPE html>
 <html>
