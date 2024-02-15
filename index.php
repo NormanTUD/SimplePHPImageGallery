@@ -107,13 +107,11 @@ if (isset($_GET['preview'])) {
 }
 
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
-// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 function searchFiles($folderPath, $searchTerm) {
 	$results = [];
+	$fileCount = 0; // Zähler für die Anzahl der gefundenen Dateien
 
 	$files = scandir($folderPath);
-
-	// Wandelt den Suchbegriff in Kleinbuchstaben um
 	$searchTermLower = strtolower($searchTerm);
 
 	foreach ($files as $file) {
@@ -124,24 +122,25 @@ function searchFiles($folderPath, $searchTerm) {
 		$filePath = $folderPath . '/' . $file;
 
 		if (is_dir($filePath)) {
-			// Ordnername mit Suchbegriff vergleichen (ignoriert Groß- und Kleinschreibung)
 			if (stripos($file, $searchTermLower) !== false) {
-				// Änderung hier: Zufälliges Bild aus den Unterverzeichnissen erhalten
 				$randomImage = getRandomImageFromSubfolders($filePath);
 				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 
 				$results[] = [
 					'path' => $filePath,
 					'type' => 'folder',
-					'thumbnail' => $thumbnailPath // Pfad zum zufälligen Bild für den Ordner
+					'thumbnail' => $thumbnailPath
 				];
+				$fileCount++;
+
+				if ($fileCount >= 50) {
+					break; // Abbruch der Schleife, wenn die maximale Anzahl erreicht ist
+				}
 			}
 
-			// Rekursiver Aufruf für Unterverzeichnisse
 			$subResults = searchFiles($filePath, $searchTerm);
 			$results = array_merge($results, $subResults);
 		} else {
-			// Dateiname mit Suchbegriff vergleichen (nur für Bildtypen, ignoriert Groß- und Kleinschreibung)
 			$imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
@@ -150,6 +149,11 @@ function searchFiles($folderPath, $searchTerm) {
 					'path' => $filePath,
 					'type' => 'file'
 				];
+				$fileCount++;
+
+				if ($fileCount >= 50) {
+					break; // Abbruch der Schleife, wenn die maximale Anzahl erreicht ist
+				}
 			}
 		}
 	}
