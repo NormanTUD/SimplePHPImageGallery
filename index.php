@@ -573,7 +573,9 @@ document.addEventListener('keypress', function(event) {
 		searchInput.value += charStr;
 
 		// Fokussiere das Suchfeld
-		searchInput.focus();
+		if(!$(searchInput).is(":focus")) {
+			searchInput.focus();
+		}
 
 		// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
 		event.preventDefault();
