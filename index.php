@@ -127,6 +127,7 @@ if (isset($_GET['preview'])) {
 	}
 
 	body {
+		font-family: sans-serif;
 		user-select: none;
 	}
 
