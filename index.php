@@ -364,7 +364,7 @@ function start_search () {
 	var searchTerm = $('#searchInput').val();
 
 	if(!/^\s*$/.test(searchTerm)) {
-		log("starting search");
+		$("#searchResults").show();
 		$("#gallery").hide();
 		$.ajax({
 		url: 'index.php',
@@ -380,7 +380,6 @@ function start_search () {
 			}
 		});
 	} else {
-		log("stopping search");
 		$("#searchResults").hide();
 		$("#gallery").show();
 	}
