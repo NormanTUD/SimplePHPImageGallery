@@ -7,3 +7,4 @@ links.txt
 ./thumbnails_cache/
 *.txt
 **/*.txt
+02_tokio
