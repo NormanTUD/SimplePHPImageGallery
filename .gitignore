@@ -5,3 +5,5 @@
 *.JPEG
 links.txt
 ./thumbnails_cache/
+*.txt
+**/*.txt
