@@ -123,13 +123,13 @@ function searchImageFileByTXT($txtFilePath) {
 		if (is_file($fullFilePath)) {
 			$fileExtension = strtolower(pathinfo($fullFilePath, PATHINFO_EXTENSION));
 
-			if ($fileExtension !== 'txt' && $pathWithoutExtension == removeFileExtensionFromString($fullFilePath)) {
-				return $fullFilePath; // Rückgabe des Pfades zur gefundenen Bilddatei
+			if ($fileExtension !== 'txt' && $pathWithoutExtension == removeFileExtensionFromString($fullFilePath) && preg_match("/\.(?:jpe?g|gif|png)$/i", $fullFilePath)) {
+				return $fullFilePath;
 			}
 		}
 	}
 
-	return $txtFilePath;
+	return null;
 }
 
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
@@ -175,14 +175,16 @@ function searchFiles($folderPath, $searchTerm) {
 				if (stripos($textContent, $searchTermLower) !== false) {
 					$imageFilePath = searchImageFileByTXT($filePath);
 
-					$results[] = [
-						'path' => $imageFilePath,
-						'type' => 'file'
-					];
-					$fileCount++;
+					if($imageFilePath) {
+						$results[] = [
+							'path' => $imageFilePath,
+							'type' => 'file'
+						];
+						$fileCount++;
 
-					if ($fileCount >= 50) {
-						break;
+						if ($fileCount >= 50) {
+							break;
+						}
 					}
 				}
 			} elseif (in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'])) {
