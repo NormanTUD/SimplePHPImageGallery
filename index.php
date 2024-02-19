@@ -620,6 +620,25 @@ function handleSwipe() {
 	}
 }
 
+document.addEventListener('keydown', function(event) {
+	var charCode = event.which || event.keyCode;
+	var charStr = String.fromCharCode(charCode);
+
+	log(charCode);
+
+	if (charCode === 8) { // Backspace-Taste (keyCode 8)
+		// Überprüfe, ob der Fokus im Suchfeld liegt
+		var searchInput = document.getElementById('searchInput');
+		if (document.activeElement === searchInput) {
+			// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
+			searchInput.value = '';
+		}
+	} else if (charCode == 27) { // Escape
+		var searchInput = document.getElementById('searchInput');
+		searchInput.value = '';
+	}
+});
+
 document.addEventListener('keypress', function(event) {
 	var charCode = event.which || event.keyCode;
 	var charStr = String.fromCharCode(charCode);
