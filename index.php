@@ -106,6 +106,32 @@ if (isset($_GET['preview'])) {
 	exit;
 }
 
+function removeFileExtensionFromString ($string) {
+	$string = preg_replace("/\.[a-z0-9_]*$/i", "", $string);
+	return $string;
+}
+
+function searchImageFileByTXT($txtFilePath) {
+	$pathWithoutExtension = removeFileExtensionFromString($txtFilePath);
+	$folderPath = dirname($txtFilePath);
+
+	$files = scandir($folderPath);
+
+	foreach ($files as $file) {
+		$fullFilePath = $folderPath . DIRECTORY_SEPARATOR . $file;
+
+		if (is_file($fullFilePath)) {
+			$fileExtension = strtolower(pathinfo($fullFilePath, PATHINFO_EXTENSION));
+
+			if ($fileExtension !== 'txt' && $pathWithoutExtension == removeFileExtensionFromString($fullFilePath)) {
+				return $fullFilePath; // Rückgabe des Pfades zur gefundenen Bilddatei
+			}
+		}
+	}
+
+	return $txtFilePath;
+}
+
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 function searchFiles($folderPath, $searchTerm) {
 	$results = [];
@@ -144,15 +170,32 @@ function searchFiles($folderPath, $searchTerm) {
 			$imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			if (in_array($fileExtension, $imageExtensions) && stripos($file, $searchTermLower) !== false) {
-				$results[] = [
-					'path' => $filePath,
-					'type' => 'file'
-				];
-				$fileCount++;
+			if ($fileExtension === 'txt') {
+				$textContent = file_get_contents($filePath);
+				if (stripos($textContent, $searchTermLower) !== false) {
+					$imageFilePath = searchImageFileByTXT($filePath);
 
-				if ($fileCount >= 50) {
-					break; // Abbruch der Schleife, wenn die maximale Anzahl erreicht ist
+					$results[] = [
+						'path' => $imageFilePath,
+						'type' => 'file'
+					];
+					$fileCount++;
+
+					if ($fileCount >= 50) {
+						break;
+					}
+				}
+			} elseif (in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'])) {
+				if (stripos($file, $searchTermLower) !== false) {
+					$results[] = [
+						'path' => $filePath,
+						'type' => 'file'
+					];
+					$fileCount++;
+
+					if ($fileCount >= 50) {
+						break;
+					}
 				}
 			}
 		}
