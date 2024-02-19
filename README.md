@@ -19,3 +19,7 @@ https://link.com/, name
 mkdir ./thumbnails_cache/
 sudo chown www-data:www-data ./thumbnails_cache/
 ```
+
+# Keywords for images
+
+For each image file, e.g. `IMG_6563.JPG` you can add a  `.txt`-file of basically the same name (`IMG_6563.txt`), that can contain keywords for that image. When searching, the `.txt` files are searched as well and displayed as results.
