@@ -301,6 +301,20 @@ if (isset($_GET['search'])) {
 	    max-width: 90%;
 	    max-height: 90%;
 	}
+
+	#breadcrumb {
+		padding: 10px;
+	}
+
+	.breadcrumb_nav {
+		background-color: #fafafa;
+		text-decoration: none;
+		color: black;
+		border: 1px groove darkblue;
+		border-radius: 10px;
+		margin: 3px;
+		padding: 3px;
+	}
     </style>
 </head>
 <body>
@@ -739,6 +753,7 @@ function createBreadcrumb(currentFolderPath) {
 			fullPath += originalFolderName + '/';
 
 			var link = document.createElement('a');
+			link.classList.add("breadcrumb_nav");
 			link.href = '?folder=' + encodeURIComponent(fullPath);
 			link.textContent = folderName;
 
