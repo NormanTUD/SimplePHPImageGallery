@@ -382,7 +382,7 @@ function displayGallery($folderPath) {
 		if (!empty($thumbnail['thumbnail'])) {
 			echo '<img draggable="false" src="index.php?preview=' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
 		} else {
-			echo '<div>No Preview Available</div>';
+			echo '<div class="no_preview_available">No Preview Available</div>';
 		}
 		echo '<h3>' . $thumbnail['name'] . '</h3>';
 		echo "</div>\n";
@@ -499,7 +499,7 @@ function displaySearchResults(searchTerm, results) {
 				if (folderThumbnail) {
 					folder_line += `<img draggable="false" src="index.php?preview=${folderThumbnail}" alt="${result.path}">`;
 				} else {
-					folder_line += '<div>No Preview Available</div>';
+					folder_line += '<div class="no_preview_available">No Preview Available</div>';
 				}
 
 				folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div>`;
@@ -746,6 +746,8 @@ function createBreadcrumb(currentFolderPath) {
 
 // Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
 createBreadcrumb('<?php echo $folderPath; ?>');
+
+$(".no_preview_available").parent().hide()
 </script>
 </body>
 </html>
