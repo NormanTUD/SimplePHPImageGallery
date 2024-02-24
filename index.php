@@ -16,6 +16,10 @@ if (isset($_GET['preview'])) {
 	$thumbnailMaxHeight = 150; // Definiere maximale Thumbnail-Höhe
 	$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
 
+	if(is_dir("/docker_tmp/")) {
+		$cacheFolder = "/docker_tmp/";
+	}
+
 	// Überprüfe, ob die Datei existiert
 	if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
 		// Generiere einen eindeutigen Dateinamen für das Thumbnail
@@ -81,7 +85,7 @@ if (isset($_GET['preview'])) {
 			}
 
 			// Erstelle ein neues Bild mit Thumbnail-Abmessungen
-			$thumbnail = imagecreatetruecolor($thumbnailWidth, $thumbnailHeight);
+			$thumbnail = imagecreatetruecolor(int($thumbnailWidth), int($thumbnailHeight));
 
 			// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
 			$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
@@ -173,7 +177,7 @@ function searchFiles($folderPath, $searchTerm) {
 			$subResults = searchFiles($filePath, $searchTerm);
 			$results = array_merge($results, $subResults);
 		} else {
-			$imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
+			$imageExtensions = array('jpg', 'jpeg');
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 			if ($fileExtension === 'txt') {
@@ -193,7 +197,7 @@ function searchFiles($folderPath, $searchTerm) {
 						}
 					}
 				}
-			} elseif (in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif'])) {
+			} elseif (in_array($fileExtension, ['jpg', 'jpeg'])) {
 				if (stripos($file, $searchTermLower) !== false) {
 					$results[] = [
 						'path' => $filePath,
@@ -344,7 +348,7 @@ function displayGallery($folderPath) {
 				'path' => $filePath
 			];
 		} else {
-			$imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
+			$imageExtensions = array('jpg', 'jpeg');
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 			if (in_array($fileExtension, $imageExtensions)) {
