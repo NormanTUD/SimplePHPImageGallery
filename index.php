@@ -1,4 +1,5 @@
 <?php
+ini_set('memory_limit', '2048M');
 $images_path = "/docker_images/";
 
 if (is_dir($images_path)) {
