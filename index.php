@@ -220,7 +220,13 @@ if (isset($_GET['search'])) {
 <html>
 <head>
     <title>Galerie</title>
-    <script src="jquery-3.7.1.min.js"></script>
+<?php
+	$jquery_file = 'jquery-3.7.1.min.js';
+	if(!file_exists($jquery_file)) {
+		$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
+	}
+?>
+    <script src="<?php print $jquery_file; ?>"></script>
 
     <style>
 	h3 {
