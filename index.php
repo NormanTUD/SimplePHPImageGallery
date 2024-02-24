@@ -1,5 +1,6 @@
 <?php
 $images_path = "/docker_images/";
+$imageExtensions = array('jpg', 'jpeg');
 
 if (is_dir($images_path)) {
 	chdir($images_path);
@@ -177,7 +178,6 @@ function searchFiles($folderPath, $searchTerm) {
 			$subResults = searchFiles($filePath, $searchTerm);
 			$results = array_merge($results, $subResults);
 		} else {
-			$imageExtensions = array('jpg', 'jpeg');
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 			if ($fileExtension === 'txt') {
@@ -197,7 +197,7 @@ function searchFiles($folderPath, $searchTerm) {
 						}
 					}
 				}
-			} elseif (in_array($fileExtension, ['jpg', 'jpeg'])) {
+			} elseif (in_array($fileExtension, $imageExtensions)) {
 				if (stripos($file, $searchTermLower) !== false) {
 					$results[] = [
 						'path' => $filePath,
@@ -348,7 +348,6 @@ function displayGallery($folderPath) {
 				'path' => $filePath
 			];
 		} else {
-			$imageExtensions = array('jpg', 'jpeg');
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 			if (in_array($fileExtension, $imageExtensions)) {
@@ -397,7 +396,6 @@ function getImagesInFolder($folderPath) {
 
 		$filePath = $folderPath . '/' . $file;
 
-		$imageExtensions = array('jpg', 'jpeg');
 		$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		if (in_array($fileExtension, $imageExtensions)) {
