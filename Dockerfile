@@ -35,5 +35,7 @@ RUN rm install.sh Dockerfile docker-compose.yml docker-compose.custom.yml git_ha
 # Expose the Apache port
 EXPOSE $APACHE_PORT
 
+ENV PHP_MEMORY_LIMIT=512M
+
 # Start Apache server
 CMD ["apache2-foreground"]
