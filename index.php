@@ -55,7 +55,7 @@ if (isset($_GET['preview'])) {
 			}
 
 			// Überprüfe und korrigiere Bildausrichtung gegebenenfalls
-			$exif = exif_read_data($imagePath);
+			$exif = @exif_read_data($imagePath);
 			if (!empty($exif['Orientation'])) {
 				switch ($exif['Orientation']) {
 				case 3:
@@ -85,14 +85,14 @@ if (isset($_GET['preview'])) {
 			}
 
 			// Erstelle ein neues Bild mit Thumbnail-Abmessungen
-			$thumbnail = imagecreatetruecolor(int($thumbnailWidth), int($thumbnailHeight));
+			$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
 
 			// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
 			$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
 			imagefill($thumbnail, 0, 0, $backgroundColor);
 
 			// Verkleinere Originalbild auf Thumbnail-Abmessungen
-			imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, $thumbnailWidth, $thumbnailHeight, $width, $height);
+			imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
 
 			// Speichere das Thumbnail im Cache
 			imagejpeg($thumbnail, $cachedThumbnailPath);
