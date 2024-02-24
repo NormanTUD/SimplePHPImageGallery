@@ -519,7 +519,7 @@ function showImage(imagePath) {
 	};
 
 	var image = document.createElement('img');
-	image.src = imagePath;
+	image.src = "image.php?path=" + imagePath;
 	image.setAttribute('draggable', false);
 
 	fullscreen.appendChild(image);
