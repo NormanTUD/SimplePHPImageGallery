@@ -387,7 +387,11 @@ function displayGallery($folderPath) {
 }
 
 function getImagesInFolder($folderPath) {
-	$folderFiles = scandir($folderPath);
+	$folderFiles = @scandir($folderPath);
+
+	if(is_bool($folderFiles)) {
+		return [];
+	}
 
 	$images = [];
 
