@@ -189,7 +189,7 @@ function searchFiles($folderPath, $searchTerm) {
 		} else {
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			$imageExtensions = array('jpg', 'jpeg', 'mp4');
+			$imageExtensions = array('jpg', 'jpeg');
 
 			if ($fileExtension === 'txt') {
 				$textContent = file_get_contents($filePath);
@@ -366,7 +366,7 @@ function displayGallery($folderPath) {
 		} else {
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			$imageExtensions = array('jpg', 'jpeg', 'mp4');
+			$imageExtensions = array('jpg', 'jpeg');
 			if (in_array($fileExtension, $imageExtensions)) {
 				$images[] = [
 					'name' => $file,
@@ -419,7 +419,7 @@ function getImagesInFolder($folderPath) {
 
 		$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-		$imageExtensions = array('jpg', 'jpeg', 'mp4');
+		$imageExtensions = array('jpg', 'jpeg');
 		if (in_array($fileExtension, $imageExtensions)) {
 			$images[] = [
 				'name' => $file,
