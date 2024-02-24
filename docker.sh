@@ -166,6 +166,6 @@ if [[ "$run_tests" -eq "1" ]]; then
 	php testing.php && echo "Syntax checks for PHP Ok" || die "Syntax Checks for PHP failed"
 fi
 
-sudo docker-compose build && docker-compose -f docker-compose.yml -f docker-compose.custom.yml up --build -d --remove-orphans || echo "Failed to build container"
+docker-compose -f docker-compose.yml -f docker-compose.custom.yml up --build -d --remove-orphans || echo "Failed to build container"
 
 rm git_hash
