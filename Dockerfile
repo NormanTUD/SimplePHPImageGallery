@@ -9,6 +9,7 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html
 
 RUN apt-get update
 RUN apt-cache search php gd
+RUN apt-get install libjpeg62-turbo-dev
 RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
     # configure the GD extension to include support for JPEG and PNG image formats
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
