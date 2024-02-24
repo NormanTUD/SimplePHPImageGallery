@@ -152,7 +152,12 @@ function searchFiles($folderPath, $searchTerm) {
 		return [];
 	}
 
-	$files = scandir($folderPath);
+	$files = @scandir($folderPath);
+
+	if(is_bool($files)) {
+		return [];
+	}
+
 	$searchTermLower = strtolower($searchTerm);
 
 	foreach ($files as $file) {
