@@ -311,7 +311,7 @@ if (isset($_GET['search'])) {
 		text-decoration: none;
 		color: black;
 		border: 1px groove darkblue;
-		border-radius: 10px;
+		border-radius: 5px;
 		margin: 3px;
 		padding: 3px;
 	}
