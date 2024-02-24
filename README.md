@@ -5,6 +5,12 @@ This is a very simple .php-file that you can simply put into a folder and it wil
 
 Nothing, except PHP and the JQuery file.
 
+# Run in Docker:
+
+```command
+bash docker.sh --debug --local-port 3312 --image-path ~/path/to/images # can be relative or absolute
+```
+
 # Showing links
 
 To show links at the top, write a file called "links.txt" into the main directory where the index.php is. It has this structure:
