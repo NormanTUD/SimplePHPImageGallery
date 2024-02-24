@@ -13,16 +13,20 @@ if (preg_match("/\.\./", $filepath)) {
 	exit(1);
 }
 
-$contents = file_get_contents($filepath);
+if(file_exists($filepath)) {
+	$contents = file_get_contents($filepath);
+	$expires = 14 * 60*60*24;
 
-$expires = 14 * 60*60*24;
+	header("Content-Type: image/jpeg");
+	header("Content-Length: " . strlen($contents));
+	header("Cache-Control: public", true);
+	header("Pragma: public", true);
+	header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT', true);
 
-header("Content-Type: image/jpeg");
-header("Content-Length: " . strlen($contents));
-header("Cache-Control: public", true);
-header("Pragma: public", true);
-header('Expires: ' . gmdate('D, d M Y H:i:s', time() + $expires) . ' GMT', true);
-
-echo $contents;
-exit;
+	echo $contents;
+	exit;
+} else {
+	echo "File not found";
+	exit(1);
+}
 ?>
