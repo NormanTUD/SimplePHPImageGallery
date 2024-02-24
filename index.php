@@ -1,4 +1,9 @@
 <?php
+
+if (is_dir("/docker_images/")) {
+	chdir("/docker_images/");
+}
+
 function dier ($msg) {
 	print(var_dump($msg));
 	exit(0);

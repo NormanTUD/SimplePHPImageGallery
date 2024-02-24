@@ -2,7 +2,7 @@
 
 # Default values
 run_tests=0
-image_path="."
+image_path="$(pwd)"
 LOCAL_PORT=""
 
 # Help message
@@ -24,7 +24,7 @@ while [[ "$#" -gt 0 ]]; do
 			shift
 			;;
 		--image-path)
-			image_path="$2"
+			image_path="$(realpath $2)"
 			shift
 			;;
 		--local-port)
@@ -54,10 +54,13 @@ fi
 echo "Using image path $image_path to mount into docker container."
 
 echo "
+version: '3'
 services:
   simplephpimagegallery:
+    build:
+      context: .
     volumes:
-      -$image_path:/usr/local/abc/service
+      - /docker_images/:$image_path
 " > docker-compose.custom.yml
 
 # Check for required parameters
@@ -163,6 +166,6 @@ if [[ "$run_tests" -eq "1" ]]; then
 	php testing.php && echo "Syntax checks for PHP Ok" || die "Syntax Checks for PHP failed"
 fi
 
-sudo docker-compose build && sudo docker-compose up -d -f docker-compose.yml -f docker-compose.custom.yml || echo "Failed to build container"
+sudo docker-compose build && docker-compose -f docker-compose.yml -f docker-compose.custom.yml up --build -d || echo "Failed to build container"
 
 rm git_hash

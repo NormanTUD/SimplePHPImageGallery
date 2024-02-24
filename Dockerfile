@@ -21,6 +21,10 @@ RUN sed -ri -e 's!/var/www/html!/var/www/html/!g' /etc/apache2/sites-available/*
 RUN sed -ri -e 's!/var/www/!/var/www/html/!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 RUN bash /var/www/html/install.sh
+RUN rm install.sh
+RUN rm Dockerfile
+RUN rm docker-compose.yml
+RUN rm docker-compose.custom.yml
 
 # Expose the Apache port
 EXPOSE $APACHE_PORT
