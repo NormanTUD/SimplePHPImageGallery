@@ -7,6 +7,9 @@ RUN a2enmod rewrite
 ENV APACHE_PORT 8080
 ENV APACHE_DOCUMENT_ROOT /var/www/html
 
+RUN apt-get update
+RUN apt-get install ca-certificates apt-transport-https apache2 -y
+
 # Copy the PHP files to the container
 COPY . /var/www/html/
 

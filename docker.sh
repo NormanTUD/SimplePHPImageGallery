@@ -2,12 +2,15 @@
 
 # Default values
 run_tests=0
+image_path="."
 LOCAL_PORT=""
 
 # Help message
 help_message() {
 	echo "Usage: docker.sh [OPTIONS]"
 	echo "Options:"
+	echo "  --debug            Show debug information"
+	echo "  --image-path       Path of where the images are. Default is '.'"
 	echo "  --local-port       Local port to bind for the GUI"
 	echo "  --run_tests        Run tests before starting"
 	echo "  --help             Show this help message"
@@ -20,9 +23,16 @@ while [[ "$#" -gt 0 ]]; do
 			run_tests=1
 			shift
 			;;
+		--image-path)
+			image_path="$2"
+			shift
+			;;
 		--local-port)
 			LOCAL_PORT="$2"
 			shift
+			;;
+		--debug)
+			set -x
 			;;
 		--help)
 			help_message
@@ -35,6 +45,20 @@ while [[ "$#" -gt 0 ]]; do
 	esac
 	shift
 done
+
+if [[ ! -d "$image_path" ]]; then
+	echo "$image_path is not a directory"
+	exit 32
+fi
+
+echo "Using image path $image_path to mount into docker container."
+
+echo "
+services:
+  simplephpimagegallery:
+    volumes:
+      -$image_path:/usr/local/abc/service
+" > docker-compose.custom.yml
 
 # Check for required parameters
 if [[ -z $LOCAL_PORT ]]; then
@@ -139,6 +163,6 @@ if [[ "$run_tests" -eq "1" ]]; then
 	php testing.php && echo "Syntax checks for PHP Ok" || die "Syntax Checks for PHP failed"
 fi
 
-sudo docker-compose build && sudo docker-compose up -d || echo "Failed to build container"
+sudo docker-compose build && sudo docker-compose up -d -f docker-compose.yml -f docker-compose.custom.yml || echo "Failed to build container"
 
 rm git_hash
