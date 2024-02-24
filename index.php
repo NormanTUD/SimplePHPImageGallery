@@ -1,7 +1,8 @@
 <?php
+$images_path = "/docker_images/";
 
-if (is_dir("/docker_images/")) {
-	chdir("/docker_images/");
+if (is_dir($images_path)) {
+	chdir($images_path);
 }
 
 function dier ($msg) {
@@ -333,11 +334,7 @@ function displayGallery($folderPath) {
 				$randomImage = getRandomImageFromSubfolders($filePath);
 				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 			} else {
-				if($seed) {
-					mt_srand($seed);
-				}
 				$randomImage = $folderImages[array_rand($folderImages)];
-				mt_srand();
 				$thumbnailPath = $randomImage['path'];
 			}
 
@@ -396,7 +393,7 @@ function getImagesInFolder($folderPath) {
 
 		$filePath = $folderPath . '/' . $file;
 
-		$imageExtensions = array('jpg', 'jpeg', 'png', 'gif');
+		$imageExtensions = array('jpg', 'jpeg');
 		$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		if (in_array($fileExtension, $imageExtensions)) {
@@ -410,30 +407,25 @@ function getImagesInFolder($folderPath) {
 	return $images;
 }
 
-function getRandomImageFromSubfolders($folderPath, $seed="") {
+function getRandomImageFromSubfolders($folderPath) {
 	$subfolders = glob($folderPath . '/*', GLOB_ONLYDIR);
 
 	if (count($subfolders) == 0) {
 		$images = getImagesInFolder($folderPath);
 
 		if (!empty($images)) {
-			if($seed) {
-				mt_srand($seed);
-			}
 			return $images[array_rand($images)];
-			mt_srand();
 		}
 	} else {
 		foreach ($subfolders as $subfolder) {
-			$images[] = getImagesInFolder($subfolder)[0];
+			$images_in_folder = getImagesInFolder($subfolder);
+			if(count($images_in_folder)) {
+				$images[] = $images_in_folder[0];
+			}
 		}
 
 		if (!empty($images)) {
-			if($seed) {
-				mt_srand($seed);
-			}
 			return $images[array_rand($images)];
-			mt_srand();
 		}
 	}
 
