@@ -22,6 +22,7 @@ RUN docker-php-ext-install gd
 # Configure Apache
 RUN sed -ri -e 's!/var/www/html!/var/www/html/!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!/var/www/html/!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+RUN sed -i 's#memory_limit = .*#memory_limit = 1G#' /usr/local/etc/php/php.ini-production
 
 # Copy the PHP files to the container
 COPY . /var/www/html/
