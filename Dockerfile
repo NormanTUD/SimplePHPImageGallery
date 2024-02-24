@@ -1,16 +1,18 @@
-FROM php:8.2-fpm
+FROM php:8.2-apache
 
 # Set the port for Apache to listen on
 ENV APACHE_PORT 8080
 ENV APACHE_DOCUMENT_ROOT /var/www/html
 
 RUN apt-get update
-RUN apt-get install libjpeg62-turbo-dev -y
+RUN apt-get install libjpeg62-turbo-dev  -y
+RUN apt-get install libfreetype6-dev  -y
+RUN apt-get install libjpeg62-turbo-dev  -y
+RUN apt-get install libpng-dev  -y
+RUN apt-get install libgd-dev -y
+RUN apt-get install libpng-dev -y
 RUN apt-get install zlib1g-dev -y
-RUN docker-php-ext-configure gd --with-jpeg
-RUN apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
-    # configure the GD extension to include support for JPEG and PNG image formats
-    && docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install exif
 RUN apt-get install ca-certificates apt-transport-https apache2 -y
 RUN apt-get update -yqq
