@@ -319,6 +319,11 @@ if(file_exists($filename)) {
 
 <?php
 function displayGallery($folderPath) {
+	if(!is_dir($folderPath)) {
+		print("Folder not found");
+		return [];
+	}
+
 	$files = scandir($folderPath);
 
 	$thumbnails = [];
