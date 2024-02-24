@@ -26,6 +26,7 @@ RUN rm Dockerfile
 RUN rm docker-compose.yml
 RUN rm docker-compose.custom.yml
 RUN rm git_hash
+RUN rm docker.sh
 
 # Expose the Apache port
 EXPOSE $APACHE_PORT

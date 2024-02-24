@@ -60,7 +60,7 @@ services:
     build:
       context: .
     volumes:
-      - /docker_images/:$image_path
+      - $image_path:/docker_images/
 " > docker-compose.custom.yml
 
 # Check for required parameters
