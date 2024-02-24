@@ -147,6 +147,10 @@ function searchFiles($folderPath, $searchTerm) {
 	$results = [];
 	$fileCount = 0; // Zähler für die Anzahl der gefundenen Dateien
 
+	if (!is_dir($folderPath)) {
+		return [];
+	}
+
 	$files = scandir($folderPath);
 	$searchTermLower = strtolower($searchTerm);
 
