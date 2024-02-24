@@ -41,18 +41,18 @@ if (isset($_GET['preview'])) {
 
 			// Lade Bild basierend auf dem Typ
 			switch ($type) {
-			case IMAGETYPE_JPEG:
-				$image = imagecreatefromjpeg($imagePath);
-				break;
-			case IMAGETYPE_PNG:
-				$image = imagecreatefrompng($imagePath);
-				break;
-			case IMAGETYPE_GIF:
-				$image = imagecreatefromgif($imagePath);
-				break;
-			default:
-				echo 'Unsupported image type.';
-				exit;
+				case IMAGETYPE_JPEG:
+					$image = imagecreatefromjpeg($imagePath);
+					break;
+				case IMAGETYPE_PNG:
+					$image = imagecreatefrompng($imagePath);
+					break;
+				case IMAGETYPE_GIF:
+					$image = imagecreatefromgif($imagePath);
+					break;
+				default:
+					echo 'Unsupported image type.';
+					exit;
 			}
 
 			// Überprüfe und korrigiere Bildausrichtung gegebenenfalls
