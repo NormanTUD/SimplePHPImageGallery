@@ -318,6 +318,7 @@ if (isset($_GET['search'])) {
     </style>
 </head>
 <body>
+<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Suche...">
 <?php
 $filename = 'links.txt';
 
@@ -727,8 +728,6 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 	$folderPath = $_GET['folder'];
 }
 ?>
-
-<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Suche...">
 
 <!-- Ergebnisse der Suche hier einfügen -->
 <div id="searchResults"></div>
