@@ -181,7 +181,7 @@ function searchFiles($folderPath, $searchTerm) {
 				];
 				$fileCount++;
 
-				if ($fileCount >= 50) {
+				if ($fileCount >= 100) {
 					break; // Abbruch der Schleife, wenn die maximale Anzahl erreicht ist
 				}
 			}
@@ -203,7 +203,7 @@ function searchFiles($folderPath, $searchTerm) {
 						];
 						$fileCount++;
 
-						if ($fileCount >= 50) {
+						if ($fileCount >= 100) {
 							break;
 						}
 					}
@@ -216,7 +216,7 @@ function searchFiles($folderPath, $searchTerm) {
 					];
 					$fileCount++;
 
-					if ($fileCount >= 50) {
+					if ($fileCount >= 100) {
 						break;
 					}
 				}
