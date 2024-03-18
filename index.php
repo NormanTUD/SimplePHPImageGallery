@@ -1,5 +1,5 @@
 <?php
-$GLOBALS["FILETYPES"] = array('jpg', 'jpeg');
+$GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png');
 
 ini_set('memory_limit', '2048M');
 $images_path = "/docker_images/";
