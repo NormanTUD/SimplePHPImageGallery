@@ -740,38 +740,38 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 <?php displayGallery($folderPath); ?>
 </div>
 <script>
-function createBreadcrumb(currentFolderPath) {
-	var breadcrumb = document.getElementById('breadcrumb');
-	breadcrumb.innerHTML = '';
+	function createBreadcrumb(currentFolderPath) {
+		var breadcrumb = document.getElementById('breadcrumb');
+		breadcrumb.innerHTML = '';
 
-	var pathArray = currentFolderPath.split('/');
-	var fullPath = '';
+		var pathArray = currentFolderPath.split('/');
+		var fullPath = '';
 
-	pathArray.forEach(function(folderName, index) {
-		if (folderName !== '') {
-			var originalFolderName = folderName;
-			if(folderName == '.') {
-				folderName = "Start";
+		pathArray.forEach(function(folderName, index) {
+			if (folderName !== '') {
+				var originalFolderName = folderName;
+				if(folderName == '.') {
+					folderName = "Start";
+				}
+				fullPath += originalFolderName + '/';
+
+				var link = document.createElement('a');
+				link.classList.add("breadcrumb_nav");
+				link.href = '?folder=' + encodeURIComponent(fullPath);
+				link.textContent = folderName;
+
+				breadcrumb.appendChild(link);
+
+				// Füge ein Trennzeichen hinzu, außer beim letzten Element
+				breadcrumb.appendChild(document.createTextNode(' / '));
 			}
-			fullPath += originalFolderName + '/';
+		});
+	}
 
-			var link = document.createElement('a');
-			link.classList.add("breadcrumb_nav");
-			link.href = '?folder=' + encodeURIComponent(fullPath);
-			link.textContent = folderName;
+	// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
+	createBreadcrumb('<?php echo $folderPath; ?>');
 
-			breadcrumb.appendChild(link);
-
-			// Füge ein Trennzeichen hinzu, außer beim letzten Element
-			breadcrumb.appendChild(document.createTextNode(' / '));
-		}
-	});
-}
-
-// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
-createBreadcrumb('<?php echo $folderPath; ?>');
-
-$(".no_preview_available").parent().hide()
+	$(".no_preview_available").parent().hide();
 </script>
 </body>
 </html>
