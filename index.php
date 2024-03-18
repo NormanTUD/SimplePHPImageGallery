@@ -514,17 +514,19 @@ function displaySearchResults(searchTerm, results) {
 			// Hier kannst du die Logik anpassen, um Links oder Vorschaubilder anzuzeigen
 			if (result.type === 'folder') {
 				var folderThumbnail = result.thumbnail;
-				var folder_line = `<div class="thumbnail_folder" onclick="showFolder('${result.path}')">`;
-
-				// Falls ein Vorschaubild vorhanden ist, verwenden wir es, sonst zeigen wir an, dass kein Vorschaubild verfügbar ist
 				if (folderThumbnail) {
-					folder_line += `<img draggable="false" src="index.php?preview=${folderThumbnail}" alt="${result.path}">`;
-				} else {
-					folder_line += '<div class="no_preview_available">No Preview Available</div>';
-				}
+					var folder_line = `<div class="thumbnail_folder" onclick="showFolder('${result.path}')">`;
 
-				folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div>`;
-				$searchResults.append(folder_line);
+					// Falls ein Vorschaubild vorhanden ist, verwenden wir es, sonst zeigen wir an, dass kein Vorschaubild verfügbar ist
+					if (folderThumbnail) {
+						folder_line += `<img draggable="false" src="index.php?preview=${folderThumbnail}" alt="${result.path}">`;
+					} else {
+						folder_line += '<div class="no_preview_available">No Preview Available</div>';
+					}
+
+					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div>`;
+					$searchResults.append(folder_line);
+				}
 			} else if (result.type === 'file') {
 				var fileName = result.path.split('/').pop(); // Dateiname aus dem Dateipfad extrahieren
 				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')"><img draggable="false" src="index.php?preview=${result.path}" alt="${fileName}"></div>`
