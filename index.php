@@ -239,84 +239,84 @@ if (isset($_GET['search'])) {
 ?>
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Galerie</title>
+	<head>
+		<title>Galerie</title>
 <?php
-	$jquery_file = 'jquery-3.7.1.min.js';
-	if(!file_exists($jquery_file)) {
-		$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
-	}
+		$jquery_file = 'jquery-3.7.1.min.js';
+		if(!file_exists($jquery_file)) {
+			$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
+		}
 ?>
-    <script src="<?php print $jquery_file; ?>"></script>
+		<script src="<?php print $jquery_file; ?>"></script>
 
-    <style>
-	h3 {
-		line-break: anywhere;
-	}
+		<style>
+			h3 {
+				line-break: anywhere;
+			}
 
-	.thumbnail_folder {
-	    display: inline-block;
-	    margin: 10px;
-	    max-width: 150px;
-	    max-height: 150px;
-	    cursor: pointer;
-	}
+			.thumbnail_folder {
+				display: inline-block;
+				margin: 10px;
+				max-width: 150px;
+				max-height: 150px;
+				cursor: pointer;
+			}
 
-	.thumbnail_folder img {
-	    max-width: 100%;
-	    max-height: 100%;
-	}
+			.thumbnail_folder img {
+				max-width: 100%;
+				max-height: 100%;
+			}
 
-	body {
-		font-family: sans-serif;
-		user-select: none;
-	}
+			body {
+				font-family: sans-serif;
+				user-select: none;
+			}
 
-	.thumbnail {
-	    display: inline-block;
-	    margin: 10px;
-	    max-width: 150px;
-	    max-height: 150px;
-	    cursor: pointer;
-	}
+			.thumbnail {
+				display: inline-block;
+				margin: 10px;
+				max-width: 150px;
+				max-height: 150px;
+				cursor: pointer;
+			}
 
-	.thumbnail img {
-	    max-width: 100%;
-	    max-height: 100%;
-	}
+			.thumbnail img {
+				max-width: 100%;
+				max-height: 100%;
+			}
 
-	.fullscreen {
-	    position: fixed;
-	    top: 0;
-	    left: 0;
-	    width: 100%;
-	    height: 100%;
-	    background-color: rgba(0, 0, 0, 0.9);
-	    display: flex;
-	    align-items: center;
-	    justify-content: center;
-	}
+			.fullscreen {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.9);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
 
-	.fullscreen img {
-	    max-width: 90%;
-	    max-height: 90%;
-	}
+			.fullscreen img {
+				max-width: 90%;
+				max-height: 90%;
+			}
 
-	#breadcrumb {
-		padding: 10px;
-	}
+			#breadcrumb {
+				padding: 10px;
+			}
 
-	.breadcrumb_nav {
-		background-color: #fafafa;
-		text-decoration: none;
-		color: black;
-		border: 1px groove darkblue;
-		border-radius: 5px;
-		margin: 3px;
-		padding: 3px;
-	}
-    </style>
-</head>
+			.breadcrumb_nav {
+				background-color: #fafafa;
+				text-decoration: none;
+				color: black;
+				border: 1px groove darkblue;
+				border-radius: 5px;
+				margin: 3px;
+				padding: 3px;
+			}
+		</style>
+	</head>
 <body>
 <input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Suche...">
 <?php
