@@ -672,6 +672,7 @@ document.addEventListener('keydown', function(event) {
 		if (document.activeElement !== searchInput) {
 			// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
 			searchInput.value = '';
+			$(searchInput).focus();
 		}
 	} else if (charCode == 27) { // Escape
 		var searchInput = document.getElementById('searchInput');
@@ -715,6 +716,7 @@ document.addEventListener('keypress', function(event) {
 		if (document.activeElement === searchInput) {
 			// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
 			searchInput.value = '';
+			$(searchInput).focus();
 		}
 	}
 });
