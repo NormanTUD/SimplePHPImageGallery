@@ -1,4 +1,6 @@
 <?php
+$GLOBALS["FILETYPES"] = array('jpg', 'jpeg');
+
 ini_set('memory_limit', '2048M');
 $images_path = "/docker_images/";
 
@@ -189,8 +191,6 @@ function searchFiles($folderPath, $searchTerm) {
 		} else {
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			$imageExtensions = array('jpg', 'jpeg');
-
 			if ($fileExtension === 'txt') {
 				$textContent = file_get_contents($filePath);
 				if (stripos($textContent, $searchTermLower) !== false) {
@@ -208,7 +208,7 @@ function searchFiles($folderPath, $searchTerm) {
 						}
 					}
 				}
-			} elseif (in_array($fileExtension, $imageExtensions)) {
+			} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
 				if (stripos($file, $searchTermLower) !== false) {
 					$results[] = [
 						'path' => $filePath,
@@ -381,8 +381,7 @@ function displayGallery($folderPath) {
 		} else {
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			$imageExtensions = array('jpg', 'jpeg');
-			if (in_array($fileExtension, $imageExtensions)) {
+			if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
 				$images[] = [
 					'name' => $file,
 					'path' => $filePath
@@ -434,8 +433,7 @@ function getImagesInFolder($folderPath) {
 
 		$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-		$imageExtensions = array('jpg', 'jpeg');
-		if (in_array($fileExtension, $imageExtensions)) {
+		if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
 			$images[] = [
 				'name' => $file,
 				'path' => $filePath

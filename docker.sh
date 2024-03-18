@@ -163,7 +163,7 @@ fi
 
 
 if [[ "$run_tests" -eq "1" ]]; then
-	php testing.php && echo "Syntax checks for PHP Ok" || die "Syntax Checks for PHP failed"
+	php testing.php || die "Syntax Checks for PHP failed"
 fi
 
 docker-compose -f docker-compose.yml -f docker-compose.custom.yml up --build -d --remove-orphans || echo "Failed to build container"
