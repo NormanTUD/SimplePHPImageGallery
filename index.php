@@ -460,7 +460,7 @@ function displayGallery($folderPath) {
 
 
 
-function process_image_file($filepath, &$hash) {
+function process_image_file_geocoords($filepath, &$hash) {
 	// Überprüfen, ob die Datei eine JPG- oder PNG-Datei ist
 	$extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
 	if ($extension === 'jpg' || $extension === 'jpeg' || $extension === 'png') {
@@ -475,7 +475,7 @@ function process_image_file($filepath, &$hash) {
 	}
 }
 
-function process_directory($dir, &$hash) {
+function process_directory_geocoords($dir, &$hash) {
 	// Überprüfen, ob das Verzeichnis existiert und lesbar ist
 	if (is_dir($dir) && is_readable($dir)) {
 		// Durchlaufen der Dateien im Verzeichnis
@@ -486,10 +486,10 @@ function process_directory($dir, &$hash) {
 				$filepath = $dir . DIRECTORY_SEPARATOR . $file;
 				// Wenn es sich um ein Verzeichnis handelt, rekursiv verarbeiten
 				if (is_dir($filepath)) {
-					process_directory($filepath, $hash);
+					process_directory_geocoords($filepath, $hash);
 				} else {
 					// Wenn es sich um eine Datei handelt, diese verarbeiten
-					process_image_file($filepath, $hash);
+					process_image_file_geocoords($filepath, $hash);
 				}
 			}
 		}
@@ -500,14 +500,14 @@ function process_directory($dir, &$hash) {
 }
 
 // Hauptfunktion, um den Hash zu erstellen
-function create_image_hash() {
+function images_with_geocoords() {
 	$hash = [];
 	$current_directory = __DIR__;
 	process_directory($current_directory, $hash);
 	return $hash;
 }
 
-#$image_hash = create_image_hash();
+#$image_hash = images_with_geocoords();
 #dier($image_hash);
 
 function getImagesInFolder($folderPath) {
