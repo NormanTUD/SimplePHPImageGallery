@@ -288,6 +288,7 @@ if (isset($_GET['search'])) {
 			}
 
 			.fullscreen {
+				z-index: 9999;
 				position: fixed;
 				top: 0;
 				left: 0;
