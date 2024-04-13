@@ -536,6 +536,8 @@ $yourDataArray = images_with_geocoords();
 
 function generateOpenStreetMapScript($dataArray) {
 	if (!empty($dataArray)) {
+		print("<h2>Map</h2>");
+
 		$totalLat = 0;
 		$totalLng = 0;
 		$numPoints = count($dataArray);
