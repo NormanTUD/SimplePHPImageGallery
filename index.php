@@ -459,6 +459,7 @@ function displayGallery($folderPath) {
 }
 
 
+
 function process_image_file($filepath, &$hash) {
 	// Überprüfen, ob die Datei eine JPG- oder PNG-Datei ist
 	$extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
@@ -467,7 +468,9 @@ function process_image_file($filepath, &$hash) {
 		$gps_data = get_image_gps($filepath);
 		// Wenn GPS-Daten vorhanden sind, füge sie dem Hash hinzu
 		if ($gps_data !== null) {
-			$hash[$filepath] = $gps_data;
+			// Pfad ohne das aktuelle Arbeitsverzeichnis (CWD)
+			$relative_path = str_replace(getcwd() . DIRECTORY_SEPARATOR, '', $filepath);
+			$hash[$relative_path] = $gps_data;
 		}
 	}
 }
@@ -503,6 +506,9 @@ function create_image_hash() {
 	process_directory($current_directory, $hash);
 	return $hash;
 }
+
+#$image_hash = create_image_hash();
+#dier($image_hash);
 
 function getImagesInFolder($folderPath) {
 	$folderFiles = @scandir($folderPath);
