@@ -503,7 +503,7 @@ function process_directory_geocoords($dir, &$hash) {
 function images_with_geocoords() {
 	$hash = [];
 	$current_directory = __DIR__;
-	process_directory($current_directory, $hash);
+	process_directory_geocoords($current_directory, $hash);
 	return $hash;
 }
 
