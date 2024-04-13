@@ -507,8 +507,50 @@ function images_with_geocoords() {
 	return $hash;
 }
 
-#$image_hash = images_with_geocoords();
+$yourDataArray = images_with_geocoords();
 #dier($image_hash);
+
+
+function generateOpenStreetMapScript($dataArray) {
+    if (!empty($dataArray)) {
+        $totalLat = 0;
+        $totalLng = 0;
+        $numPoints = count($dataArray);
+
+        foreach ($dataArray as $key => $data) {
+            $totalLat += $data['latitude']['degrees'];
+            $totalLng += $data['longitude']['degrees'];
+        }
+
+        $averageLat = $totalLat / $numPoints;
+        $averageLng = $totalLng / $numPoints;
+?>
+
+<div id="map" style="height: 400px; width: 100%;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+
+<script>
+    var map = L.map('map').setView([<?php echo $averageLat; ?>, <?php echo $averageLng; ?>], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    <?php foreach ($dataArray as $key => $data): ?>
+        var marker_<?php echo md5($key); ?> = L.marker([<?php echo $data['latitude']['degrees']; ?>, <?php echo $data['longitude']['degrees']; ?>]).addTo(map);
+        marker_<?php echo md5($key); ?>.bindPopup("<img src='index.php?preview=<?php echo urlencode('.//' . $key); ?>' width='100' height='100' />").openPopup();
+
+        marker_<?php echo md5($key); ?>.on('click', function() {
+            showImage('<?php echo './/' . $key; ?>');
+        });
+    <?php endforeach; ?>
+</script>
+
+<?php
+    }
+}
 
 function getImagesInFolder($folderPath) {
 	$folderFiles = @scandir($folderPath);
@@ -866,5 +908,9 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 
 	$(".no_preview_available").parent().hide();
 </script>
+
+<?php
+	generateOpenStreetMapScript($yourDataArray);
+?>
 </body>
 </html>
