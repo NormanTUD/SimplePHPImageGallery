@@ -350,39 +350,59 @@ function getCoord( $expr ) {
 	return $expr_p[0] / $expr_p[1];
 }
 
-function get_image_gps ($img) {
-	$exif = exif_read_data( $img, 0, true );
+function convertToDecimalLatitude($degrees, $minutes, $seconds, $direction) {
+	// Convert degrees, minutes, and seconds to decimal
+	$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
+
+	// Adjust sign based on direction (N or S)
+	if ($direction == 'S') {
+		$decimal *= -1;
+	}
+
+	return $decimal;
+}
+
+function convertToDecimalLongitude($degrees, $minutes, $seconds, $direction) {
+	// Convert degrees, minutes, and seconds to decimal
+	$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
+
+	// Adjust sign based on direction (E or W)
+	if ($direction == 'W') {
+		$decimal *= -1;
+	}
+
+	return $decimal;
+}
+
+
+function get_image_gps($img) {
+	$exif = exif_read_data($img, 0, true);
 
 	if (empty($exif["GPS"])) {
 		return null;
 	}
 
 	$latitude = array();
-	$Longitude = array();
+	$longitude = array();
 
 	// Latitude
-	$latitude['degrees'] = getCoord( $exif['GPS']['GPSLatitude'][0] );
-	$latitude['minutes'] = getCoord( $exif['GPS']['GPSLatitude'][1] );
-	$latitude['seconds'] = getCoord( $exif['GPS']['GPSLatitude'][2] );
-
-	$latitude['minutes'] += 60 * ($latitude['degrees'] - floor($latitude['degrees']));
-	$latitude['degrees'] = floor($latitude['degrees']);
-
-	$latitude['seconds'] += 60 * ($latitude['minutes'] - floor($latitude['minutes']));
-	$latitude['minutes'] = floor($latitude['minutes']);
+	$latitude['degrees'] = getCoord($exif['GPS']['GPSLatitude'][0]);
+	$latitude['minutes'] = getCoord($exif['GPS']['GPSLatitude'][1]);
+	$latitude['seconds'] = getCoord($exif['GPS']['GPSLatitude'][2]);
+	$latitude_direction = $exif['GPS']['GPSLatitudeRef'];
 
 	// Longitude
-	$longitude['degrees'] = getCoord( $exif['GPS']['GPSLongitude'][0] );
-	$longitude['minutes'] = getCoord( $exif['GPS']['GPSLongitude'][1] );
-	$longitude['seconds'] = getCoord( $exif['GPS']['GPSLongitude'][2] );
+	$longitude['degrees'] = getCoord($exif['GPS']['GPSLongitude'][0]);
+	$longitude['minutes'] = getCoord($exif['GPS']['GPSLongitude'][1]);
+	$longitude['seconds'] = getCoord($exif['GPS']['GPSLongitude'][2]);
+	$longitude_direction = $exif['GPS']['GPSLongitudeRef'];
 
-	$longitude['minutes'] += 60 * ($longitude['degrees'] - floor($longitude['degrees']));
-	$longitude['degrees'] = floor($longitude['degrees']);
+	$res = array(
+		"latitude" => convertToDecimalLatitude($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
+		"longitude" => convertToDecimalLongitude($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
+	);
 
-	$longitude['seconds'] += 60 * ($longitude['minutes'] - floor($longitude['minutes']));
-	$longitude['minutes'] = floor($longitude['minutes']);
-
-	return array("latitude" => $latitude, "longitude" => $longitude);
+	return $res;
 }
 
 function displayGallery($folderPath) {
@@ -460,7 +480,7 @@ function displayGallery($folderPath) {
 
 
 
-function process_image_file_geocoords($filepath, &$hash) {
+function process_image_file_geocoords($filepath, $hash) {
 	// Überprüfen, ob die Datei eine JPG- oder PNG-Datei ist
 	$extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
 	if ($extension === 'jpg' || $extension === 'jpeg' || $extension === 'png') {
@@ -473,9 +493,11 @@ function process_image_file_geocoords($filepath, &$hash) {
 			$hash[$relative_path] = $gps_data;
 		}
 	}
+
+	return $hash;
 }
 
-function process_directory_geocoords($dir, &$hash) {
+function process_directory_geocoords($dir, $hash) {
 	// Überprüfen, ob das Verzeichnis existiert und lesbar ist
 	if (is_dir($dir) && is_readable($dir)) {
 		// Durchlaufen der Dateien im Verzeichnis
@@ -486,10 +508,10 @@ function process_directory_geocoords($dir, &$hash) {
 				$filepath = $dir . DIRECTORY_SEPARATOR . $file;
 				// Wenn es sich um ein Verzeichnis handelt, rekursiv verarbeiten
 				if (is_dir($filepath)) {
-					process_directory_geocoords($filepath, $hash);
+					$hash = process_directory_geocoords($filepath, $hash);
 				} else {
 					// Wenn es sich um eine Datei handelt, diese verarbeiten
-					process_image_file_geocoords($filepath, $hash);
+					$hash = process_image_file_geocoords($filepath, $hash);
 				}
 			}
 		}
@@ -497,33 +519,33 @@ function process_directory_geocoords($dir, &$hash) {
 		// Wenn das Verzeichnis nicht existiert oder nicht lesbar ist, eine Warnung ausgeben
 		warn("Directory $dir does not exist or is not readable.");
 	}
+
+	return $hash;
 }
 
 // Hauptfunktion, um den Hash zu erstellen
 function images_with_geocoords() {
-	$hash = [];
 	$current_directory = __DIR__;
-	process_directory_geocoords($current_directory, $hash);
+	$hash = process_directory_geocoords($current_directory, $hash);
 	return $hash;
 }
 
 $yourDataArray = images_with_geocoords();
-#dier($image_hash);
-
+#dier($yourDataArray);
 
 function generateOpenStreetMapScript($dataArray) {
-    if (!empty($dataArray)) {
-        $totalLat = 0;
-        $totalLng = 0;
-        $numPoints = count($dataArray);
+	if (!empty($dataArray)) {
+		$totalLat = 0;
+		$totalLng = 0;
+		$numPoints = count($dataArray);
 
-        foreach ($dataArray as $key => $data) {
-            $totalLat += $data['latitude']['degrees'];
-            $totalLng += $data['longitude']['degrees'];
-        }
+		foreach ($dataArray as $key => $data) {
+			$totalLat += $data['latitude'];
+			$totalLng += $data['longitude'];
+		}
 
-        $averageLat = $totalLat / $numPoints;
-        $averageLng = $totalLng / $numPoints;
+		$averageLat = $totalLat / $numPoints;
+		$averageLng = $totalLng / $numPoints;
 ?>
 
 <div id="map" style="height: 400px; width: 100%;"></div>
@@ -531,25 +553,25 @@ function generateOpenStreetMapScript($dataArray) {
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
 
-<script>
-    var map = L.map('map').setView([<?php echo $averageLat; ?>, <?php echo $averageLng; ?>], 12);
+		<script>
+		var map = L.map('map').setView([<?php echo $averageLat; ?>, <?php echo $averageLng; ?>], 12);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+		}).addTo(map);
 
-    <?php foreach ($dataArray as $key => $data): ?>
-        var marker_<?php echo md5($key); ?> = L.marker([<?php echo $data['latitude']['degrees']; ?>, <?php echo $data['longitude']['degrees']; ?>]).addTo(map);
-        marker_<?php echo md5($key); ?>.bindPopup("<img src='index.php?preview=<?php echo urlencode('.//' . $key); ?>' width='100' height='100' />").openPopup();
+		<?php foreach ($dataArray as $key => $data): ?>
+		var marker_<?php echo md5($key); ?> = L.marker([<?php echo $data['latitude']; ?>, <?php echo $data['longitude']; ?>]).addTo(map);
+		marker_<?php echo md5($key); ?>.bindPopup("<img src='index.php?preview=<?php echo urlencode('.//' . $key); ?>' width='100' height='100' />").openPopup();
 
-        marker_<?php echo md5($key); ?>.on('click', function() {
-            showImage('<?php echo './/' . $key; ?>');
-        });
-    <?php endforeach; ?>
-</script>
+		marker_<?php echo md5($key); ?>.on('click', function() {
+			showImage('<?php echo './/' . $key; ?>');
+		});
+		<?php endforeach; ?>
+		</script>
 
 <?php
-    }
+	}
 }
 
 function getImagesInFolder($folderPath) {
