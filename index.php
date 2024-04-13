@@ -9,7 +9,9 @@ if (is_dir($images_path)) {
 }
 
 function dier ($msg) {
+	print("<pre>");
 	print(var_dump($msg));
+	print("</pre>");
 	exit(0);
 }
 
@@ -343,6 +345,46 @@ if(file_exists($filename)) {
 <div id="breadcrumb"></div>
 
 <?php
+function getCoord( $expr ) {
+	$expr_p = explode( '/', $expr );
+	return $expr_p[0] / $expr_p[1];
+}
+
+function get_image_gps ($img) {
+	$exif = exif_read_data( $img, 0, true );
+
+	if (empty($exif["GPS"])) {
+		return null;
+	}
+
+	$latitude = array();
+	$Longitude = array();
+
+	// Latitude
+	$latitude['degrees'] = getCoord( $exif['GPS']['GPSLatitude'][0] );
+	$latitude['minutes'] = getCoord( $exif['GPS']['GPSLatitude'][1] );
+	$latitude['seconds'] = getCoord( $exif['GPS']['GPSLatitude'][2] );
+
+	$latitude['minutes'] += 60 * ($latitude['degrees'] - floor($latitude['degrees']));
+	$latitude['degrees'] = floor($latitude['degrees']);
+
+	$latitude['seconds'] += 60 * ($latitude['minutes'] - floor($latitude['minutes']));
+	$latitude['minutes'] = floor($latitude['minutes']);
+
+	// Longitude
+	$longitude['degrees'] = getCoord( $exif['GPS']['GPSLongitude'][0] );
+	$longitude['minutes'] = getCoord( $exif['GPS']['GPSLongitude'][1] );
+	$longitude['seconds'] = getCoord( $exif['GPS']['GPSLongitude'][2] );
+
+	$longitude['minutes'] += 60 * ($longitude['degrees'] - floor($longitude['degrees']));
+	$longitude['degrees'] = floor($longitude['degrees']);
+
+	$longitude['seconds'] += 60 * ($longitude['minutes'] - floor($longitude['minutes']));
+	$longitude['minutes'] = floor($longitude['minutes']);
+
+	return array("latitude" => $latitude, "longitude" => $longitude);
+}
+
 function displayGallery($folderPath) {
 	if(!is_dir($folderPath)) {
 		print("Folder not found");
@@ -409,6 +451,7 @@ function displayGallery($folderPath) {
 	}
 
 	foreach ($images as $image) {
+		#dier(get_image_gps($image["path"]));
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
 		echo '<img draggable="false" src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
 		echo "</div>\n";
