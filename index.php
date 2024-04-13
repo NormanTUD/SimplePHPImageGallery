@@ -539,47 +539,57 @@ $images_with_geocoords = images_with_geocoords();
 #dier($images_with_geocoords);
 
 function generateOpenStreetMapScript($dataArray) {
-	if (!empty($dataArray)) {
-		print("<h2>Map</h2>");
-
-		$totalLat = 0;
-		$totalLng = 0;
-		$numPoints = count($dataArray);
-
-		foreach ($dataArray as $key => $data) {
-			$totalLat += $data['latitude'];
-			$totalLng += $data['longitude'];
-		}
-
-		$averageLat = $totalLat / $numPoints;
-		$averageLng = $totalLng / $numPoints;
-?>
-
-<div id="map" style="height: 400px; width: 100%;"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
-
-		<script>
-		var map = L.map('map').setView([<?php echo $averageLat; ?>, <?php echo $averageLng; ?>], 12);
-
-		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(map);
-
-		<?php foreach ($dataArray as $key => $data): ?>
-		var marker_<?php echo md5($key); ?> = L.marker([<?php echo $data['latitude']; ?>, <?php echo $data['longitude']; ?>]).addTo(map);
-		marker_<?php echo md5($key); ?>.bindPopup("<img src='index.php?preview=<?php echo urlencode('.//' . $key); ?>' width='100' height='100' />").openPopup();
-
-		marker_<?php echo md5($key); ?>.on('click', function() {
-			showImage('<?php echo './/' . $key; ?>');
-		});
-		<?php endforeach; ?>
-		</script>
-
-<?php
-	}
+    if (!empty($dataArray)) {
+        print("<h2>Map</h2>");
+        
+        // Calculate bounding box coordinates
+        $minLat = $minLng = PHP_INT_MAX;
+        $maxLat = $maxLng = PHP_INT_MIN;
+        foreach ($dataArray as $data) {
+            $minLat = min($minLat, $data['latitude']);
+            $maxLat = max($maxLat, $data['latitude']);
+            $minLng = min($minLng, $data['longitude']);
+            $maxLng = max($maxLng, $data['longitude']);
+        }
+        
+        // Calculate center coordinates
+        $averageLat = ($minLat + $maxLat) / 2;
+        $averageLng = ($minLng + $maxLng) / 2;
+        
+        ?>
+        <div id="map" style="height: 400px; width: 100%;"></div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+        
+        <script>
+        var map = L.map('map').fitBounds([[<?= $minLat ?>, <?= $minLng ?>], [<?= $maxLat ?>, <?= $maxLng ?>]]);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        <?php foreach ($dataArray as $key => $data): ?>
+        var marker_<?php echo md5($key); ?> = L.marker([<?php echo $data['latitude']; ?>, <?php echo $data['longitude']; ?>]);
+        
+        marker_<?php echo md5($key); ?>.on('click', function() {
+            var popup = L.popup()
+                .setContent("<img id='preview_<?php echo md5($key); ?>' src='index.php?preview=<?php echo urlencode('.//' . $key); ?>' style='width: 100px; height: 100px;' onclick='showImage(\"<?php echo './/' . $key; ?>\")' />");
+            
+            this.bindPopup(popup).openPopup();
+        });
+        
+        marker_<?php echo md5($key); ?>.addTo(map);
+        <?php endforeach; ?>
+        
+        function showImage(imageUrl) {
+            window.open(imageUrl, '_blank');
+        }
+        </script>
+        <?php
+    }
 }
+
 
 function getImagesInFolder($folderPath) {
 	$folderFiles = @scandir($folderPath);
