@@ -458,6 +458,52 @@ function displayGallery($folderPath) {
 	}
 }
 
+
+function process_image_file($filepath, &$hash) {
+	// Überprüfen, ob die Datei eine JPG- oder PNG-Datei ist
+	$extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+	if ($extension === 'jpg' || $extension === 'jpeg' || $extension === 'png') {
+		// GPS-Daten aus dem Bild erhalten
+		$gps_data = get_image_gps($filepath);
+		// Wenn GPS-Daten vorhanden sind, füge sie dem Hash hinzu
+		if ($gps_data !== null) {
+			$hash[$filepath] = $gps_data;
+		}
+	}
+}
+
+function process_directory($dir, &$hash) {
+	// Überprüfen, ob das Verzeichnis existiert und lesbar ist
+	if (is_dir($dir) && is_readable($dir)) {
+		// Durchlaufen der Dateien im Verzeichnis
+		$files = scandir($dir);
+		foreach ($files as $file) {
+			// Ignorieren von . und ..
+			if ($file !== '.' && $file !== '..') {
+				$filepath = $dir . DIRECTORY_SEPARATOR . $file;
+				// Wenn es sich um ein Verzeichnis handelt, rekursiv verarbeiten
+				if (is_dir($filepath)) {
+					process_directory($filepath, $hash);
+				} else {
+					// Wenn es sich um eine Datei handelt, diese verarbeiten
+					process_image_file($filepath, $hash);
+				}
+			}
+		}
+	} else {
+		// Wenn das Verzeichnis nicht existiert oder nicht lesbar ist, eine Warnung ausgeben
+		warn("Directory $dir does not exist or is not readable.");
+	}
+}
+
+// Hauptfunktion, um den Hash zu erstellen
+function create_image_hash() {
+	$hash = [];
+	$current_directory = __DIR__;
+	process_directory($current_directory, $hash);
+	return $hash;
+}
+
 function getImagesInFolder($folderPath) {
 	$folderFiles = @scandir($folderPath);
 
