@@ -403,6 +403,10 @@ function get_image_gps($img) {
 		"longitude" => convertToDecimalLongitude($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
 	);
 
+	if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
+		return null;
+	}
+
 	return $res;
 }
 
@@ -531,8 +535,8 @@ function images_with_geocoords() {
 	return $hash;
 }
 
-$yourDataArray = images_with_geocoords();
-#dier($yourDataArray);
+$images_with_geocoords = images_with_geocoords();
+#dier($images_with_geocoords);
 
 function generateOpenStreetMapScript($dataArray) {
 	if (!empty($dataArray)) {
@@ -935,7 +939,7 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 </script>
 
 <?php
-	generateOpenStreetMapScript($yourDataArray);
+	generateOpenStreetMapScript($images_with_geocoords);
 ?>
 </body>
 </html>
