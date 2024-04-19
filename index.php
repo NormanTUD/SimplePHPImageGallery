@@ -397,7 +397,7 @@ function get_image_gps($img) {
 	$cache_file = "$cacheFolder/".md5($img).".json";
 
 	if (file_exists($cache_file)) {
-		return json_decode(file_get_contents($cache_file));
+		return json_decode(file_get_contents($cache_file), true);
 	}
 	
 	$exif = exif_read_data($img, 0, true);
@@ -583,10 +583,12 @@ function generateOpenStreetMapScript($dataArray) {
 		$minLat = $minLng = PHP_INT_MAX;
 		$maxLat = $maxLng = PHP_INT_MIN;
 		foreach ($dataArray as $data) {
-			$minLat = min($minLat, @$data['latitude']);
-			$maxLat = max($maxLat, @$data['latitude']);
-			$minLng = min($minLng, @$data['longitude']);
-			$maxLng = max($maxLng, @$data['longitude']);
+			if(isset($data["latitude"]) && isset($data["longitude"])) {
+				$minLat = min($minLat, $data['latitude']);
+				$maxLat = max($maxLat, $data['latitude']);
+				$minLng = min($minLng, $data['longitude']);
+				$maxLng = max($maxLng, $data['longitude']);
+			}
 		}
 
 		// Calculate center coordinates
