@@ -354,7 +354,12 @@ if(file_exists($filename)) {
 <?php
 function getCoord( $expr ) {
 	$expr_p = explode( '/', $expr );
-	return $expr_p[0] / $expr_p[1];
+
+	if (count($expr_p) == 2) {
+		return $expr_p[0] / $expr_p[1];
+	}
+
+	return null;
 }
 
 function convertToDecimalLatitude($degrees, $minutes, $seconds, $direction) {
@@ -383,6 +388,18 @@ function convertToDecimalLongitude($degrees, $minutes, $seconds, $direction) {
 
 
 function get_image_gps($img) {
+	$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+
+	if(is_dir("/docker_tmp/")) {
+		$cacheFolder = "/docker_tmp/";
+	}
+
+	$cache_file = "$cacheFolder/".md5($img).".json";
+
+	if (file_exists($cache_file)) {
+		return json_decode(file_get_contents($cache_file));
+	}
+	
 	$exif = exif_read_data($img, 0, true);
 
 	if (empty($exif["GPS"])) {
@@ -392,16 +409,26 @@ function get_image_gps($img) {
 	$latitude = array();
 	$longitude = array();
 
+	if (empty($exif['GPS']['GPSLatitude'])) {
+		return null;
+	}
+
 	// Latitude
 	$latitude['degrees'] = getCoord($exif['GPS']['GPSLatitude'][0]);
+	if(is_null($latitude["degrees"])) { return null; }
 	$latitude['minutes'] = getCoord($exif['GPS']['GPSLatitude'][1]);
+	if(is_null($latitude["minutes"])) { return null; }
 	$latitude['seconds'] = getCoord($exif['GPS']['GPSLatitude'][2]);
+	if(is_null($latitude["seconds"])) { return null; }
 	$latitude_direction = $exif['GPS']['GPSLatitudeRef'];
 
 	// Longitude
 	$longitude['degrees'] = getCoord($exif['GPS']['GPSLongitude'][0]);
+	if(is_null($longitude["degrees"])) { return null; }
 	$longitude['minutes'] = getCoord($exif['GPS']['GPSLongitude'][1]);
+	if(is_null($longitude["minutes"])) { return null; }
 	$longitude['seconds'] = getCoord($exif['GPS']['GPSLongitude'][2]);
+	if(is_null($longitude["seconds"])) { return null; }
 	$longitude_direction = $exif['GPS']['GPSLongitudeRef'];
 
 	$res = array(
@@ -412,6 +439,10 @@ function get_image_gps($img) {
 	if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
 		return null;
 	}
+
+	$json_data = json_encode($res);
+
+	file_put_contents($cache_file, $json_data);
 
 	return $res;
 }
@@ -535,7 +566,8 @@ function process_directory_geocoords($dir, $hash) {
 }
 
 // Hauptfunktion, um den Hash zu erstellen
-function images_with_geocoords($path) {
+function get_images_with_geocoords($path) {
+	$hash = array();
 	if(!$path) {
 		$path = __DIR__;
 	}
@@ -551,10 +583,10 @@ function generateOpenStreetMapScript($dataArray) {
 		$minLat = $minLng = PHP_INT_MAX;
 		$maxLat = $maxLng = PHP_INT_MIN;
 		foreach ($dataArray as $data) {
-			$minLat = min($minLat, $data['latitude']);
-			$maxLat = max($maxLat, $data['latitude']);
-			$minLng = min($minLng, $data['longitude']);
-			$maxLng = max($maxLng, $data['longitude']);
+			$minLat = min($minLat, @$data['latitude']);
+			$maxLat = max($maxLat, @$data['latitude']);
+			$minLng = min($minLng, @$data['longitude']);
+			$maxLng = max($maxLng, @$data['longitude']);
 		}
 
 		// Calculate center coordinates
@@ -942,7 +974,7 @@ document.addEventListener('keypress', function(event) {
 </script>
 
 <?php
-	$images_with_geocoords = images_with_geocoords($folderPath);
+	$images_with_geocoords = get_images_with_geocoords($folderPath);
 	#dier($images_with_geocoords);
 
 	generateOpenStreetMapScript($images_with_geocoords);
