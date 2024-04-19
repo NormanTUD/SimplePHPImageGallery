@@ -543,9 +543,6 @@ function images_with_geocoords($path) {
 	return $hash;
 }
 
-$images_with_geocoords = images_with_geocoords($folderPath);
-#dier($images_with_geocoords);
-
 function generateOpenStreetMapScript($dataArray) {
 	if (!empty($dataArray)) {
 		print("<h2>Map</h2>");
@@ -945,6 +942,9 @@ document.addEventListener('keypress', function(event) {
 </script>
 
 <?php
+	$images_with_geocoords = images_with_geocoords($folderPath);
+	#dier($images_with_geocoords);
+
 	generateOpenStreetMapScript($images_with_geocoords);
 ?>
 </body>
