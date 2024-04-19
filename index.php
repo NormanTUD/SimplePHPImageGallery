@@ -356,7 +356,9 @@ function getCoord( $expr ) {
 	$expr_p = explode( '/', $expr );
 
 	if (count($expr_p) == 2) {
-		return $expr_p[0] / $expr_p[1];
+		if($expr_p[1]) {
+			return $expr_p[0] / $expr_p[1];
+		}
 	}
 
 	return null;
