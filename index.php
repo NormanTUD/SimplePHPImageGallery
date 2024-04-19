@@ -504,14 +504,14 @@ function displayGallery($fp) {
 	});
 
 	foreach ($thumbnails as $thumbnail) {
-		echo '<div class="thumbnail_folder" onclick="showFolder(\'' . $thumbnail['path'] . '\')">';
+		echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
 		if (!empty($thumbnail['thumbnail'])) {
 			echo '<img draggable="false" src="index.php?preview=' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
 		} else {
 			echo '<div class="no_preview_available">No Preview Available</div>';
 		}
 		echo '<h3>' . $thumbnail['name'] . '</h3>';
-		echo "</div>\n";
+		echo "</div></a>\n";
 	}
 
 	foreach ($images as $image) {
@@ -723,7 +723,7 @@ function displaySearchResults(searchTerm, results) {
 			if (result.type === 'folder') {
 				var folderThumbnail = result.thumbnail;
 				if (folderThumbnail) {
-					var folder_line = `<div class="thumbnail_folder" onclick="showFolder('${result.path}')">`;
+					var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 					// Falls ein Vorschaubild vorhanden ist, verwenden wir es, sonst zeigen wir an, dass kein Vorschaubild verfügbar ist
 					if (folderThumbnail) {
@@ -732,7 +732,7 @@ function displaySearchResults(searchTerm, results) {
 						folder_line += '<div class="no_preview_available">No Preview Available</div>';
 					}
 
-					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div>`;
+					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 					$searchResults.append(folder_line);
 				}
 			} else if (result.type === 'file') {
@@ -745,10 +745,6 @@ function displaySearchResults(searchTerm, results) {
 	} else {
 		$searchResults.append('<p>Keine Ergebnisse gefunden.</p>');
 	}
-}
-
-function showFolder(folderPath) {
-	window.location.href = '?folder=' + encodeURIComponent(folderPath);
 }
 
 var fullscreen;
