@@ -1,6 +1,12 @@
 <?php
 $GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png');
 
+$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
+
+if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
+	$folderPath = $_GET['folder'];
+}
+
 ini_set('memory_limit', '2048M');
 $images_path = "/docker_images/";
 
@@ -128,12 +134,12 @@ function removeFileExtensionFromString ($string) {
 
 function searchImageFileByTXT($txtFilePath) {
 	$pathWithoutExtension = removeFileExtensionFromString($txtFilePath);
-	$folderPath = dirname($txtFilePath);
+	$fp = dirname($txtFilePath);
 
-	$files = scandir($folderPath);
+	$files = scandir($fp);
 
 	foreach ($files as $file) {
-		$fullFilePath = $folderPath . DIRECTORY_SEPARATOR . $file;
+		$fullFilePath = $fp . DIRECTORY_SEPARATOR . $file;
 
 		if (is_file($fullFilePath)) {
 			$fileExtension = strtolower(pathinfo($fullFilePath, PATHINFO_EXTENSION));
@@ -148,15 +154,15 @@ function searchImageFileByTXT($txtFilePath) {
 }
 
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
-function searchFiles($folderPath, $searchTerm) {
+function searchFiles($fp, $searchTerm) {
 	$results = [];
 	$fileCount = 0; // Zähler für die Anzahl der gefundenen Dateien
 
-	if (!is_dir($folderPath)) {
+	if (!is_dir($fp)) {
 		return [];
 	}
 
-	$files = @scandir($folderPath);
+	$files = @scandir($fp);
 
 	if(is_bool($files)) {
 		return [];
@@ -169,7 +175,7 @@ function searchFiles($folderPath, $searchTerm) {
 			continue;
 		}
 
-		$filePath = $folderPath . '/' . $file;
+		$filePath = $fp . '/' . $file;
 
 		if (is_dir($filePath)) {
 			if (stripos($file, $searchTermLower) !== false) {
@@ -410,13 +416,13 @@ function get_image_gps($img) {
 	return $res;
 }
 
-function displayGallery($folderPath) {
-	if(!is_dir($folderPath)) {
+function displayGallery($fp) {
+	if(!is_dir($fp)) {
 		print("Folder not found");
 		return [];
 	}
 
-	$files = scandir($folderPath);
+	$files = scandir($fp);
 
 	$thumbnails = [];
 	$images = [];
@@ -426,7 +432,7 @@ function displayGallery($folderPath) {
 			continue;
 		}
 
-		$filePath = $folderPath . '/' . $file;
+		$filePath = $fp . '/' . $file;
 
 		if (is_dir($filePath)) {
 			$folderImages = getImagesInFolder($filePath);
@@ -529,13 +535,15 @@ function process_directory_geocoords($dir, $hash) {
 }
 
 // Hauptfunktion, um den Hash zu erstellen
-function images_with_geocoords() {
-	$current_directory = __DIR__;
-	$hash = process_directory_geocoords($current_directory, $hash);
+function images_with_geocoords($path) {
+	if(!$path) {
+		$path = __DIR__;
+	}
+	$hash = process_directory_geocoords($path, $hash);
 	return $hash;
 }
 
-$images_with_geocoords = images_with_geocoords();
+$images_with_geocoords = images_with_geocoords($folderPath);
 #dier($images_with_geocoords);
 
 function generateOpenStreetMapScript($dataArray) {
@@ -894,14 +902,6 @@ document.addEventListener('keypress', function(event) {
 });
 
 </script>
-
-<?php
-$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
-
-if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
-	$folderPath = $_GET['folder'];
-}
-?>
 
 <!-- Ergebnisse der Suche hier einfügen -->
 <div id="searchResults"></div>
