@@ -400,7 +400,7 @@ function get_image_gps($img) {
 		return json_decode(file_get_contents($cache_file), true);
 	}
 	
-	$exif = exif_read_data($img, 0, true);
+	$exif = @exif_read_data($img, 0, true);
 
 	if (empty($exif["GPS"])) {
 		return null;
