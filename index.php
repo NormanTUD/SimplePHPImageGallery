@@ -557,9 +557,6 @@ function process_directory_geocoords($dir, $hash) {
 				}
 			}
 		}
-	} else {
-		// Wenn das Verzeichnis nicht existiert oder nicht lesbar ist, eine Warnung ausgeben
-		warn("Directory $dir does not exist or is not readable.");
 	}
 
 	return $hash;
