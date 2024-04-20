@@ -513,10 +513,12 @@ function displayGallery($fp) {
 	});
 
 	foreach ($thumbnails as $thumbnail) {
-		echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
-		echo '<img draggable="false" src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $thumbnail['path'] . '">';
-		echo '<h3>' . $thumbnail['name'] . '</h3>';
-		echo "</div></a>\n";
+		if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
+			echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
+			echo '<img draggable="false" src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $thumbnail['thumbnail'] . '">';
+			echo '<h3>' . $thumbnail['name'] . '</h3>';
+			echo "</div></a>\n";
+		}
 	}
 
 	foreach ($images as $image) {
