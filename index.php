@@ -704,8 +704,8 @@ function start_search() {
 			url: 'index.php',
 				type: 'GET',
 				data: {
-				search: searchTerm
-			},
+					search: searchTerm
+				},
 				success: function (response) {
 					displaySearchResults(searchTerm, JSON.parse(response));
 				},
