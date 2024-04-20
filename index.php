@@ -9,7 +9,7 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 
 ini_set('memory_limit', '2048M');
 $images_path = "/docker_images/";
-setLocale(LC_ALL, ["de.utf", "de_DE.utf", "de_DE.UTF-8", "de", "de_DE"]);
+setLocale(LC_ALL, ["en.utf", "en_US.utf", "en_US.UTF-8", "en", "en_US"]);
 
 if (is_dir($images_path)) {
 	chdir($images_path);
