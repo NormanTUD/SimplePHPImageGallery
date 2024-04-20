@@ -9,25 +9,26 @@ if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 
 ini_set('memory_limit', '2048M');
 $images_path = "/docker_images/";
+setLocale(LC_ALL, ["de.utf", "de_DE.utf", "de_DE.UTF-8", "de", "de_DE"]);
 
 if (is_dir($images_path)) {
 	chdir($images_path);
 }
 
 function normalize_special_characters($text) {
-	// Ersetze Sonderzeichen durch ihre nicht-akzentuierten Alternativen
 	$normalized_text = preg_replace_callback('/[^\x20-\x7E]/u', function ($match) {
 		$char = $match[0];
-		// Erstelle die nicht-akzentuierte Version des Zeichens
 		$normalized_char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
-		return $normalized_char;
+		return $normalized_char !== false ? $normalized_char : ''; // Überprüfe auf Fehler bei der Konvertierung
 	}, $text);
 
-	// Wandele den Text in Kleinbuchstaben um
 	$normalized_text = mb_strtolower($normalized_text, 'UTF-8');
 
 	return $normalized_text;
 }
+
+
+
 
 function dier ($msg) {
 	print("<pre>");
@@ -183,6 +184,7 @@ function searchFiles($fp, $searchTerm) {
 	}
 
 	$searchTermLower = strtolower($searchTerm);
+	$normalized = normalize_special_characters($searchTerm);
 
 	foreach ($files as $file) {
 		if ($file === '.' || $file === '..' || $file === '.git' || $file === "thumbnails_cache") {
@@ -192,7 +194,8 @@ function searchFiles($fp, $searchTerm) {
 		$filePath = $fp . '/' . $file;
 
 		if (is_dir($filePath)) {
-			if (stripos($file, $searchTermLower) !== false) {
+			#print("stripos(".normalize_special_characters($file).", ".$normalized.")\n");
+			if (stripos($file, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
 				$randomImage = getRandomImageFromSubfolders($filePath);
 				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 
@@ -210,7 +213,7 @@ function searchFiles($fp, $searchTerm) {
 
 			if ($fileExtension === 'txt') {
 				$textContent = file_get_contents($filePath);
-				if (stripos($textContent, $searchTermLower) !== false) {
+				if (stripos($textContent, $searchTermLower) !== false || stripos(normalize_special_characters($textContent), $normalized) !== false) {
 					$imageFilePath = searchImageFileByTXT($filePath);
 
 					if($imageFilePath) {
@@ -221,7 +224,7 @@ function searchFiles($fp, $searchTerm) {
 					}
 				}
 			} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-				if (stripos($file, $searchTermLower) !== false) {
+				if (stripos($file, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
 					$results[] = [
 						'path' => $filePath,
 						'type' => 'file'
@@ -236,6 +239,7 @@ function searchFiles($fp, $searchTerm) {
 
 // AJAX-Handler für die Suche
 if (isset($_GET['search'])) {
+	header('Content-type: application/json; charset=utf-8');
 	$searchTerm = $_GET['search'];
 	$results = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
 
@@ -247,6 +251,7 @@ if (isset($_GET['search'])) {
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="UTF-8">
 		<title>Galerie</title>
 <?php
 $jquery_file = 'jquery-3.7.1.min.js';
@@ -514,7 +519,6 @@ function displayGallery($fp) {
 	}
 
 	foreach ($images as $image) {
-		#dier(get_image_gps($image["path"]));
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
 		echo '<img draggable="false" src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
 		echo "</div>\n";
@@ -1003,7 +1007,6 @@ document.addEventListener('keypress', function(event) {
 
 <?php
 	$images_with_geocoords = get_images_with_geocoords($folderPath);
-	#dier($images_with_geocoords);
 
 	generateOpenStreetMapScript($images_with_geocoords);
 ?>
