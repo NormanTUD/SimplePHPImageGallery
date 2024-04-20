@@ -680,29 +680,47 @@ function getRandomImageFromSubfolders($folderPath) {
 var log = console.log;
 var l = log;
 
-function start_search () {
+var searchTimer; // Globale Variable für den Timer
+
+function start_search() {
 	var searchTerm = $('#searchInput').val();
 
-	if(!/^\s*$/.test(searchTerm)) {
-		$("#searchResults").show();
-		$("#gallery").hide();
-		$.ajax({
-		url: 'index.php',
-			type: 'GET',
-			data: {
+	// Funktion zum Abbrechen der vorherigen Suchanfrage
+	function abortPreviousRequest() {
+		if (searchTimer) {
+			clearTimeout(searchTimer);
+		}
+	}
+
+	// Funktion zum Durchführen der Suchanfrage
+	function performSearch() {
+		// Abbrechen der vorherigen Anfrage, falls vorhanden
+		abortPreviousRequest();
+
+		if (!/^\s*$/.test(searchTerm)) {
+			$("#searchResults").show();
+			$("#gallery").hide();
+			$.ajax({
+			url: 'index.php',
+				type: 'GET',
+				data: {
 				search: searchTerm
 			},
-			success: function(response) {
-				displaySearchResults(searchTerm, JSON.parse(response));
-			},
-			error: function(xhr, status, error) {
-				console.error(error);
-			}
-		});
-	} else {
-		$("#searchResults").hide();
-		$("#gallery").show();
+				success: function (response) {
+					displaySearchResults(searchTerm, JSON.parse(response));
+				},
+				error: function (xhr, status, error) {
+					console.error(error);
+				}
+			});
+		} else {
+			$("#searchResults").hide();
+			$("#gallery").show();
+		}
 	}
+
+	// Starten der Suche nach einer Sekunde Verzögerung
+	searchTimer = setTimeout(performSearch, 1000);
 }
 
 // Funktion zur Anzeige der Suchergebnisse
@@ -741,6 +759,8 @@ function displaySearchResults(searchTerm, results) {
 		$('.loading-thumbnail').each(function() {
 			var $thumbnail = $(this);
 			var originalUrl = $thumbnail.attr('data-original-url');
+
+			log(originalUrl);
 
 			// Bild im Hintergrund laden
 			var img = new Image();
