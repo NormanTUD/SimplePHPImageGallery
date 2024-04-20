@@ -337,7 +337,7 @@ if(!file_exists($jquery_file)) {
 		</style>
 	</head>
 <body>
-<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Suche...">
+<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
 <?php
 $filename = 'links.txt';
 
