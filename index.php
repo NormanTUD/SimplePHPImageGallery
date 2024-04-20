@@ -156,7 +156,6 @@ function searchImageFileByTXT($txtFilePath) {
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 function searchFiles($fp, $searchTerm) {
 	$results = [];
-	$fileCount = 0; // Zähler für die Anzahl der gefundenen Dateien
 
 	if (!is_dir($fp)) {
 		return [];
@@ -187,7 +186,6 @@ function searchFiles($fp, $searchTerm) {
 					'type' => 'folder',
 					'thumbnail' => $thumbnailPath
 				];
-				$fileCount++;
 			}
 
 			$subResults = searchFiles($filePath, $searchTerm);
@@ -205,11 +203,6 @@ function searchFiles($fp, $searchTerm) {
 							'path' => $imageFilePath,
 							'type' => 'file'
 						];
-						$fileCount++;
-
-						if ($fileCount >= 100) {
-							break;
-						}
 					}
 				}
 			} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
@@ -218,11 +211,6 @@ function searchFiles($fp, $searchTerm) {
 						'path' => $filePath,
 						'type' => 'file'
 					];
-					$fileCount++;
-
-					if ($fileCount >= 100) {
-						break;
-					}
 				}
 			}
 		}
@@ -246,10 +234,10 @@ if (isset($_GET['search'])) {
 	<head>
 		<title>Galerie</title>
 <?php
-		$jquery_file = 'jquery-3.7.1.min.js';
-		if(!file_exists($jquery_file)) {
-			$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
-		}
+$jquery_file = 'jquery-3.7.1.min.js';
+if(!file_exists($jquery_file)) {
+	$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
+}
 ?>
 		<script src="<?php print $jquery_file; ?>"></script>
 
