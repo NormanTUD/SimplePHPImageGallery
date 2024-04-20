@@ -259,6 +259,15 @@ if(!file_exists($jquery_file)) {
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			a {
+				color: black;
+				text-decoration: none;
+			}
+
+			a:visited {
+				color: black;
+			}
+
 			h3 {
 				line-break: anywhere;
 			}
