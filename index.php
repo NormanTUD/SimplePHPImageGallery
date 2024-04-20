@@ -714,7 +714,7 @@ function start_search() {
 					search: searchTerm
 				},
 				success: function (response) {
-					displaySearchResults(searchTerm, JSON.parse(response));
+					displaySearchResults(searchTerm, response);
 				},
 				error: function (xhr, status, error) {
 					console.error(error);
@@ -777,7 +777,7 @@ function displaySearchResults(searchTerm, results) {
 			img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
 		});
 	} else {
-		$searchResults.append('<p>Keine Ergebnisse gefunden.</p>');
+		$searchResults.append('<p>No results found.</p>');
 	}
 }
 
