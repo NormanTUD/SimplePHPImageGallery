@@ -259,6 +259,16 @@ if(!file_exists($jquery_file)) {
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			#delete_search {
+				color: red;
+				background-color: #fafafa;
+				text-decoration: none;
+				border: 1px groove darkblue;
+				border-radius: 5px;
+				margin: 3px;
+				padding: 3px;
+			}
+
 			a {
 				color: black;
 				text-decoration: none;
@@ -338,6 +348,7 @@ if(!file_exists($jquery_file)) {
 	</head>
 <body>
 <input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
+<button style="display: none" id="delete_search" onclick='delete_search(1)'>&#x2715;</button>
 <?php
 $filename = 'links.txt';
 
@@ -705,6 +716,7 @@ function start_search() {
 		abortPreviousRequest();
 
 		if (!/^\s*$/.test(searchTerm)) {
+			$("#delete_search").show();
 			$("#searchResults").show();
 			$("#gallery").hide();
 			$.ajax({
@@ -721,6 +733,7 @@ function start_search() {
 				}
 			});
 		} else {
+			$("#delete_search").hide();
 			$("#searchResults").hide();
 			$("#gallery").show();
 		}
@@ -1015,10 +1028,19 @@ document.addEventListener('keypress', function(event) {
 		});
 	}
 
-	$( document ).ready(function() {
-		loadAndReplaceImages();
-
+	function delete_search(trigger=0) {
 		$("#searchInput").val("");
+		$("#delete_search").hide();
+		if(trigger) {
+			$("#searchInput").trigger("change");
+		}
+	}
+
+	$( document ).ready(function() {
+		$("#delete_search").hide();
+		delete_search();
+
+		loadAndReplaceImages();
 	});
 </script>
 
