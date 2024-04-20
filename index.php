@@ -27,9 +27,6 @@ function normalize_special_characters($text) {
 	return $normalized_text;
 }
 
-
-
-
 function dier ($msg) {
 	print("<pre>");
 	print(var_dump($msg));
@@ -392,7 +389,6 @@ function convertToDecimalLongitude($degrees, $minutes, $seconds, $direction) {
 	return $decimal;
 }
 
-
 function get_image_gps($img) {
 	$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
 
@@ -525,8 +521,6 @@ function displayGallery($fp) {
 	}
 }
 
-
-
 function process_image_file_geocoords($filepath, $hash) {
 	// Überprüfen, ob die Datei eine JPG- oder PNG-Datei ist
 	$extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
@@ -626,7 +620,6 @@ function generateOpenStreetMapScript($dataArray) {
 <?php
 	}
 }
-
 
 function getImagesInFolder($folderPath) {
 	$folderFiles = @scandir($folderPath);
@@ -780,7 +773,6 @@ function displaySearchResults(searchTerm, results) {
 		$searchResults.append('<p>No results found.</p>');
 	}
 }
-
 
 var fullscreen;
 
