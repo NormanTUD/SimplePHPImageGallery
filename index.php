@@ -14,6 +14,21 @@ if (is_dir($images_path)) {
 	chdir($images_path);
 }
 
+function normalize_special_characters($text) {
+	// Ersetze Sonderzeichen durch ihre nicht-akzentuierten Alternativen
+	$normalized_text = preg_replace_callback('/[^\x20-\x7E]/u', function ($match) {
+		$char = $match[0];
+		// Erstelle die nicht-akzentuierte Version des Zeichens
+		$normalized_char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
+		return $normalized_char;
+	}, $text);
+
+	// Wandele den Text in Kleinbuchstaben um
+	$normalized_text = mb_strtolower($normalized_text, 'UTF-8');
+
+	return $normalized_text;
+}
+
 function dier ($msg) {
 	print("<pre>");
 	print(var_dump($msg));
