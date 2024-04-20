@@ -188,10 +188,6 @@ function searchFiles($fp, $searchTerm) {
 					'thumbnail' => $thumbnailPath
 				];
 				$fileCount++;
-
-				if ($fileCount >= 100) {
-					break; // Abbruch der Schleife, wenn die maximale Anzahl erreicht ist
-				}
 			}
 
 			$subResults = searchFiles($filePath, $searchTerm);
@@ -718,33 +714,46 @@ function displaySearchResults(searchTerm, results) {
 		$searchResults.append('<h2>Search results:</h2>');
 
 		results.forEach(function(result) {
-			// Link oder Vorschaubild für das Suchergebnis anzeigen
-			// Hier kannst du die Logik anpassen, um Links oder Vorschaubilder anzuzeigen
 			if (result.type === 'folder') {
 				var folderThumbnail = result.thumbnail;
 				if (folderThumbnail) {
 					var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
-					// Falls ein Vorschaubild vorhanden ist, verwenden wir es, sonst zeigen wir an, dass kein Vorschaubild verfügbar ist
-					if (folderThumbnail) {
-						folder_line += `<img draggable="false" src="index.php?preview=${folderThumbnail}" alt="${result.path}">`;
-					} else {
-						folder_line += '<div class="no_preview_available">No Preview Available</div>';
-					}
+					// Ersetze das Vorschaubild mit einem Lade-Spinner
+					folder_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=${folderThumbnail}">`;
 
 					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 					$searchResults.append(folder_line);
 				}
 			} else if (result.type === 'file') {
-				var fileName = result.path.split('/').pop(); // Dateiname aus dem Dateipfad extrahieren
-				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')"><img draggable="false" src="index.php?preview=${result.path}" alt="${fileName}"></div>`
-					$searchResults.append(image_line);
+				var fileName = result.path.split('/').pop();
+				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
+
+				// Ersetze das Vorschaubild mit einem Lade-Spinner
+				image_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=${result.path}">`;
+
+				image_line += `</div>`;
+				$searchResults.append(image_line);
 			}
+		});
+
+		// Hintergrundladen und Austauschen der Vorschaubilder
+		$('.loading-thumbnail').each(function() {
+			var $thumbnail = $(this);
+			var originalUrl = $thumbnail.attr('data-original-url');
+
+			// Bild im Hintergrund laden
+			var img = new Image();
+			img.onload = function() {
+				$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+			};
+			img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
 		});
 	} else {
 		$searchResults.append('<p>Keine Ergebnisse gefunden.</p>');
 	}
 }
+
 
 var fullscreen;
 
