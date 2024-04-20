@@ -715,7 +715,7 @@ function displaySearchResults(searchTerm, results) {
 	$searchResults.empty();
 
 	if (results.length > 0) {
-		$searchResults.append('<h2>Suchergebnisse:</h2>');
+		$searchResults.append('<h2>Search results:</h2>');
 
 		results.forEach(function(result) {
 			// Link oder Vorschaubild für das Suchergebnis anzeigen
