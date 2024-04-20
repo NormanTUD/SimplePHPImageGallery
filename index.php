@@ -739,7 +739,6 @@ function displaySearchResults(searchTerm, results) {
 				var fileName = result.path.split('/').pop(); // Dateiname aus dem Dateipfad extrahieren
 				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')"><img draggable="false" src="index.php?preview=${result.path}" alt="${fileName}"></div>`
 					$searchResults.append(image_line);
-				//$searchResults.append('<div><a href="' + result.path + '">' + fileName + '</a> (Bild)</div>');
 			}
 		});
 	} else {
