@@ -1017,6 +1017,8 @@ document.addEventListener('keypress', function(event) {
 
 	$( document ).ready(function() {
 		loadAndReplaceImages();
+
+		$("#searchInput").val("");
 	});
 </script>
 
