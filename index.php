@@ -514,18 +514,14 @@ function displayGallery($fp) {
 
 	foreach ($thumbnails as $thumbnail) {
 		echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
-		if (!empty($thumbnail['thumbnail'])) {
-			echo '<img draggable="false" src="index.php?preview=' . $thumbnail['thumbnail'] . '" alt="' . $thumbnail['name'] . '">';
-		} else {
-			echo '<div class="no_preview_available">No Preview Available</div>';
-		}
+		echo '<img draggable="false" src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $thumbnail['path'] . '">';
 		echo '<h3>' . $thumbnail['name'] . '</h3>';
 		echo "</div></a>\n";
 	}
 
 	foreach ($images as $image) {
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-		echo '<img draggable="false" src="index.php?preview=' . $image['path'] . '" alt="' . $image['name'] . '">';
+		echo '<img draggable="false" src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
 		echo "</div>\n";
 	}
 }
@@ -747,7 +743,7 @@ function displaySearchResults(searchTerm, results) {
 					var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 					// Ersetze das Vorschaubild mit einem Lade-Spinner
-					folder_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=${folderThumbnail}">`;
+					folder_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${folderThumbnail}">`;
 
 					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 					$searchResults.append(folder_line);
@@ -757,7 +753,7 @@ function displaySearchResults(searchTerm, results) {
 				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
 
 				// Ersetze das Vorschaubild mit einem Lade-Spinner
-				image_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=${result.path}">`;
+				image_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
 
 				image_line += `</div>`;
 				$searchResults.append(image_line);
@@ -765,11 +761,9 @@ function displaySearchResults(searchTerm, results) {
 		});
 
 		// Hintergrundladen und Austauschen der Vorschaubilder
-		$('.loading-thumbnail').each(function() {
+		$('.loading-thumbnail-search').each(function() {
 			var $thumbnail = $(this);
 			var originalUrl = $thumbnail.attr('data-original-url');
-
-			log(originalUrl);
 
 			// Bild im Hintergrund laden
 			var img = new Image();
@@ -1004,6 +998,24 @@ document.addEventListener('keypress', function(event) {
 	createBreadcrumb('<?php echo $folderPath; ?>');
 
 	$(".no_preview_available").parent().hide();
+
+	function loadAndReplaceImages() {
+		$('.loading-thumbnail').each(function() {
+			var $thumbnail = $(this);
+			var originalUrl = $thumbnail.attr('data-original-url');
+
+			// Bild im Hintergrund laden
+			var img = new Image();
+			img.onload = function() {
+				$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+			};
+			img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
+		});
+	}
+
+	$( document ).ready(function() {
+		loadAndReplaceImages();
+	});
 </script>
 
 <?php
