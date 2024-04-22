@@ -470,12 +470,12 @@ function get_image_gps($img) {
 }
 
 function is_valid_image_file ($filepath) {
-	$finfo = finfo_open(FILEINFO_MIME_TYPE);
-	$type = finfo_file($finfo, $filepath);
-
 	if(!is_readable($filepath)) {
 		return false;
 	}
+
+	$finfo = finfo_open(FILEINFO_MIME_TYPE);
+	$type = finfo_file($finfo, $filepath);
 
 	if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif"))) {
 		return true;
