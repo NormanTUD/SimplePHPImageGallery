@@ -797,18 +797,37 @@ var fullscreen;
 function showImage(imagePath) {
 	$(fullscreen).remove();
 
+	// Create fullscreen div
 	fullscreen = document.createElement('div');
 	fullscreen.classList.add('fullscreen');
 	fullscreen.onclick = function() {
 		fullscreen.parentNode.removeChild(fullscreen);
 	};
 
+	// Create image element with loading_favicon.gif initially
 	var image = document.createElement('img');
-	image.src = "image.php?path=" + imagePath;
+	image.src = "loading_favicon.gif";
 	image.setAttribute('draggable', false);
 
+	// Append image to fullscreen div
 	fullscreen.appendChild(image);
 	document.body.appendChild(fullscreen);
+
+	// Start separate request to load the correct image
+	var url = "image.php?path=" + imagePath;
+	var request = new XMLHttpRequest();
+	request.open('GET', url, true);
+	request.onreadystatechange = function() {
+		if (request.readyState === XMLHttpRequest.DONE) {
+			if (request.status === 200) {
+				// Replace loading_favicon.gif with the correct image
+				image.src = url;
+			} else {
+				console.warn("Failed to load image:", request.status);
+			}
+		}
+	};
+	request.send();
 }
 
 function get_fullscreen_img_name () {
