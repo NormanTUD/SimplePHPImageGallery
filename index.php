@@ -533,9 +533,11 @@ function displayGallery($fp) {
 	}
 
 	foreach ($images as $image) {
-		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-		echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
-		echo "</div>\n";
+		if(is_file($image["path"])) {
+			echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
+			echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
+			echo "</div>\n";
+		}
 	}
 }
 
