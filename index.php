@@ -469,6 +469,21 @@ function get_image_gps($img) {
 	return $res;
 }
 
+function is_valid_image_file ($filepath) {
+	$finfo = finfo_open(FILEINFO_MIME_TYPE);
+	$type = finfo_file($finfo, $filepath);
+
+	if(!is_readable($filepath)) {
+		return false;
+	}
+
+	if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif"))) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 function displayGallery($fp) {
 	if(!is_dir($fp)) {
 		print("Folder not found");
@@ -533,7 +548,7 @@ function displayGallery($fp) {
 	}
 
 	foreach ($images as $image) {
-		if(is_file($image["path"])) {
+		if(is_file($image["path"]) && is_valid_image_file($image["path"])) {
 			echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
 			echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
 			echo "</div>\n";
