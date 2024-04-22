@@ -526,7 +526,7 @@ function displayGallery($fp) {
 	foreach ($thumbnails as $thumbnail) {
 		if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
 			echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
-			echo '<img draggable="false" src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $thumbnail['thumbnail'] . '">';
+			echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $thumbnail['thumbnail'] . '">';
 			echo '<h3>' . $thumbnail['name'] . '</h3>';
 			echo "</div></a>\n";
 		}
@@ -534,7 +534,7 @@ function displayGallery($fp) {
 
 	foreach ($images as $image) {
 		echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-		echo '<img draggable="false" src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
+		echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
 		echo "</div>\n";
 	}
 }
@@ -758,7 +758,7 @@ function displaySearchResults(searchTerm, results) {
 					var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 					// Ersetze das Vorschaubild mit einem Lade-Spinner
-					folder_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${folderThumbnail}">`;
+					folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${folderThumbnail}">`;
 
 					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 					$searchResults.append(folder_line);
@@ -768,7 +768,7 @@ function displaySearchResults(searchTerm, results) {
 				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
 
 				// Ersetze das Vorschaubild mit einem Lade-Spinner
-				image_line += `<img src="loading_favicon.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
+				image_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
 
 				image_line += `</div>`;
 				$searchResults.append(image_line);
@@ -804,9 +804,9 @@ function showImage(imagePath) {
 		fullscreen.parentNode.removeChild(fullscreen);
 	};
 
-	// Create image element with loading_favicon.gif initially
+	// Create image element with loading.gif initially
 	var image = document.createElement('img');
-	image.src = "loading_favicon.gif";
+	image.src = "loading.gif";
 	image.setAttribute('draggable', false);
 
 	// Append image to fullscreen div
@@ -820,7 +820,7 @@ function showImage(imagePath) {
 	request.onreadystatechange = function() {
 		if (request.readyState === XMLHttpRequest.DONE) {
 			if (request.status === 200) {
-				// Replace loading_favicon.gif with the correct image
+				// Replace loading.gif with the correct image
 				image.src = url;
 			} else {
 				console.warn("Failed to load image:", request.status);
