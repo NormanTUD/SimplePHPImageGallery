@@ -644,7 +644,7 @@ function generateOpenStreetMapScript($dataArray) {
 		var map = L.map('map').fitBounds([[<?= $minLat ?>, <?= $minLng ?>], [<?= $maxLat ?>, <?= $maxLng ?>]]);
 
 		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 		}).addTo(map);
 
 		<?php foreach ($dataArray as $key => $data): ?>
