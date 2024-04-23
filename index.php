@@ -1117,7 +1117,13 @@ function getRandomImageFromSubfolders($folderPath) {
 				} else {
 					var imgs = [];
 
-					$("img").each(function (i, e) {
+					var img_elements = $("img");
+
+					if ($("#searchResults").html().length) {
+						img_elements = $("#searchResults").find("img");
+					}
+
+					img_elements.each(function (i, e) {
 						var src = $(e).data("original-url");
 						if(src && src.match(/preview=/)) {
 							imgs.push(src.replace(/.*index.php\?preview=/, ""));
