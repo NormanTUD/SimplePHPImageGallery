@@ -750,8 +750,7 @@ function getRandomImageFromSubfolders($folderPath) {
 							search: searchTerm
 						},
 							success: async function (response) {
-								displaySearchResults(searchTerm, response["files"]);
-								await draw_map_from_current_images(0);
+								await displaySearchResults(searchTerm, response["files"]);
 							},
 							error: function (xhr, status, error) {
 								console.error(error);
@@ -769,7 +768,7 @@ function getRandomImageFromSubfolders($folderPath) {
 			}
 
 			// Funktion zur Anzeige der Suchergebnisse
-			function displaySearchResults(searchTerm, results) {
+			async function displaySearchResults(searchTerm, results) {
 				var $searchResults = $('#searchResults');
 				$searchResults.empty();
 
@@ -815,6 +814,8 @@ function getRandomImageFromSubfolders($folderPath) {
 				} else {
 					$searchResults.append('<p>No results found.</p>');
 				}
+
+				await draw_map_from_current_images(0);
 			}
 
 			var fullscreen;
