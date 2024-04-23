@@ -34,12 +34,78 @@ function dier ($msg) {
 	exit(0);
 }
 
+function convertToRelativePath($absolutePath) {
+	try {
+		// Erhalten des aktuellen Verzeichnisses
+		$currentDirectory = getcwd();
+
+		// Überprüfen, ob der angegebene Pfad im aktuellen Verzeichnis liegt
+		if (strpos($absolutePath, $currentDirectory) !== false) {
+			// Entfernen des aktuellen Verzeichnisses aus dem absoluten Pfad
+			$relativePath = str_replace($currentDirectory, '.', $absolutePath);
+
+			// Entfernen führender Schrägstriche oder Backslashes
+			$relativePath = ltrim($relativePath, '/\\');
+
+			return $relativePath;
+		} else {
+			// Wenn der angegebene Pfad nicht im aktuellen Verzeichnis liegt, Fehlermeldung ausgeben
+			throw new Exception("Der angegebene Pfad liegt nicht im aktuellen Verzeichnis.");
+		}
+	} catch (Exception $e) {
+		// Fehler abfangen und behandeln (hier: Logging und Warnung)
+		error_log("Fehler beim Konvertieren des absoluten Pfads in einen relativen Pfad: " . $e->getMessage());
+		echo "Fehler: " . $e->getMessage();
+	}
+}
+
+function getImagesInDirectory($directory) {
+	$images = [];
+
+	// Überprüfen, ob das Verzeichnis existiert und lesbar ist
+	assert(is_dir($directory), "Das Verzeichnis existiert nicht oder ist nicht lesbar: $directory");
+
+	// Verzeichnisinhalt lesen
+	try {
+		$files = scandir($directory);
+	} catch (Exception $e) {
+		// Fehler beim Lesen des Verzeichnisses
+		warn("Fehler beim Lesen des Verzeichnisses $directory: " . $e->getMessage());
+		return $images;
+	}
+
+	foreach ($files as $file) {
+		if ($file !== '.' && $file !== '..') {
+			$filePath = $directory . '/' . $file;
+			if (is_dir($filePath)) {
+				// Rekursiv alle Bilder im Unterverzeichnis sammeln
+				$images = array_merge($images, getImagesInDirectory($filePath));
+			} else {
+				// Überprüfen, ob die Datei eine unterstützte Bildendung hat
+				$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+				if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+					// Bild zur Liste hinzufügen
+					$images[] = convertToRelativePath($filePath);
+				}
+			}
+		}
+	}
+
+	return $images;
+}
+
 if (isset($_GET["geolist"])) {
 	$geolist = $_GET["geolist"];
 
 	$untested_files = explode(";;;", $geolist);
 
 	$files = [];
+
+	if ($_GET["geolist"] == "1") {
+		$currentDirectory = __DIR__;
+
+		$files = getImagesInDirectory($currentDirectory);
+	}
 
 	foreach ($untested_files as $file) {
 		if(!preg_match("/\.\.\//", $file) && is_valid_image_file($file)) {
@@ -278,14 +344,6 @@ if (isset($_GET['search'])) {
 	$results = array();
 	$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
 
-	foreach ($results["files"] as $nr => $file) {
-		$gps = get_image_gps($file["path"]);
-		if($gps) {
-			$results["geo"][$file["path"]] = $gps;
-		}
-	}
-
-	// Ausgabe der Ergebnisse als JSON
 	echo json_encode($results);
 	exit;
 }
@@ -390,10 +448,13 @@ if(!file_exists($jquery_file)) {
 				padding: 3px;
 			}
 		</style>
+
+		<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
 	</head>
-<body>
-<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
-<button style="display: none" id="delete_search" onclick='delete_search(1)'>&#x2715;</button>
+	<body>
+		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
+		<button style="display: none" id="delete_search" onclick='delete_search(1)'>&#x2715;</button>
 <?php
 $filename = 'links.txt';
 
@@ -415,7 +476,7 @@ if(file_exists($filename)) {
 }
 ?>
 
-<div id="breadcrumb"></div>
+		<div id="breadcrumb"></div>
 
 <?php
 function getCoord( $expr ) {
@@ -466,7 +527,7 @@ function get_image_gps($img) {
 	if (file_exists($cache_file)) {
 		return json_decode(file_get_contents($cache_file), true);
 	}
-	
+
 	$exif = @exif_read_data($img, 0, true);
 
 	if (empty($exif["GPS"])) {
@@ -601,147 +662,6 @@ function displayGallery($fp) {
 	}
 }
 
-function process_image_file_geocoords($filepath, $hash) {
-	// Überprüfen, ob die Datei eine JPG- oder PNG-Datei ist
-	$extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-	if ($extension === 'jpg' || $extension === 'jpeg' || $extension === 'png') {
-		// GPS-Daten aus dem Bild erhalten
-		$gps_data = get_image_gps($filepath);
-		// Wenn GPS-Daten vorhanden sind, füge sie dem Hash hinzu
-		if ($gps_data !== null) {
-			// Pfad ohne das aktuelle Arbeitsverzeichnis (CWD)
-			$relative_path = str_replace(getcwd() . DIRECTORY_SEPARATOR, '', $filepath);
-			$hash[$relative_path] = $gps_data;
-		}
-	}
-
-	return $hash;
-}
-
-function process_directory_geocoords($dir, $hash) {
-	// Überprüfen, ob das Verzeichnis existiert und lesbar ist
-	if (is_dir($dir) && is_readable($dir)) {
-		// Durchlaufen der Dateien im Verzeichnis
-		$files = scandir($dir);
-		foreach ($files as $file) {
-			// Ignorieren von . und ..
-			if ($file !== '.' && $file !== '..') {
-				$filepath = $dir . DIRECTORY_SEPARATOR . $file;
-				// Wenn es sich um ein Verzeichnis handelt, rekursiv verarbeiten
-				if (is_dir($filepath)) {
-					$hash = process_directory_geocoords($filepath, $hash);
-				} else {
-					// Wenn es sich um eine Datei handelt, diese verarbeiten
-					$hash = process_image_file_geocoords($filepath, $hash);
-				}
-			}
-		}
-	}
-
-	return $hash;
-}
-
-// Hauptfunktion, um den Hash zu erstellen
-function get_images_with_geocoords($path) {
-	$hash = array();
-	if(!$path) {
-		$path = __DIR__;
-	}
-	$hash = process_directory_geocoords($path, $hash);
-	return $hash;
-}
-
-function generateOpenStreetMapScript($dataArray) {
-	if (!empty($dataArray)) {
-		print("<h2>Map</h2>");
-
-		// Calculate bounding box coordinates
-		$minLat = $minLng = PHP_INT_MAX;
-		$maxLat = $maxLng = PHP_INT_MIN;
-		foreach ($dataArray as $data) {
-			if(isset($data["latitude"]) && isset($data["longitude"])) {
-				$minLat = min($minLat, $data['latitude']);
-				$maxLat = max($maxLat, $data['latitude']);
-				$minLng = min($minLng, $data['longitude']);
-				$maxLng = max($maxLng, $data['longitude']);
-			}
-		}
-
-		// Calculate center coordinates
-		$averageLat = ($minLat + $maxLat) / 2;
-		$averageLng = ($minLng + $maxLng) / 2;
-
-?>
-	<div id="map" style="height: 400px; width: 100%;"></div>
-
-	<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
-
-	<script>
-		
-		function draw_map(data) {
-			var map = L.map('map').fitBounds([[<?= $minLat ?>, <?= $minLng ?>], [<?= $maxLat ?>, <?= $maxLng ?>]]);
-
-			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-			}).addTo(map);
-
-			var markers = {};
-
-			var keys = Object.keys(data);
-
-			var i = 0
-
-			while (i < keys.length) {
-				var element = data[keys[i]];
-
-				var hash = element["hash"];
-				var url = element["url"];
-
-				markers[hash] = L.marker([element['latitude'], element['longitude']]);
-
-				markers[hash].on('click', function() {
-					var text = "<img id='preview_" + hash + 
-						"' src='./index.php?preview=" +
-						url + 
-						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-						url + "\");' />";
-
-					var popup = L.popup().setContent(text);
-
-					this.bindPopup(popup).openPopup();
-				});
-
-				markers[hash].addTo(map);
-
-				i++;
-			}
-		}
-
-		function draw_map_from_current_images () {
-			var imgs = [];
-			$("img").each(function (i, e) {
-				var src = $(e).data("original-url");
-				if(src.match(/preview=/)) {
-					imgs.push(src.replace(/.*index.php\?preview=/, ""));
-				}
-			});
-
-			imgs = [...new Set(imgs)];
-
-			var url = "index.php?geolist=" + imgs.join(";;;");
-
-			$.getJSON(url, function(data) {
-				draw_map(data);
-			});
-		}
-
-		draw_map_from_current_images()
-	</script>
-<?php
-	}
-}
-
 function getImagesInFolder($folderPath) {
 	$folderFiles = @scandir($folderPath);
 
@@ -797,379 +717,512 @@ function getRandomImageFromSubfolders($folderPath) {
 }
 ?>
 
-<script>
-var log = console.log;
-var l = log;
+		<script>
+			var map = null;
+			var log = console.log;
+			var l = log;
 
-var searchTimer; // Globale Variable für den Timer
+			var searchTimer; // Globale Variable für den Timer
 
-function start_search() {
-	var searchTerm = $('#searchInput').val();
+			function start_search() {
+				var searchTerm = $('#searchInput').val();
 
-	// Funktion zum Abbrechen der vorherigen Suchanfrage
-	function abortPreviousRequest() {
-		if (searchTimer) {
-			clearTimeout(searchTimer);
-		}
-	}
+				// Funktion zum Abbrechen der vorherigen Suchanfrage
+				function abortPreviousRequest() {
+					if (searchTimer) {
+						clearTimeout(searchTimer);
+					}
+				}
 
-	// Funktion zum Durchführen der Suchanfrage
-	function performSearch() {
-		// Abbrechen der vorherigen Anfrage, falls vorhanden
-		abortPreviousRequest();
+				// Funktion zum Durchführen der Suchanfrage
+				function performSearch() {
+					// Abbrechen der vorherigen Anfrage, falls vorhanden
+					abortPreviousRequest();
 
-		if (!/^\s*$/.test(searchTerm)) {
-			$("#delete_search").show();
-			$("#searchResults").show();
-			$("#gallery").hide();
-			$.ajax({
-			url: 'index.php',
-				type: 'GET',
-				data: {
-					search: searchTerm
-				},
-				success: function (response) {
-					displaySearchResults(searchTerm, response["files"]);
-				},
-				error: function (xhr, status, error) {
-					console.error(error);
+					if (!/^\s*$/.test(searchTerm)) {
+						$("#delete_search").show();
+						$("#searchResults").show();
+						$("#gallery").hide();
+						$.ajax({
+						url: 'index.php',
+							type: 'GET',
+							data: {
+							search: searchTerm
+						},
+							success: async function (response) {
+								displaySearchResults(searchTerm, response["files"]);
+								await draw_map_from_current_images(0);
+							},
+							error: function (xhr, status, error) {
+								console.error(error);
+							}
+						});
+					} else {
+						$("#delete_search").hide();
+						$("#searchResults").hide();
+						$("#gallery").show();
+					}
+				}
+
+				// Starten der Suche nach einer Sekunde Verzögerung
+				searchTimer = setTimeout(performSearch, 1000);
+			}
+
+			// Funktion zur Anzeige der Suchergebnisse
+			function displaySearchResults(searchTerm, results) {
+				var $searchResults = $('#searchResults');
+				$searchResults.empty();
+
+				if (results.length > 0) {
+					$searchResults.append('<h2>Search results:</h2>');
+
+					results.forEach(function(result) {
+						if (result.type === 'folder') {
+							var folderThumbnail = result.thumbnail;
+							if (folderThumbnail) {
+								var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
+
+								// Ersetze das Vorschaubild mit einem Lade-Spinner
+								folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${folderThumbnail}">`;
+
+								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
+								$searchResults.append(folder_line);
+							}
+						} else if (result.type === 'file') {
+							var fileName = result.path.split('/').pop();
+							var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
+
+							// Ersetze das Vorschaubild mit einem Lade-Spinner
+							image_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
+
+							image_line += `</div>`;
+							$searchResults.append(image_line);
+						}
+					});
+
+					// Hintergrundladen und Austauschen der Vorschaubilder
+					$('.loading-thumbnail-search').each(function() {
+						var $thumbnail = $(this);
+						var originalUrl = $thumbnail.attr('data-original-url');
+
+						// Bild im Hintergrund laden
+						var img = new Image();
+						img.onload = function() {
+							$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+						};
+						img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
+					});
+				} else {
+					$searchResults.append('<p>No results found.</p>');
+				}
+			}
+
+			var fullscreen;
+
+			function showImage(imagePath) {
+				$(fullscreen).remove();
+
+				// Create fullscreen div
+				fullscreen = document.createElement('div');
+				fullscreen.classList.add('fullscreen');
+				fullscreen.onclick = function() {
+					fullscreen.parentNode.removeChild(fullscreen);
+				};
+
+				// Create image element with loading.gif initially
+				var image = document.createElement('img');
+				image.src = "loading.gif";
+				image.setAttribute('draggable', false);
+
+				// Append image to fullscreen div
+				fullscreen.appendChild(image);
+				document.body.appendChild(fullscreen);
+
+				// Start separate request to load the correct image
+				var url = "image.php?path=" + imagePath;
+				var request = new XMLHttpRequest();
+				request.open('GET', url, true);
+				request.onreadystatechange = function() {
+					if (request.readyState === XMLHttpRequest.DONE) {
+						if (request.status === 200) {
+							// Replace loading.gif with the correct image
+							image.src = url;
+						} else {
+							console.warn("Failed to load image:", request.status);
+						}
+					}
+				};
+				request.send();
+			}
+
+			function get_fullscreen_img_name () {
+				var src = $(".fullscreen").find("img").attr("src");
+
+				if(src) {
+					src = src.replace(/.*\//, "");
+
+					return src;
+				} else {
+					console.warn("No index");
+					return "";
+				}
+			}
+
+			function next_image () {
+				next_or_prev(1);
+			}
+
+			function prev_image () {
+				next_or_prev(0);
+			}
+
+			function next_or_prev (next=1) {
+				var current_fullscreen = get_fullscreen_img_name();
+
+				if(!current_fullscreen) {
+					return;
+				}
+
+				var current_idx = -1;
+
+				var $thumbnails = $(".thumbnail");
+
+				$thumbnails.each((i, e) => {
+				var onclick = $(e).attr("onclick");
+
+				onclick = onclick.replace(/.*\//, "").replace(/'.*/, "");
+
+				if(onclick == current_fullscreen) {
+					current_idx = i;
+				}
+				});
+
+				var next_idx = current_idx + 1;
+				if(!next) {
+					next_idx = current_idx - 1;
+				}
+
+				if(next_idx < 0) {
+					next_idx = $thumbnails.length - 1;
+				}
+
+				next_idx = next_idx %  $thumbnails.length;
+
+				var next_img = $($thumbnails[next_idx]).attr("onclick").replace(/.*?'/, '').replace(/'.*/, "");
+
+				showImage(next_img);
+			}
+
+			document.onkeydown = checkKey;
+
+			function checkKey(e) {
+				e = e || window.event;
+
+				if (e.keyCode == '38') {
+					// up arrow
+				} else if (e.keyCode == '40') {
+					// down arrow
+				} else if (e.keyCode == '37') {
+					prev_image();
+				} else if (e.keyCode == '39') {
+					next_image();
+				} else if (e.key === "Escape") {
+					$(fullscreen).remove();
+				}
+			}
+
+			var touchStartX = 0;
+			var touchEndX = 0;
+
+			document.addEventListener('touchstart', function(event) {
+				touchStartX = event.touches[0].clientX;
+			}, false);
+
+			document.addEventListener('touchend', function(event) {
+				touchEndX = event.changedTouches[0].clientX;
+				handleSwipe();
+			}, false);
+
+			function handleSwipe() {
+				var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
+
+				var deltaX = touchEndX - touchStartX;
+
+				if (Math.abs(deltaX) >= swipeThreshold) {
+					if (deltaX > 0) {
+						prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
+					} else {
+						next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
+					}
+				}
+			}
+
+			document.addEventListener('keydown', function(event) {
+				var charCode = event.which || event.keyCode;
+				var charStr = String.fromCharCode(charCode);
+
+				if (charCode === 8) { // Backspace-Taste (keyCode 8)
+					// Überprüfe, ob der Fokus im Suchfeld liegt
+					var searchInput = document.getElementById('searchInput');
+					if (document.activeElement !== searchInput) {
+						// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
+						searchInput.value = '';
+						$(searchInput).focus();
+					}
+				} else if (charCode == 27) { // Escape
+					var searchInput = document.getElementById('searchInput');
+					searchInput.value = '';
 				}
 			});
-		} else {
-			$("#delete_search").hide();
-			$("#searchResults").hide();
-			$("#gallery").show();
-		}
-	}
 
-	// Starten der Suche nach einer Sekunde Verzögerung
-	searchTimer = setTimeout(performSearch, 1000);
-}
+			document.addEventListener('keypress', function(event) {
+				var charCode = event.which || event.keyCode;
+				var charStr = String.fromCharCode(charCode);
 
-// Funktion zur Anzeige der Suchergebnisse
-function displaySearchResults(searchTerm, results) {
-	var $searchResults = $('#searchResults');
-	$searchResults.empty();
+				// Überprüfe, ob der eingegebene Wert ein Buchstabe oder eine Zahl ist
+				if (/[a-zA-Z0-9]/.test(charStr)) {
+					// Überprüfe, ob der Fokus nicht bereits im Suchfeld liegt
+					var searchInput = document.getElementById('searchInput');
+					if (document.activeElement !== searchInput) {
+						// Lösche die Suchanfrage, wenn der Fokus nicht im Suchfeld liegt
+						searchInput.value = '';
+					}
 
-	if (results.length > 0) {
-		$searchResults.append('<h2>Search results:</h2>');
+					// Ersetze den markierten Text durch den eingegebenen Buchstaben oder die Zahl
+					var selectionStart = searchInput.selectionStart;
+					var selectionEnd = searchInput.selectionEnd;
+					var currentValue = searchInput.value;
+					var newValue = currentValue.substring(0, selectionStart) + charStr + currentValue.substring(selectionEnd);
+					searchInput.value = newValue;
 
-		results.forEach(function(result) {
-			if (result.type === 'folder') {
-				var folderThumbnail = result.thumbnail;
-				if (folderThumbnail) {
-					var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
+					// Aktualisiere die Position des Cursors
+					searchInput.selectionStart = searchInput.selectionEnd = selectionStart + 1;
 
-					// Ersetze das Vorschaubild mit einem Lade-Spinner
-					folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${folderThumbnail}">`;
+					// Fokussiere das Suchfeld
+					if (!$(searchInput).is(":focus")) {
+						searchInput.focus();
+					}
 
-					folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
-					$searchResults.append(folder_line);
+					// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
+					event.preventDefault();
+				} else if (charCode === 8) { // Backspace-Taste (keyCode 8)
+					// Überprüfe, ob der Fokus im Suchfeld liegt
+					var searchInput = document.getElementById('searchInput');
+					if (document.activeElement === searchInput) {
+						// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
+						searchInput.value = '';
+						$(searchInput).focus();
+					}
 				}
-			} else if (result.type === 'file') {
-				var fileName = result.path.split('/').pop();
-				var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
+			});
 
-				// Ersetze das Vorschaubild mit einem Lade-Spinner
-				image_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
+		</script>
 
-				image_line += `</div>`;
-				$searchResults.append(image_line);
-			}
-		});
+		<!-- Ergebnisse der Suche hier einfügen -->
+		<div id="searchResults"></div>
 
-		// Hintergrundladen und Austauschen der Vorschaubilder
-		$('.loading-thumbnail-search').each(function() {
-			var $thumbnail = $(this);
-			var originalUrl = $thumbnail.attr('data-original-url');
+		<div id="gallery">
+			<?php displayGallery($folderPath); ?>
+		</div>
 
-			// Bild im Hintergrund laden
-			var img = new Image();
-			img.onload = function() {
-				$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
-			};
-			img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
-		});
-	} else {
-		$searchResults.append('<p>No results found.</p>');
-	}
-}
+		<script>
+			var json_cache = {};
 
-var fullscreen;
-
-function showImage(imagePath) {
-	$(fullscreen).remove();
-
-	// Create fullscreen div
-	fullscreen = document.createElement('div');
-	fullscreen.classList.add('fullscreen');
-	fullscreen.onclick = function() {
-		fullscreen.parentNode.removeChild(fullscreen);
-	};
-
-	// Create image element with loading.gif initially
-	var image = document.createElement('img');
-	image.src = "loading.gif";
-	image.setAttribute('draggable', false);
-
-	// Append image to fullscreen div
-	fullscreen.appendChild(image);
-	document.body.appendChild(fullscreen);
-
-	// Start separate request to load the correct image
-	var url = "image.php?path=" + imagePath;
-	var request = new XMLHttpRequest();
-	request.open('GET', url, true);
-	request.onreadystatechange = function() {
-		if (request.readyState === XMLHttpRequest.DONE) {
-			if (request.status === 200) {
-				// Replace loading.gif with the correct image
-				image.src = url;
-			} else {
-				console.warn("Failed to load image:", request.status);
-			}
-		}
-	};
-	request.send();
-}
-
-function get_fullscreen_img_name () {
-	var src = $(".fullscreen").find("img").attr("src");
-
-	if(src) {
-		src = src.replace(/.*\//, "");
-
-		return src;
-	} else {
-		console.warn("No index");
-		return "";
-	}
-}
-
-function next_image () {
-	next_or_prev(1);
-}
-
-function prev_image () {
-	next_or_prev(0);
-}
-
-function next_or_prev (next=1) {
-	var current_fullscreen = get_fullscreen_img_name();
-
-	if(!current_fullscreen) {
-		return;
-	}
-
-	var current_idx = -1;
-
-	var $thumbnails = $(".thumbnail");
-
-	$thumbnails.each((i, e) => {
-	var onclick = $(e).attr("onclick");
-
-	onclick = onclick.replace(/.*\//, "").replace(/'.*/, "");
-
-	if(onclick == current_fullscreen) {
-		current_idx = i;
-	}
-	});
-
-	var next_idx = current_idx + 1;
-	if(!next) {
-		next_idx = current_idx - 1;
-	}
-
-	if(next_idx < 0) {
-		next_idx = $thumbnails.length - 1;
-	}
-
-	next_idx = next_idx %  $thumbnails.length;
-
-	var next_img = $($thumbnails[next_idx]).attr("onclick").replace(/.*?'/, '').replace(/'.*/, "");
-
-	showImage(next_img);
-}
-
-document.onkeydown = checkKey;
-
-function checkKey(e) {
-	e = e || window.event;
-
-	if (e.keyCode == '38') {
-		// up arrow
-	} else if (e.keyCode == '40') {
-		// down arrow
-	} else if (e.keyCode == '37') {
-		prev_image();
-	} else if (e.keyCode == '39') {
-		next_image();
-	} else if (e.key === "Escape") {
-		$(fullscreen).remove();
-	}
-}
-
-var touchStartX = 0;
-var touchEndX = 0;
-
-document.addEventListener('touchstart', function(event) {
-	touchStartX = event.touches[0].clientX;
-}, false);
-
-document.addEventListener('touchend', function(event) {
-	touchEndX = event.changedTouches[0].clientX;
-	handleSwipe();
-}, false);
-
-function handleSwipe() {
-	var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
-
-	var deltaX = touchEndX - touchStartX;
-
-	if (Math.abs(deltaX) >= swipeThreshold) {
-		if (deltaX > 0) {
-			prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
-		} else {
-			next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
-		}
-	}
-}
-
-document.addEventListener('keydown', function(event) {
-	var charCode = event.which || event.keyCode;
-	var charStr = String.fromCharCode(charCode);
-
-	if (charCode === 8) { // Backspace-Taste (keyCode 8)
-		// Überprüfe, ob der Fokus im Suchfeld liegt
-		var searchInput = document.getElementById('searchInput');
-		if (document.activeElement !== searchInput) {
-			// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
-			searchInput.value = '';
-			$(searchInput).focus();
-		}
-	} else if (charCode == 27) { // Escape
-		var searchInput = document.getElementById('searchInput');
-		searchInput.value = '';
-	}
-});
-
-document.addEventListener('keypress', function(event) {
-	var charCode = event.which || event.keyCode;
-	var charStr = String.fromCharCode(charCode);
-
-	// Überprüfe, ob der eingegebene Wert ein Buchstabe oder eine Zahl ist
-	if (/[a-zA-Z0-9]/.test(charStr)) {
-		// Überprüfe, ob der Fokus nicht bereits im Suchfeld liegt
-		var searchInput = document.getElementById('searchInput');
-		if (document.activeElement !== searchInput) {
-			// Lösche die Suchanfrage, wenn der Fokus nicht im Suchfeld liegt
-			searchInput.value = '';
-		}
-
-		// Ersetze den markierten Text durch den eingegebenen Buchstaben oder die Zahl
-		var selectionStart = searchInput.selectionStart;
-		var selectionEnd = searchInput.selectionEnd;
-		var currentValue = searchInput.value;
-		var newValue = currentValue.substring(0, selectionStart) + charStr + currentValue.substring(selectionEnd);
-		searchInput.value = newValue;
-
-		// Aktualisiere die Position des Cursors
-		searchInput.selectionStart = searchInput.selectionEnd = selectionStart + 1;
-
-		// Fokussiere das Suchfeld
-		if (!$(searchInput).is(":focus")) {
-			searchInput.focus();
-		}
-
-		// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
-		event.preventDefault();
-	} else if (charCode === 8) { // Backspace-Taste (keyCode 8)
-		// Überprüfe, ob der Fokus im Suchfeld liegt
-		var searchInput = document.getElementById('searchInput');
-		if (document.activeElement === searchInput) {
-			// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
-			searchInput.value = '';
-			$(searchInput).focus();
-		}
-	}
-});
-
-</script>
-
-<!-- Ergebnisse der Suche hier einfügen -->
-<div id="searchResults"></div>
-
-<div id="gallery">
-<?php displayGallery($folderPath); ?>
-</div>
-<script>
-	function createBreadcrumb(currentFolderPath) {
-		var breadcrumb = document.getElementById('breadcrumb');
-		breadcrumb.innerHTML = '';
-
-		var pathArray = currentFolderPath.split('/');
-		var fullPath = '';
-
-		pathArray.forEach(function(folderName, index) {
-			if (folderName !== '') {
-				var originalFolderName = folderName;
-				if(folderName == '.') {
-					folderName = "Start";
+			async function get_json_cached (url) {
+				if (Object.keys(json_cache).includes(url)) {
+					return json_cache[url];
 				}
-				fullPath += originalFolderName + '/';
 
-				var link = document.createElement('a');
-				link.classList.add("breadcrumb_nav");
-				link.href = '?folder=' + encodeURIComponent(fullPath);
-				link.textContent = folderName;
+				var d = null;
+				await $.getJSON(url, function(internal_data) {
+					d = internal_data;
+				});
 
-				breadcrumb.appendChild(link);
+				json_cache[url] = d;
 
-				// Füge ein Trennzeichen hinzu, außer beim letzten Element
-				breadcrumb.appendChild(document.createTextNode(' / '));
+				return d;
 			}
-		});
-	}
 
-	// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
-	createBreadcrumb('<?php echo $folderPath; ?>');
 
-	$(".no_preview_available").parent().hide();
+			function draw_map(data) {
+				if(Object.keys(data).length == 0) {
+					$("#map_container").hide();
+					return;
+				}
 
-	function loadAndReplaceImages() {
-		$('.loading-thumbnail').each(function() {
-			var $thumbnail = $(this);
-			var originalUrl = $thumbnail.attr('data-original-url');
+				$("#map_container").show();
 
-			// Bild im Hintergrund laden
-			var img = new Image();
-			img.onload = function() {
-				$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
-			};
-			img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
-		});
-	}
+				let minLat = data[0].latitude;
+				let maxLat = data[0].latitude;
+				let minLon = data[0].longitude;
+				let maxLon = data[0].longitude;
 
-	function delete_search(trigger=0) {
-		$("#searchInput").val("");
-		$("#delete_search").hide();
-		if(trigger) {
-			$("#searchInput").trigger("change");
-		}
-	}
+				// Durchlaufen der Daten, um die minimalen und maximalen Koordinaten zu finden
+				data.forEach(item => {
+					minLat = Math.min(minLat, item.latitude);
+					maxLat = Math.max(maxLat, item.latitude);
+					minLon = Math.min(minLon, item.longitude);
+					maxLon = Math.max(maxLon, item.longitude);
+				});
 
-	$( document ).ready(function() {
-		$("#delete_search").hide();
-		delete_search();
+				if(map) {
+					map.remove();
+					map = null;
+				}
 
-		loadAndReplaceImages();
-	});
-</script>
+				map = L.map('map').fitBounds([[minLat, minLon], [maxLat, maxLon]]);
+
+				L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+				}).addTo(map);
+
+				var markers = {};
+
+				var keys = Object.keys(data);
+
+				var i = 0
+
+					while (i < keys.length) {
+						var element = data[keys[i]];
+
+						var hash = element["hash"];
+						var url = element["url"];
+
+						markers[hash] = L.marker([element['latitude'], element['longitude']]);
+
+						markers[hash].on('click', function() {
+							var text = "<img id='preview_" + hash + 
+								"' src='./index.php?preview=" +
+								url + 
+								"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
+								url + "\");' />";
+
+							var popup = L.popup().setContent(text);
+
+							this.bindPopup(popup).openPopup();
+						});
+
+						markers[hash].addTo(map);
+
+						i++;
+					}
+			}
+
+			async function draw_map_from_current_images (show_all_available) {
+				var data = [];
+
+				if(show_all_available) {
+					var url = "index.php?geolist=1";
+					data = await get_json_cached(url);
+				} else {
+					var imgs = [];
+
+					$("img").each(function (i, e) {
+						var src = $(e).data("original-url");
+						if(src && src.match(/preview=/)) {
+							imgs.push(src.replace(/.*index.php\?preview=/, ""));
+						}
+					});
+
+					imgs = [...new Set(imgs)];
+
+					for (var i = 0; i < imgs.length; i++) {
+						url = "index.php?geolist=" + imgs[i];
+
+						var res = await get_json_cached(url);
+
+						if(res && Object.keys(res).length) {
+							data.push(res[0]);
+						}
+					}
+				}
+
+				//log("show_all_available:", show_all_available, "data:", data);
+
+				draw_map(data);
+			}
+
+			function createBreadcrumb(currentFolderPath) {
+				var breadcrumb = document.getElementById('breadcrumb');
+				breadcrumb.innerHTML = '';
+
+				var pathArray = currentFolderPath.split('/');
+				var fullPath = '';
+
+				pathArray.forEach(function(folderName, index) {
+					if (folderName !== '') {
+						var originalFolderName = folderName;
+						if(folderName == '.') {
+							folderName = "Start";
+						}
+						fullPath += originalFolderName + '/';
+
+						var link = document.createElement('a');
+						link.classList.add("breadcrumb_nav");
+						link.href = '?folder=' + encodeURIComponent(fullPath);
+						link.textContent = folderName;
+
+						breadcrumb.appendChild(link);
+
+						// Füge ein Trennzeichen hinzu, außer beim letzten Element
+						breadcrumb.appendChild(document.createTextNode(' / '));
+					}
+				});
+			}
+
+			// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
+			createBreadcrumb('<?php echo $folderPath; ?>');
+
+			$(".no_preview_available").parent().hide();
+
+			function loadAndReplaceImages() {
+				$('.loading-thumbnail').each(function() {
+					var $thumbnail = $(this);
+					var originalUrl = $thumbnail.attr('data-original-url');
+
+					// Bild im Hintergrund laden
+					var img = new Image();
+					img.onload = function() {
+						$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+					};
+					img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
+				});
+			}
+
+			function delete_search(trigger=0) {
+				$("#searchInput").val("");
+				$("#delete_search").hide();
+				if(trigger) {
+					$("#searchInput").trigger("change");
+				}
+			}
+
+			$(document).ready(async function() {
+				$("#delete_search").hide();
+				delete_search();
+
+				loadAndReplaceImages();
 
 <?php
-	$images_with_geocoords = get_images_with_geocoords($folderPath);
+				$is_startpage = $_GET["folder"] == "./" || !isset($_GET["folder"]);
 
-	generateOpenStreetMapScript($images_with_geocoords);
+				if($is_startpage) {
 ?>
-</body>
+//aaa
+					await draw_map_from_current_images(1);
+<?php
+				} else {
+?>
+//bbb
+					await draw_map_from_current_images(0);
+<?php
+				}
+?>
+			});
+		</script>
+
+		<div id="map_container">
+			<div id="map" style="height: 400px; width: 100%;"></div>
+		</div>
+	</body>
 </html>
