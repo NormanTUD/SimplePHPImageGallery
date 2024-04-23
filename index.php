@@ -1073,7 +1073,7 @@ function getRandomImageFromSubfolders($folderPath) {
 				map = L.map('map').fitBounds([[minLat, minLon], [maxLat, maxLon]]);
 
 				L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+					attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 				}).addTo(map);
 
 				var markers = {};
