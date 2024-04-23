@@ -1068,6 +1068,7 @@ function getRandomImageFromSubfolders($folderPath) {
 				if(map) {
 					map.remove();
 					map = null;
+					$("#map").html("");
 				}
 
 				map = L.map('map').fitBounds([[minLat, minLon], [maxLat, maxLon]]);
