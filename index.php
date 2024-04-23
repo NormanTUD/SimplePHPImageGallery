@@ -238,7 +238,15 @@ function searchFiles($fp, $searchTerm) {
 if (isset($_GET['search'])) {
 	header('Content-type: application/json; charset=utf-8');
 	$searchTerm = $_GET['search'];
-	$results = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
+	$results = array();
+	$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
+
+	foreach ($results["files"] as $nr => $file) {
+		$gps = get_image_gps($file["path"]);
+		if($gps) {
+			$results["geo"][$file["path"]] = $gps;
+		}
+	}
 
 	// Ausgabe der Ergebnisse als JSON
 	echo json_encode($results);
@@ -743,7 +751,7 @@ function start_search() {
 					search: searchTerm
 				},
 				success: function (response) {
-					displaySearchResults(searchTerm, response);
+					displaySearchResults(searchTerm, response["files"]);
 				},
 				error: function (xhr, status, error) {
 					console.error(error);
