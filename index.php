@@ -293,9 +293,11 @@ function searchFiles($fp, $searchTerm) {
 
 		$filePath = $fp . '/' . $file;
 
+		$file_without_ending = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
+
 		if (is_dir($filePath)) {
 			#print("stripos(".normalize_special_characters($file).", ".$normalized.")\n");
-			if (stripos($file, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
+			if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file_without_ending), $normalized) !== false) {
 				$randomImage = getRandomImageFromSubfolders($filePath);
 				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 
@@ -324,7 +326,7 @@ function searchFiles($fp, $searchTerm) {
 					}
 				}
 			} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-				if (stripos($file, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
+				if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
 					$results[] = [
 						'path' => $filePath,
 						'type' => 'file'
