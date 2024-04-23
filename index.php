@@ -1229,7 +1229,7 @@ function getRandomImageFromSubfolders($folderPath) {
 			});
 		</script>
 
-		<div id="map_container">
+		<div id="map_container" style="display: none">
 			<div id="map" style="height: 400px; width: 100%;"></div>
 		</div>
 	</body>
