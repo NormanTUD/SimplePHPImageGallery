@@ -34,6 +34,43 @@ function dier ($msg) {
 	exit(0);
 }
 
+if (isset($_GET["geolist"])) {
+	$geolist = $_GET["geolist"];
+
+	$untested_files = explode(";;;", $geolist);
+
+	$files = [];
+
+	foreach ($untested_files as $file) {
+		if(!preg_match("/\.\.\//", $file) && is_valid_image_file($file)) {
+			$files[] = $file;
+		}
+	}
+
+	$s = array();
+
+	foreach ($files as $file) {
+		$hash = md5($file);
+
+		$gps = get_image_gps($file);
+
+		if ($gps) {
+			$s[] = array(
+				'url' => $file,
+				"latitude" => $gps["latitude"],
+				"longitude" => $gps["longitude"],
+				"hash" => $hash
+			);
+		}
+
+	}
+
+	header('Content-type: application/json; charset=utf-8');
+	print json_encode($s);
+
+	exit(0);
+}
+
 if (isset($_GET['preview'])) {
 	$imagePath = $_GET['preview'];
 	$thumbnailMaxWidth = 150; // Definiere maximale Thumbnail-Breite
@@ -681,30 +718,25 @@ function generateOpenStreetMapScript($dataArray) {
 			}
 		}
 
-		var mapdata = <?php
-			$s = array();
+		function draw_map_from_current_images () {
+			var imgs = [];
+			$("img").each(function (i, e) {
+				var src = $(e).data("original-url");
+				if(src.match(/preview=/)) {
+					imgs.push(src.replace(/.*index.php\?preview=/, ""));
+				}
+			});
 
-			foreach ($dataArray as $key => $data) {
-				
-				$hash = md5($key);
-				$data['latitude'];
-				$data['longitude'];
-				
+			imgs = [...new Set(imgs)];
 
-				$s[] = array(
-					'url' => $key,
-					"latitude" => $data["latitude"],
-					"longitude" => $data["longitude"],
-					"hash" => $hash
-				);
+			var url = "index.php?geolist=" + imgs.join(";;;");
 
-			}
+			$.getJSON(url, function(data) {
+				draw_map(data);
+			});
+		}
 
-			print json_encode($s);
-		?>
-			;
-
-		draw_map(mapdata);
+		draw_map_from_current_images()
 	</script>
 <?php
 	}
