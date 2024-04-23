@@ -641,24 +641,70 @@ function generateOpenStreetMapScript($dataArray) {
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
 
 	<script>
-		var map = L.map('map').fitBounds([[<?= $minLat ?>, <?= $minLng ?>], [<?= $maxLat ?>, <?= $maxLng ?>]]);
+		
+		function draw_map(data) {
+			var map = L.map('map').fitBounds([[<?= $minLat ?>, <?= $minLng ?>], [<?= $maxLat ?>, <?= $maxLng ?>]]);
 
-		L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(map);
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+			}).addTo(map);
 
-		<?php foreach ($dataArray as $key => $data): ?>
-			var marker_<?php echo md5($key); ?> = L.marker([<?php echo $data['latitude']; ?>, <?php echo $data['longitude']; ?>]);
+			var markers = {};
 
-			marker_<?php echo md5($key); ?>.on('click', function() {
-				var popup = L.popup()
-					.setContent("<img id='preview_<?php echo md5($key); ?>' src='index.php?preview=<?php echo urlencode('.//' . $key); ?>' style='width: 100px; height: 100px;' onclick='showImage(\"<?php echo './/' . $key; ?>\")' />");
+			var keys = Object.keys(data);
 
-				this.bindPopup(popup).openPopup();
-			});
+			var i = 0
 
-			marker_<?php echo md5($key); ?>.addTo(map);
-		<?php endforeach; ?>
+			while (i < keys.length) {
+				var element = data[keys[i]];
+
+				var hash = element["hash"];
+				var url = element["url"];
+
+				markers[hash] = L.marker([element['latitude'], element['longitude']]);
+
+				markers[hash].on('click', function() {
+					var text = "<img id='preview_" + hash + 
+						"' src='./index.php?preview=" +
+						url + 
+						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
+						url + "\");' />";
+
+					var popup = L.popup().setContent(text);
+
+					this.bindPopup(popup).openPopup();
+				});
+
+				markers[hash].addTo(map);
+
+				i++;
+			}
+		}
+
+		var mapdata = <?php
+			$s = array();
+
+			foreach ($dataArray as $key => $data) {
+				
+				$hash = md5($key);
+				$data['latitude'];
+				$data['longitude'];
+				
+
+				$s[] = array(
+					'url' => $key,
+					"latitude" => $data["latitude"],
+					"longitude" => $data["longitude"],
+					"hash" => $hash
+				);
+
+			}
+
+			print json_encode($s);
+		?>
+			;
+
+		draw_map(mapdata);
 	</script>
 <?php
 	}
