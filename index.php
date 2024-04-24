@@ -732,7 +732,6 @@ function getRandomImageFromSubfolders($folderPath) {
 				// Funktion zum Abbrechen der vorherigen Suchanfrage
 				function abortPreviousRequest() {
 					if (searchTimer) {
-						debug("Vorherigen Timer abgebrochen");
 						clearTimeout(searchTimer);
 						searchTimer = null;
 					}
@@ -770,7 +769,6 @@ function getRandomImageFromSubfolders($folderPath) {
 				}
 
 				// Starten der Suche nach einer Sekunde Verzögerung
-				debug("Setze Timer für die Suche");
 				searchTimer = setTimeout(performSearch, 1000);
 			}
 
@@ -1127,32 +1125,52 @@ function getRandomImageFromSubfolders($folderPath) {
 				return new Promise(resolve => setTimeout(resolve, ms));
 			}
 
+			function is_hidden_or_has_hidden_parent(element) {
+				if ($(element).css("display") == "none") {
+					return true;
+				}
+
+				var parents = $(element).parents();
+
+				for (var i = 0; i < parents.length; i++) {
+					if ($(parents[i]).css("display") == "none") {
+						return true;
+					}
+				}
+
+				return false;
+			}
+
 			async function draw_map_from_current_images () {
 				var data = [];
 
 				var folder_elements = $("");
-				var $folders = $(".thumbnail_folder");
+				var $folders = $(".loading-thumbnail-search,.thumbnail_folder");
+
 				var nr_of_folders = $folders.length;
 				var folders_gone_through = 0;
 
-				await $folders.each(async function (i, e) {
-					var folder = decodeURIComponent($(e).parent()[0].href.replace(/.*\?folder=/, ""));
+				$folders.each(async function (i, e) {
+					log(">>>", e, "<<<");
+					if(!is_hidden_or_has_hidden_parent(e)) {
+						var folder = decodeURIComponent($(e).parent()[0].href.replace(/.*\?folder=/, ""));
 
-					var url = `index.php?geolist=${folder}`;
-					var folder_data = await get_json_cached(url);
+						var url = `index.php?geolist=${folder}`;
+						var folder_data = await get_json_cached(url);
 
-					var _keys = Object.keys(folder_data);
-					if(_keys.length) {
-						for (var i = 0; i < _keys.length; i++) {
-							var this_data = folder_data[_keys[i]];
+						var _keys = Object.keys(folder_data);
+						if(_keys.length) {
+							for (var i = 0; i < _keys.length; i++) {
+								var this_data = folder_data[_keys[i]];
 
-							//log(this_data);
+								//log(this_data);
 
-							data.push(this_data);
+								data.push(this_data);
+							}
 						}
-					}
 
-					folders_gone_through++;
+						folders_gone_through++;
+					}
 				});
 
 				var img_elements = $("img");
@@ -1178,9 +1196,6 @@ function getRandomImageFromSubfolders($folderPath) {
 						data.push(this_data);
 					}
 				});
-
-
-
 
 				while ($(".thumbnail_folder").length > folders_gone_through) {
 					await sleep(100);
