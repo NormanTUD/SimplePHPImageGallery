@@ -826,7 +826,7 @@ function getRandomImageFromSubfolders($folderPath) {
 							}
 
 							// Ersetze das Vorschaubild mit einem Lade-Spinner
-							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.thumbnail}">`;
+							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
 
 							image_line += `</div>`;
 							$searchResults.append(image_line);
@@ -1174,7 +1174,7 @@ function getRandomImageFromSubfolders($folderPath) {
 					})
 				}
 
-				log("show_all_available:", show_all_available, "data:", data);
+				//log("show_all_available:", show_all_available, "data:", data);
 
 				draw_map(data);
 			}
