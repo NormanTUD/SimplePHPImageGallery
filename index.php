@@ -794,7 +794,7 @@ function getRandomImageFromSubfolders($folderPath) {
 							}
 						} else if (result.type === 'file') {
 							var fileName = result.path.split('/').pop();
-							var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
+							var image_line = `<div class="thumbnail" href="${result.path}" onclick="showImage('${result.path}')">`;
 
 							var gps_data_string = "";
 
@@ -1144,34 +1144,43 @@ function getRandomImageFromSubfolders($folderPath) {
 			async function draw_map_from_current_images () {
 				var data = [];
 
-				var folder_elements = $("");
 				var $folders = $(".loading-thumbnail-search,.thumbnail_folder");
 
-				var nr_of_folders = $folders.length;
 				var folders_gone_through = 0;
+				var $filtered_folders = [];
 
 				$folders.each(async function (i, e) {
-					log(">>>", e, "<<<");
 					if(!is_hidden_or_has_hidden_parent(e)) {
-						var folder = decodeURIComponent($(e).parent()[0].href.replace(/.*\?folder=/, ""));
+						var link_element = $(e).parent()[0];
 
-						var url = `index.php?geolist=${folder}`;
-						var folder_data = await get_json_cached(url);
-
-						var _keys = Object.keys(folder_data);
-						if(_keys.length) {
-							for (var i = 0; i < _keys.length; i++) {
-								var this_data = folder_data[_keys[i]];
-
-								//log(this_data);
-
-								data.push(this_data);
-							}
+						if($(link_element).parent().hasClass("thumbnail_folder")) {
+							link_element = $(link_element).parent()[0];
 						}
 
-						folders_gone_through++;
+						if(link_element.hasAttribute("href")) {
+							$filtered_folders.push(link_element);
+						}
 					}
 				});
+
+				$filtered_folders.forEach(async function (e, i) {
+					var folder = decodeURIComponent($(e).attr("href").replace(/.*\?folder=/, ""));
+
+					var url = `index.php?geolist=${folder}`;
+					var folder_data = await get_json_cached(url);
+
+					var _keys = Object.keys(folder_data);
+					if(_keys.length) {
+						for (var i = 0; i < _keys.length; i++) {
+							var this_data = folder_data[_keys[i]];
+
+							data.push(this_data);
+						}
+					}
+
+					folders_gone_through++;
+				});
+
 
 				var img_elements = $("img");
 
@@ -1197,10 +1206,11 @@ function getRandomImageFromSubfolders($folderPath) {
 					}
 				});
 
-				while ($(".thumbnail_folder").length > folders_gone_through) {
+				while ($filtered_folders.length > folders_gone_through) {
 					await sleep(100);
 				}
 
+				log("$filtered_folders:", $filtered_folders);
 				//log("data:", data);
 
 				_draw_map(data);
