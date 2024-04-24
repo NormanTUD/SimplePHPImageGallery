@@ -1125,8 +1125,11 @@ function getRandomImageFromSubfolders($folderPath) {
 				var data = [];
 
 				var folder_elements = $("");
-				var done = 0;
-				await $(".thumbnail_folder").each(async function (i, e) {
+				var $folders = $(".thumbnail_folder");
+				var nr_of_folders = $folders.length;
+				var folders_gone_through = 0;
+
+				await $folders.each(async function (i, e) {
 					var folder = decodeURIComponent($(e).parent()[0].href.replace(/.*\?folder=/, ""));
 
 					var url = `index.php?geolist=${folder}`;
@@ -1136,11 +1139,14 @@ function getRandomImageFromSubfolders($folderPath) {
 					if(_keys.length) {
 						for (var i = 0; i < _keys.length; i++) {
 							var this_data = folder_data[_keys[i]];
+
+							//log(this_data);
+
 							data.push(this_data);
 						}
 					}
 
-					done = 1;
+					folders_gone_through++;
 				});
 
 				var img_elements = $("img");
@@ -1156,25 +1162,25 @@ function getRandomImageFromSubfolders($folderPath) {
 					var lon = $(e).data("longitude");
 
 					if(src && hash && lat && lon) {
-						data.push({
+						var this_data = {
 							"hash": hash,
 							"url": src,
 							"latitude": lat,
 							"longitude": lon
-						});
+						};
+
+						data.push(this_data);
 					}
 				});
 
 
-				if($(".thumbnail_folder").length == 0) {
-					done = 1;
-				}
 
-				while (!done) {
+
+				while ($(".thumbnail_folder").length > folders_gone_through) {
 					await sleep(100);
 				}
 
-				log("data:", data);
+				//log("data:", data);
 
 				_draw_map(data);
 
