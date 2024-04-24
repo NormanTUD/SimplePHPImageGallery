@@ -769,8 +769,8 @@ if(!file_exists($jquery_file)) {
 					}
 				}
 
-				// Starten der Suche nach einer Sekunde Verzögerung
-				searchTimer = setTimeout(performSearch, 1000);
+				// Starten der Suche nach 10 ms Verzögerung
+				searchTimer = setTimeout(performSearch, 10);
 			}
 
 			// Funktion zur Anzeige der Suchergebnisse
