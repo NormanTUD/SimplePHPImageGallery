@@ -341,11 +341,28 @@ function searchFiles($fp, $searchTerm) {
 
 // AJAX-Handler für die Suche
 if (isset($_GET['search'])) {
-	header('Content-type: application/json; charset=utf-8');
 	$searchTerm = $_GET['search'];
 	$results = array();
 	$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
 
+	$i = 0;
+	foreach ($results["files"] as $this_result) {
+		$path = $this_result["path"];
+		$type = $this_result["type"];
+
+		if($type == "file") {
+			$gps = get_image_gps($path);
+			if($gps) {
+				$results["files"][$i]["latitude"] = $gps["latitude"];
+				$results["files"][$i]["longitude"] = $gps["longitude"];
+			}
+			$results["files"][$i]["hash"] = md5($path);
+		}
+
+		$i++;
+	}
+
+	header('Content-type: application/json; charset=utf-8');
 	echo json_encode($results);
 	exit;
 }
@@ -802,8 +819,14 @@ function getRandomImageFromSubfolders($folderPath) {
 							var fileName = result.path.split('/').pop();
 							var image_line = `<div class="thumbnail" onclick="showImage('${result.path}')">`;
 
+							var gps_data_string = "";
+
+							if(result.latitude && result.longitude) { // TODO: was für Geocoords 0, 0?
+								gps_data_string = ` data-latitude="${result.latitude}" data-longitude="${result.longitude}" `;
+							}
+
 							// Ersetze das Vorschaubild mit einem Lade-Spinner
-							image_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
+							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${result.path}">`;
 
 							image_line += `</div>`;
 							$searchResults.append(image_line);
