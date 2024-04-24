@@ -1126,17 +1126,17 @@ function getRandomImageFromSubfolders($folderPath) {
 
 						markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
-						markers[hash].on('click', function() {
-							var text = "<img id='preview_" + hash + 
-								"' src='" +
-								url + 
-								"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-								url + "\");' />";
+						var text = "<img id='preview_" + hash + 
+							"' src='" +
+							url + 
+							"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
+							url + "\");' />";
 
-							var popup = L.popup().setContent(text);
+						eval(`markers['${hash}'].on('click', function() {
+							var popup = L.popup().setContent(\`${text}\`);
 
 							this.bindPopup(popup).openPopup();
-						});
+						});`);
 
 						markers[hash].addTo(map);
 
