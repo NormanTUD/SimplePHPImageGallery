@@ -1130,7 +1130,7 @@ function getRandomImageFromSubfolders($folderPath) {
 							"' src='" +
 							url + 
 							"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-							url + "\");' />";
+							url.replace(/index.php\?preview=/, "") + "\");' />";
 
 						eval(`markers['${hash}'].on('click', function() {
 							var popup = L.popup().setContent(\`${text}\`);
