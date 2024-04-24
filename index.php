@@ -446,7 +446,7 @@ if(!file_exists($jquery_file)) {
 	</head>
 	<body>
 		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
-		<button style="display: none" id="delete_search" onclick='delete_search(1)'>&#x2715;</button>
+		<button style="display: none" id="delete_search" onclick='delete_search()'>&#x2715;</button>
 <?php
 $filename = 'links.txt';
 
@@ -728,7 +728,7 @@ function getRandomImageFromSubfolders($folderPath) {
 
 			var searchTimer; // Stellen Sie sicher, dass searchTimer global verfügbar ist
 
-			function start_search() {
+			async function start_search() {
 				// Funktion zum Abbrechen der vorherigen Suchanfrage
 				function abortPreviousRequest() {
 					if (searchTimer) {
@@ -742,7 +742,7 @@ function getRandomImageFromSubfolders($folderPath) {
 				var searchTerm = $('#searchInput').val();
 
 				// Funktion zum Durchführen der Suchanfrage
-				function performSearch() {
+				async function performSearch() {
 					// Abbrechen der vorherigen Anfrage, falls vorhanden
 					abortPreviousRequest();
 
@@ -765,6 +765,7 @@ function getRandomImageFromSubfolders($folderPath) {
 						$("#delete_search").hide();
 						$("#searchResults").hide();
 						$("#gallery").show();
+						await draw_map_from_current_images();
 					}
 				}
 
@@ -1184,7 +1185,7 @@ function getRandomImageFromSubfolders($folderPath) {
 
 				var img_elements = $("img");
 
-				if ($("#searchResults").html().length) {
+				if ($("#searchResults").html().length && $("#searchResults").is(":visible")) {
 					img_elements = $("#searchResults").find("img");
 				}
 
@@ -1210,7 +1211,7 @@ function getRandomImageFromSubfolders($folderPath) {
 					await sleep(100);
 				}
 
-				log("$filtered_folders:", $filtered_folders);
+				//log("$filtered_folders:", $filtered_folders);
 				//log("data:", data);
 
 				_draw_map(data);
@@ -1265,13 +1266,9 @@ function getRandomImageFromSubfolders($folderPath) {
 				});
 			}
 
-			async function delete_search(trigger=0) {
+			async function delete_search() {
 				$("#searchInput").val("");
-				$("#delete_search").hide();
-				if(trigger) {
-					$("#searchInput").trigger("change");
-					await draw_map_from_current_images();
-				}
+				await start_search();
 			}
 
 			$(document).ready(async function() {
