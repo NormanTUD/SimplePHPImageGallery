@@ -1230,7 +1230,9 @@ function getRandomImageFromSubfolders($folderPath) {
 				$("#searchInput").val("");
 				$("#delete_search").hide();
 				if(trigger) {
-					$("#searchInput").trigger("change");
+					$("#searchInput").trigger("change").then(function () {
+						draw_map_from_current_images();
+					});
 				}
 			}
 
