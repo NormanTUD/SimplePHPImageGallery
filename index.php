@@ -1101,7 +1101,7 @@ function getRandomImageFromSubfolders($folderPath) {
 
 						var text = "<img id='preview_" + hash + 
 							"' src='index.php?preview=" +
-							url + 
+							url.replace(/index.php\?preview=/, "") +
 							"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
 							url.replace(/index.php\?preview=/, "") + "\");' />";
 
