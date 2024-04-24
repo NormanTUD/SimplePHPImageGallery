@@ -657,8 +657,17 @@ function displayGallery($fp) {
 
 	foreach ($images as $image) {
 		if(is_file($image["path"]) && is_valid_image_file($image["path"])) {
+			$gps = get_image_gps($image["path"]);
+			$hash = md5($image["path"]);
+
+			$gps_data_string = "";
+
+			if($gps) {
+				$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
+			}
+
 			echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-			echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
+			echo '<img data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . $image['path'] . '">';
 			echo "</div>\n";
 		}
 	}
@@ -1119,8 +1128,6 @@ function getRandomImageFromSubfolders($folderPath) {
 					var url = "index.php?geolist=1";
 					data = await get_json_cached(url);
 				} else {
-					var imgs = [];
-
 					var img_elements = $("img");
 
 					if ($("#searchResults").html().length) {
@@ -1129,25 +1136,22 @@ function getRandomImageFromSubfolders($folderPath) {
 
 					img_elements.each(function (i, e) {
 						var src = $(e).data("original-url");
-						if(src && src.match(/preview=/)) {
-							imgs.push(src.replace(/.*index.php\?preview=/, ""));
+						var hash = $(e).data("hash");
+						var lat = $(e).data("latitude");
+						var lon = $(e).data("longitude");
+
+						if(src && hash && lat && lon) {
+							data.push({
+								"hash": hash,
+								"url": src,
+								"latitude": lat,
+								"longitude": lon
+							});
 						}
-					});
-
-					imgs = [...new Set(imgs)];
-
-					for (var i = 0; i < imgs.length; i++) {
-						url = "index.php?geolist=" + imgs[i];
-
-						var res = await get_json_cached(url);
-
-						if(res && Object.keys(res).length) {
-							data.push(res[0]);
-						}
-					}
+					})
 				}
 
-				//log("show_all_available:", show_all_available, "data:", data);
+				log("show_all_available:", show_all_available, "data:", data);
 
 				draw_map(data);
 			}
@@ -1218,12 +1222,10 @@ function getRandomImageFromSubfolders($folderPath) {
 
 				if($is_startpage) {
 ?>
-//aaa
 					await draw_map_from_current_images(1);
 <?php
 				} else {
 ?>
-//bbb
 					await draw_map_from_current_images(0);
 <?php
 				}
