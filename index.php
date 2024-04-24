@@ -1100,7 +1100,7 @@ function getRandomImageFromSubfolders($folderPath) {
 						markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
 						var text = "<img id='preview_" + hash + 
-							"' src='" +
+							"' src='index.php?preview=" +
 							url + 
 							"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
 							url.replace(/index.php\?preview=/, "") + "\");' />";
