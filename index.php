@@ -1052,7 +1052,7 @@ function getRandomImageFromSubfolders($folderPath) {
 			}
 
 
-			function draw_map(data) {
+			function _draw_map(data) {
 				if(Object.keys(data).length == 0) {
 					$("#map_container").hide();
 					return;
@@ -1171,7 +1171,9 @@ function getRandomImageFromSubfolders($folderPath) {
 
 				//log("data:", data);
 
-				draw_map(data);
+				_draw_map(data);
+
+				return data;
 			}
 
 			function createBreadcrumb(currentFolderPath) {
@@ -1221,18 +1223,18 @@ function getRandomImageFromSubfolders($folderPath) {
 				});
 			}
 
-			function delete_search(trigger=0) {
+			async function delete_search(trigger=0) {
 				$("#searchInput").val("");
 				$("#delete_search").hide();
 				if(trigger) {
 					$("#searchInput").trigger("change");
-					draw_map_from_current_images();
+					await draw_map_from_current_images();
 				}
 			}
 
 			$(document).ready(async function() {
 				$("#delete_search").hide();
-				delete_search();
+				await delete_search();
 
 				loadAndReplaceImages();
 
