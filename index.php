@@ -720,20 +720,27 @@ function getRandomImageFromSubfolders($folderPath) {
 
 		<script>
 			var map = null;
-			var log = console.log;
-			var l = log;
+			const log = console.log;
+			const debug = console.debug;
+			const l = log;
 
 			var searchTimer; // Globale Variable für den Timer
 
-			function start_search() {
-				var searchTerm = $('#searchInput').val();
+			var searchTimer; // Stellen Sie sicher, dass searchTimer global verfügbar ist
 
+			function start_search() {
 				// Funktion zum Abbrechen der vorherigen Suchanfrage
 				function abortPreviousRequest() {
 					if (searchTimer) {
+						debug("Vorherigen Timer abgebrochen");
 						clearTimeout(searchTimer);
+						searchTimer = null;
 					}
 				}
+
+				abortPreviousRequest();
+
+				var searchTerm = $('#searchInput').val();
 
 				// Funktion zum Durchführen der Suchanfrage
 				function performSearch() {
@@ -747,9 +754,7 @@ function getRandomImageFromSubfolders($folderPath) {
 						$.ajax({
 						url: 'index.php',
 							type: 'GET',
-							data: {
-							search: searchTerm
-						},
+							data: { search: searchTerm },
 							success: async function (response) {
 								await displaySearchResults(searchTerm, response["files"]);
 							},
@@ -765,6 +770,7 @@ function getRandomImageFromSubfolders($folderPath) {
 				}
 
 				// Starten der Suche nach einer Sekunde Verzögerung
+				debug("Setze Timer für die Suche");
 				searchTimer = setTimeout(performSearch, 1000);
 			}
 
