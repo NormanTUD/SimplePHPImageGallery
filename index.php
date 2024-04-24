@@ -34,31 +34,6 @@ function dier ($msg) {
 	exit(0);
 }
 
-function convertToRelativePath($absolutePath) {
-	try {
-		// Erhalten des aktuellen Verzeichnisses
-		$currentDirectory = getcwd();
-
-		// Überprüfen, ob der angegebene Pfad im aktuellen Verzeichnis liegt
-		if (strpos($absolutePath, $currentDirectory) !== false) {
-			// Entfernen des aktuellen Verzeichnisses aus dem absoluten Pfad
-			$relativePath = str_replace($currentDirectory, '.', $absolutePath);
-
-			// Entfernen führender Schrägstriche oder Backslashes
-			$relativePath = ltrim($relativePath, '/\\');
-
-			return $relativePath;
-		} else {
-			// Wenn der angegebene Pfad nicht im aktuellen Verzeichnis liegt, Fehlermeldung ausgeben
-			throw new Exception("Der angegebene Pfad liegt nicht im aktuellen Verzeichnis.");
-		}
-	} catch (Exception $e) {
-		// Fehler abfangen und behandeln (hier: Logging und Warnung)
-		error_log("Fehler beim Konvertieren des absoluten Pfads in einen relativen Pfad: " . $e->getMessage());
-		echo "Fehler: " . $e->getMessage();
-	}
-}
-
 function getImagesInDirectory($directory) {
 	$images = [];
 
@@ -85,7 +60,7 @@ function getImagesInDirectory($directory) {
 				$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 				if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
 					// Bild zur Liste hinzufügen
-					$images[] = convertToRelativePath($filePath);
+					$images[] = $filePath;
 				}
 			}
 		}
@@ -97,14 +72,12 @@ function getImagesInDirectory($directory) {
 if (isset($_GET["geolist"])) {
 	$geolist = $_GET["geolist"];
 
-	$untested_files = explode(";;;", $geolist);
-
 	$files = [];
 
-	if ($_GET["geolist"] == "1") {
-		$currentDirectory = __DIR__;
-
-		$files = getImagesInDirectory($currentDirectory);
+	if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist)) {
+		$files = getImagesInDirectory($geolist);
+	} else {
+		die("Wrongly formed geolist: ".$geolist);
 	}
 
 	foreach ($untested_files as $file) {
@@ -849,7 +822,7 @@ function getRandomImageFromSubfolders($folderPath) {
 					$searchResults.append('<p>No results found.</p>');
 				}
 
-				await draw_map_from_current_images(0);
+				await draw_map_from_current_images();
 			}
 
 			var fullscreen;
@@ -1144,37 +1117,59 @@ function getRandomImageFromSubfolders($folderPath) {
 					}
 			}
 
-			async function draw_map_from_current_images (show_all_available) {
+			function sleep(ms) {
+				return new Promise(resolve => setTimeout(resolve, ms));
+			}
+
+			async function draw_map_from_current_images () {
 				var data = [];
 
-				if(show_all_available) {
-					var url = "index.php?geolist=1";
-					data = await get_json_cached(url);
-				} else {
-					var img_elements = $("img");
+				var img_elements = $("img");
 
-					if ($("#searchResults").html().length) {
-						img_elements = $("#searchResults").find("img");
-					}
-
-					img_elements.each(function (i, e) {
-						var src = $(e).data("original-url");
-						var hash = $(e).data("hash");
-						var lat = $(e).data("latitude");
-						var lon = $(e).data("longitude");
-
-						if(src && hash && lat && lon) {
-							data.push({
-								"hash": hash,
-								"url": src,
-								"latitude": lat,
-								"longitude": lon
-							});
-						}
-					})
+				if ($("#searchResults").html().length) {
+					img_elements = $("#searchResults").find("img");
 				}
 
-				//log("show_all_available:", show_all_available, "data:", data);
+				img_elements.each(function (i, e) {
+					var src = $(e).data("original-url");
+					var hash = $(e).data("hash");
+					var lat = $(e).data("latitude");
+					var lon = $(e).data("longitude");
+
+					if(src && hash && lat && lon) {
+						data.push({
+							"hash": hash,
+							"url": src,
+							"latitude": lat,
+							"longitude": lon
+						});
+					}
+				});
+
+				var folder_elements = $("");
+				var done = 0;
+				await $(".thumbnail_folder").each(async function (i, e) {
+					var folder = decodeURIComponent($(e).parent()[0].href.replace(/.*\?folder=/, ""));
+
+					var url = `index.php?geolist=${folder}`;
+					var folder_data = await get_json_cached(url);
+
+					var _keys = Object.keys(folder_data);
+					if(_keys.length) {
+						for (var i = 0; i < _keys.length; i++) {
+							var this_data = folder_data[_keys[i]];
+							data.push(this_data);
+						}
+					}
+
+					done = 1;
+				});
+
+				while (!done) {
+					await sleep(100);
+				}
+
+				//log("data:", data);
 
 				draw_map(data);
 			}
@@ -1246,11 +1241,11 @@ function getRandomImageFromSubfolders($folderPath) {
 
 				if($is_startpage) {
 ?>
-					await draw_map_from_current_images(1);
+					await draw_map_from_current_images();
 <?php
 				} else {
 ?>
-					await draw_map_from_current_images(0);
+					await draw_map_from_current_images();
 <?php
 				}
 ?>
