@@ -1236,19 +1236,7 @@ function getRandomImageFromSubfolders($folderPath) {
 
 				loadAndReplaceImages();
 
-<?php
-				$is_startpage = $_GET["folder"] == "./" || !isset($_GET["folder"]);
-
-				if($is_startpage) {
-?>
-					await draw_map_from_current_images();
-<?php
-				} else {
-?>
-					await draw_map_from_current_images();
-<?php
-				}
-?>
+				await draw_map_from_current_images();
 			});
 		</script>
 
