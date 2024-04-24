@@ -1165,6 +1165,10 @@ function getRandomImageFromSubfolders($folderPath) {
 					done = 1;
 				});
 
+				if($(".thumbnail_folder").length == 0) {
+					done = 1;
+				}
+
 				while (!done) {
 					await sleep(100);
 				}
