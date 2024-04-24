@@ -1096,30 +1096,34 @@ if(!file_exists($jquery_file)) {
 
 				var i = 0
 
-					while (i < keys.length) {
-						var element = data[keys[i]];
+				while (i < keys.length) {
+					var element = data[keys[i]];
 
-						var hash = element["hash"];
-						var url = element["url"];
+					var hash = element["hash"];
+					var url = element["url"];
 
-						markers[hash] = L.marker([element['latitude'], element['longitude']]);
+					markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
-						var text = "<img id='preview_" + hash + 
-							"' src='index.php?preview=" +
-							url.replace(/index.php\?preview=/, "") +
-							"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-							url.replace(/index.php\?preview=/, "") + "\");' />";
+					var text = "<img id='preview_" + hash + 
+						"' src='index.php?preview=" +
+						url.replace(/index.php\?preview=/, "") +
+						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
+						url.replace(/index.php\?preview=/, "") + "\");' />";
 
-						eval(`markers['${hash}'].on('click', function() {
-							var popup = L.popup().setContent(\`${text}\`);
+					eval(`markers['${hash}'].on('click', function(e) {
+						var popup = L.popup().setContent(\`${text}\`);
 
-							this.bindPopup(popup).openPopup();
-						});`);
+						this.bindPopup(popup).openPopup();
 
-						markers[hash].addTo(map);
+						markers['${hash}'].unbindPopup();
+					});`);
 
-						i++;
-					}
+					markers[hash].addTo(map);
+
+					i++;
+				}
+
+				return markers;
 			}
 
 			function sleep(ms) {
@@ -1214,9 +1218,12 @@ if(!file_exists($jquery_file)) {
 				//log("$filtered_folders:", $filtered_folders);
 				//log("data:", data);
 
-				_draw_map(data);
+				var markers = _draw_map(data);
 
-				return data;
+				return {
+					"data": data,
+					"markers": markers
+				};
 			}
 
 			function createBreadcrumb(currentFolderPath) {
