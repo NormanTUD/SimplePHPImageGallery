@@ -725,10 +725,17 @@ if(!file_exists($jquery_file)) {
 			const l = log;
 
 			var searchTimer; // Globale Variable für den Timer
-
-			var searchTimer; // Stellen Sie sicher, dass searchTimer global verfügbar ist
+			var lastSearch = "";
 
 			async function start_search() {
+				var searchTerm = $('#searchInput').val();
+
+				if(searchTerm == lastSearch) {
+					return;
+				}
+
+				lastSearch = searchTerm;
+
 				// Funktion zum Abbrechen der vorherigen Suchanfrage
 				function abortPreviousRequest() {
 					if (searchTimer) {
@@ -738,8 +745,6 @@ if(!file_exists($jquery_file)) {
 				}
 
 				abortPreviousRequest();
-
-				var searchTerm = $('#searchInput').val();
 
 				// Funktion zum Durchführen der Suchanfrage
 				async function performSearch() {
