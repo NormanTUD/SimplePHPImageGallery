@@ -988,12 +988,16 @@ if(!file_exists($jquery_file)) {
 				handleSwipe();
 			}, false);
 
+			function isZooming(event) {
+				return event.touches.length > 1;
+			}
+
 			function handleSwipe() {
 				var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
 
 				var deltaX = touchEndX - touchStartX;
 
-				if (Math.abs(deltaX) >= swipeThreshold) {
+				if (!isZooming(event) && Math.abs(deltaX) >= swipeThreshold) {
 					if (deltaX > 0) {
 						prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
 					} else {
@@ -1204,18 +1208,22 @@ if(!file_exists($jquery_file)) {
 					var folder = decodeURIComponent($(e).attr("href").replace(/.*\?folder=/, ""));
 
 					var url = `index.php?geolist=${folder}`;
-					var folder_data = await get_json_cached(url);
+					try {
+						var folder_data = await get_json_cached(url);
 
-					var _keys = Object.keys(folder_data);
-					if(_keys.length) {
-						for (var i = 0; i < _keys.length; i++) {
-							var this_data = folder_data[_keys[i]];
+						var _keys = Object.keys(folder_data);
+						if(_keys.length) {
+							for (var i = 0; i < _keys.length; i++) {
+								var this_data = folder_data[_keys[i]];
 
-							data.push(this_data);
+								data.push(this_data);
+							}
 						}
-					}
 
-					folders_gone_through++;
+						folders_gone_through++;
+					} catch (e) {
+						return;
+					}
 				});
 
 
