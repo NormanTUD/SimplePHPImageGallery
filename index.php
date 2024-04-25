@@ -370,6 +370,13 @@ if(!file_exists($jquery_file)) {
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			#searchInput {
+				width: 20vw;
+				height: 4vw;
+				max-height: 50px;
+				max-width: 400px;
+			}
+
 			#delete_search {
 				color: red;
 				background-color: #fafafa;
@@ -378,6 +385,10 @@ if(!file_exists($jquery_file)) {
 				border-radius: 5px;
 				margin: 3px;
 				padding: 3px;
+				width: 4vw;
+				height: 4vw;
+				max-height: 50px;
+				max-width: 50px;
 			}
 
 			a {
