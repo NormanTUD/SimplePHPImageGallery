@@ -1016,6 +1016,10 @@ if(!file_exists($jquery_file)) {
 			}
 
 			document.addEventListener('keydown', function(event) {
+				if($(fullscreen).is(":visible")) {
+					return;
+				}
+
 				var charCode = event.which || event.keyCode;
 				var charStr = String.fromCharCode(charCode);
 
@@ -1034,6 +1038,10 @@ if(!file_exists($jquery_file)) {
 			});
 
 			document.addEventListener('keypress', function(event) {
+				if($(fullscreen).is(":visible")) {
+					return;
+				}
+
 				var charCode = event.which || event.keyCode;
 				var charStr = String.fromCharCode(charCode);
 
