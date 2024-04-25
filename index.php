@@ -666,7 +666,7 @@ if(!file_exists($jquery_file)) {
 			foreach ($thumbnails as $thumbnail) {
 				if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
 					echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
-					echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . encodeURIComponent($thumbnail['thumbnail']) . '">';
+					echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 					echo '<h3>' . $thumbnail['name'] . '</h3>';
 					echo "</div></a>\n";
 				}
@@ -1159,9 +1159,9 @@ if(!file_exists($jquery_file)) {
 
 					var text = "<img id='preview_" + hash + 
 						"' src='index.php?preview=" +
-						url.replace(/index.php\?preview=/, "") +
+						encodeURIComponent(url.replace(/index.php\?preview=/, "")) +
 						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-						url.replace(/index.php\?preview=/, "") + "\");' />";
+						encodeURIComponent(url.replace(/index.php\?preview=/, "")) + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
 						var popup = L.popup().setContent(\`${text}\`);
