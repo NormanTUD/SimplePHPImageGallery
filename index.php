@@ -981,28 +981,37 @@ if(!file_exists($jquery_file)) {
 
 			document.addEventListener('touchstart', function(event) {
 				touchStartX = event.touches[0].clientX;
+				touchStartY = event.touches[0].clientY; // Speichere auch die Start-Y-Position
 			}, false);
 
 			document.addEventListener('touchend', function(event) {
 				touchEndX = event.changedTouches[0].clientX;
-				handleSwipe();
+				touchEndY = event.changedTouches[0].clientY; // Speichere auch die End-Y-Position
+				handleSwipe(event); // Übergebe das Event-Objekt an die handleSwipe-Funktion
 			}, false);
 
 			function isZooming(event) {
 				return event.touches.length > 1;
 			}
 
-			function handleSwipe() {
+			function handleSwipe(event) { // Übernimm das Event-Objekt als Parameter
 				var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
 
 				var deltaX = touchEndX - touchStartX;
+				var deltaY = touchEndY - touchStartY;
+				var absDeltaX = Math.abs(deltaX);
+				var absDeltaY = Math.abs(deltaY);
 
-				if (!isZooming(event) && Math.abs(deltaX) >= swipeThreshold) {
+				if (!isZooming(event) && absDeltaX >= swipeThreshold && absDeltaX > absDeltaY) {
 					if (deltaX > 0) {
 						prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
 					} else {
 						next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
 					}
+				}
+
+				if (isZooming(event)) {
+					event.preventDefault(); // Verhindere das Standardverhalten des Events, wenn das Zoomen erkannt wird
 				}
 			}
 
