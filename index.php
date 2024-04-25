@@ -242,6 +242,20 @@ function searchImageFileByTXT($txtFilePath) {
 	return null;
 }
 
+function sortAndCleanString($inputString) {
+	// Leerzeichen am Anfang und Ende entfernen und doppelte Leerzeichen zusammenführen
+	$cleanedString = trim(preg_replace('/\s+/', ' ', $inputString));
+
+	// String in ein Array von Wörtern aufteilen und alphabetisch sortieren
+	$wordsArray = explode(' ', $cleanedString);
+	sort($wordsArray);
+
+	// Array von Wörtern zu einem String mit Leerzeichen als Trennzeichen zusammenführen
+	$sortedString = implode(' ', $wordsArray);
+
+	return $sortedString;
+}
+
 // Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 function searchFiles($fp, $searchTerm) {
 	$results = [];
@@ -255,6 +269,8 @@ function searchFiles($fp, $searchTerm) {
 	if(is_bool($files)) {
 		return [];
 	}
+
+	$searchTerm = sortAndCleanString($searchTerm);
 
 	$searchTermLower = strtolower($searchTerm);
 	$normalized = normalize_special_characters($searchTerm);
@@ -287,7 +303,7 @@ function searchFiles($fp, $searchTerm) {
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 			if ($fileExtension === 'txt') {
-				$textContent = file_get_contents($filePath);
+				$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
 				if (stripos($textContent, $searchTermLower) !== false || stripos(normalize_special_characters($textContent), $normalized) !== false) {
 					$imageFilePath = searchImageFileByTXT($filePath);
 
