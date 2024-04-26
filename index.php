@@ -1391,8 +1391,8 @@ if(!file_exists($jquery_file)) {
 						link.classList.add("breadcrumb_nav");
 						link.textContent = decodeURI(folderName);
 
-						eval(`$(link).on("click", function () {
-							load_folder("${fullPath}")
+						eval(`$(link).on("click", async function () {
+							await load_folder("${fullPath}")
 						});`);
 
 						breadcrumb.appendChild(link);
