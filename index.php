@@ -353,7 +353,7 @@
 
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
-				echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
+				echo '<a onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
 				echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
 				echo "</div></a>\n";
@@ -1124,9 +1124,6 @@ if(!file_exists($jquery_file)) {
 
 					// Die aktualisierte URL in der Adressleiste setzen
 					window.history.replaceState(null, null, currentUrl);
-
-					// Loggen der erfolgreichen Aktualisierung
-					console.log('URL parameter "folder" updated successfully.');
 				} catch (error) {
 					// Fehlerbehandlung
 					console.warn('An error occurred while updating URL parameter "folder":', error);
