@@ -355,6 +355,252 @@
 		echo json_encode($results);
 		exit;
 	}
+
+	function getCoord( $expr ) {
+		$expr_p = explode( '/', $expr );
+
+		if (count($expr_p) == 2) {
+			if($expr_p[1]) {
+				return $expr_p[0] / $expr_p[1];
+			}
+		}
+
+		return null;
+	}
+
+	function convertToDecimalLatitude($degrees, $minutes, $seconds, $direction) {
+		// Convert degrees, minutes, and seconds to decimal
+		$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
+
+		// Adjust sign based on direction (N or S)
+		if ($direction == 'S') {
+			$decimal *= -1;
+		}
+
+		return $decimal;
+	}
+
+	function convertToDecimalLongitude($degrees, $minutes, $seconds, $direction) {
+		// Convert degrees, minutes, and seconds to decimal
+		$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
+
+		// Adjust sign based on direction (E or W)
+		if ($direction == 'W') {
+			$decimal *= -1;
+		}
+
+		return $decimal;
+	}
+
+	function get_image_gps($img) {
+		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+
+		if(is_dir("/docker_tmp/")) {
+			$cacheFolder = "/docker_tmp/";
+		}
+
+		$cache_file = "$cacheFolder/".md5($img).".json";
+
+		if (file_exists($cache_file)) {
+			return json_decode(file_get_contents($cache_file), true);
+		}
+
+		$exif = @exif_read_data($img, 0, true);
+
+		if (empty($exif["GPS"])) {
+			return null;
+		}
+
+		$latitude = array();
+		$longitude = array();
+
+		if (empty($exif['GPS']['GPSLatitude'])) {
+			return null;
+		}
+
+		// Latitude
+		$latitude['degrees'] = getCoord($exif['GPS']['GPSLatitude'][0]);
+		if(is_null($latitude["degrees"])) { return null; }
+		$latitude['minutes'] = getCoord($exif['GPS']['GPSLatitude'][1]);
+		if(is_null($latitude["minutes"])) { return null; }
+		$latitude['seconds'] = getCoord($exif['GPS']['GPSLatitude'][2]);
+		if(is_null($latitude["seconds"])) { return null; }
+		$latitude_direction = $exif['GPS']['GPSLatitudeRef'];
+
+		// Longitude
+		$longitude['degrees'] = getCoord($exif['GPS']['GPSLongitude'][0]);
+		if(is_null($longitude["degrees"])) { return null; }
+		$longitude['minutes'] = getCoord($exif['GPS']['GPSLongitude'][1]);
+		if(is_null($longitude["minutes"])) { return null; }
+		$longitude['seconds'] = getCoord($exif['GPS']['GPSLongitude'][2]);
+		if(is_null($longitude["seconds"])) { return null; }
+		$longitude_direction = $exif['GPS']['GPSLongitudeRef'];
+
+		$res = array(
+			"latitude" => convertToDecimalLatitude($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
+			"longitude" => convertToDecimalLongitude($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
+		);
+
+		if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
+			return null;
+		}
+
+		$json_data = json_encode($res);
+
+		file_put_contents($cache_file, $json_data);
+
+		return $res;
+	}
+
+	function is_valid_image_file ($filepath) {
+		if(!is_readable($filepath)) {
+			return false;
+		}
+
+		$finfo = finfo_open(FILEINFO_MIME_TYPE);
+		$type = finfo_file($finfo, $filepath);
+
+		if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif"))) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	function displayGallery($fp) {
+		if(!is_dir($fp)) {
+			print("Folder not found");
+			return [];
+		}
+
+		$files = scandir($fp);
+
+		$thumbnails = [];
+		$images = [];
+
+		foreach ($files as $file) {
+			if ($file === '.' || $file === '..'  || preg_match("/^\./", $file) || $file === "thumbnails_cache") {
+				continue;
+			}
+
+			$filePath = $fp . '/' . $file;
+
+			if (is_dir($filePath)) {
+				$folderImages = getImagesInFolder($filePath);
+
+				if (empty($folderImages)) {
+					// If the folder itself doesn't have images, try to get a random image from subfolders
+					$randomImage = getRandomImageFromSubfolders($filePath);
+					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
+				} else {
+					$randomImage = $folderImages[array_rand($folderImages)];
+					$thumbnailPath = $randomImage['path'];
+				}
+
+				$thumbnails[] = [
+					'name' => $file,
+					'thumbnail' => $thumbnailPath,
+					'path' => $filePath
+				];
+			} else {
+				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+				if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+					$images[] = [
+						'name' => $file,
+						'path' => $filePath
+					];
+				}
+			}
+		}
+
+		usort($thumbnails, function ($a, $b) {
+			return strcmp($a['name'], $b['name']);
+		});
+		usort($images, function ($a, $b) {
+			return strcmp($a['name'], $b['name']);
+		});
+
+		foreach ($thumbnails as $thumbnail) {
+			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
+				echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
+				echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
+				echo '<h3>' . $thumbnail['name'] . '</h3>';
+				echo "</div></a>\n";
+			}
+		}
+
+		foreach ($images as $image) {
+			if(is_file($image["path"]) && is_valid_image_file($image["path"])) {
+				$gps = get_image_gps($image["path"]);
+				$hash = md5($image["path"]);
+
+				$gps_data_string = "";
+
+				if($gps) {
+					$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
+				}
+
+				echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
+				echo '<img data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				echo "</div>\n";
+			}
+		}
+	}
+
+	function getImagesInFolder($folderPath) {
+		$folderFiles = @scandir($folderPath);
+
+		if(is_bool($folderFiles)) {
+			return [];
+		}
+
+		$images = [];
+
+		foreach ($folderFiles as $file) {
+			if ($file === '.' || $file === '..') {
+				continue;
+			}
+
+			$filePath = $folderPath . '/' . $file;
+
+			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+			if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+				$images[] = [
+					'name' => $file,
+					'path' => $filePath
+				];
+			}
+		}
+
+		return $images;
+	}
+
+	function getRandomImageFromSubfolders($folderPath) {
+		$subfolders = glob($folderPath . '/*', GLOB_ONLYDIR);
+
+		if (count($subfolders) == 0) {
+			$images = getImagesInFolder($folderPath);
+
+			if (!empty($images)) {
+				return $images[array_rand($images)];
+			}
+		} else {
+			foreach ($subfolders as $subfolder) {
+				$images_in_folder = getImagesInFolder($subfolder);
+				if(count($images_in_folder)) {
+					$images[] = $images_in_folder[0];
+				}
+			}
+
+			if (!empty($images)) {
+				return $images[array_rand($images)];
+			}
+		}
+
+		return null;
+	}
 ?>
 <!DOCTYPE html>
 <html>
@@ -498,251 +744,6 @@ if(!file_exists($jquery_file)) {
 		<div id="breadcrumb"></div>
 
 <?php
-		function getCoord( $expr ) {
-			$expr_p = explode( '/', $expr );
-
-			if (count($expr_p) == 2) {
-				if($expr_p[1]) {
-					return $expr_p[0] / $expr_p[1];
-				}
-			}
-
-			return null;
-		}
-
-		function convertToDecimalLatitude($degrees, $minutes, $seconds, $direction) {
-			// Convert degrees, minutes, and seconds to decimal
-			$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
-
-			// Adjust sign based on direction (N or S)
-			if ($direction == 'S') {
-				$decimal *= -1;
-			}
-
-			return $decimal;
-		}
-
-		function convertToDecimalLongitude($degrees, $minutes, $seconds, $direction) {
-			// Convert degrees, minutes, and seconds to decimal
-			$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
-
-			// Adjust sign based on direction (E or W)
-			if ($direction == 'W') {
-				$decimal *= -1;
-			}
-
-			return $decimal;
-		}
-
-		function get_image_gps($img) {
-			$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
-
-			if(is_dir("/docker_tmp/")) {
-				$cacheFolder = "/docker_tmp/";
-			}
-
-			$cache_file = "$cacheFolder/".md5($img).".json";
-
-			if (file_exists($cache_file)) {
-				return json_decode(file_get_contents($cache_file), true);
-			}
-
-			$exif = @exif_read_data($img, 0, true);
-
-			if (empty($exif["GPS"])) {
-				return null;
-			}
-
-			$latitude = array();
-			$longitude = array();
-
-			if (empty($exif['GPS']['GPSLatitude'])) {
-				return null;
-			}
-
-			// Latitude
-			$latitude['degrees'] = getCoord($exif['GPS']['GPSLatitude'][0]);
-			if(is_null($latitude["degrees"])) { return null; }
-			$latitude['minutes'] = getCoord($exif['GPS']['GPSLatitude'][1]);
-			if(is_null($latitude["minutes"])) { return null; }
-			$latitude['seconds'] = getCoord($exif['GPS']['GPSLatitude'][2]);
-			if(is_null($latitude["seconds"])) { return null; }
-			$latitude_direction = $exif['GPS']['GPSLatitudeRef'];
-
-			// Longitude
-			$longitude['degrees'] = getCoord($exif['GPS']['GPSLongitude'][0]);
-			if(is_null($longitude["degrees"])) { return null; }
-			$longitude['minutes'] = getCoord($exif['GPS']['GPSLongitude'][1]);
-			if(is_null($longitude["minutes"])) { return null; }
-			$longitude['seconds'] = getCoord($exif['GPS']['GPSLongitude'][2]);
-			if(is_null($longitude["seconds"])) { return null; }
-			$longitude_direction = $exif['GPS']['GPSLongitudeRef'];
-
-			$res = array(
-				"latitude" => convertToDecimalLatitude($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
-				"longitude" => convertToDecimalLongitude($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
-			);
-
-			if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
-				return null;
-			}
-
-			$json_data = json_encode($res);
-
-			file_put_contents($cache_file, $json_data);
-
-			return $res;
-		}
-
-		function is_valid_image_file ($filepath) {
-			if(!is_readable($filepath)) {
-				return false;
-			}
-
-			$finfo = finfo_open(FILEINFO_MIME_TYPE);
-			$type = finfo_file($finfo, $filepath);
-
-			if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif"))) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-
-		function displayGallery($fp) {
-			if(!is_dir($fp)) {
-				print("Folder not found");
-				return [];
-			}
-
-			$files = scandir($fp);
-
-			$thumbnails = [];
-			$images = [];
-
-			foreach ($files as $file) {
-				if ($file === '.' || $file === '..'  || preg_match("/^\./", $file) || $file === "thumbnails_cache") {
-					continue;
-				}
-
-				$filePath = $fp . '/' . $file;
-
-				if (is_dir($filePath)) {
-					$folderImages = getImagesInFolder($filePath);
-
-					if (empty($folderImages)) {
-						// If the folder itself doesn't have images, try to get a random image from subfolders
-						$randomImage = getRandomImageFromSubfolders($filePath);
-						$thumbnailPath = $randomImage ? $randomImage['path'] : '';
-					} else {
-						$randomImage = $folderImages[array_rand($folderImages)];
-						$thumbnailPath = $randomImage['path'];
-					}
-
-					$thumbnails[] = [
-						'name' => $file,
-						'thumbnail' => $thumbnailPath,
-						'path' => $filePath
-					];
-				} else {
-					$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-					if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-						$images[] = [
-							'name' => $file,
-							'path' => $filePath
-						];
-					}
-				}
-			}
-
-			usort($thumbnails, function ($a, $b) {
-				return strcmp($a['name'], $b['name']);
-			});
-			usort($images, function ($a, $b) {
-				return strcmp($a['name'], $b['name']);
-			});
-
-			foreach ($thumbnails as $thumbnail) {
-				if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
-					echo '<a href="?folder=' . urlencode($thumbnail['path']) . '"><div class="thumbnail_folder">';
-					echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
-					echo '<h3>' . $thumbnail['name'] . '</h3>';
-					echo "</div></a>\n";
-				}
-			}
-
-			foreach ($images as $image) {
-				if(is_file($image["path"]) && is_valid_image_file($image["path"])) {
-					$gps = get_image_gps($image["path"]);
-					$hash = md5($image["path"]);
-
-					$gps_data_string = "";
-
-					if($gps) {
-						$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
-					}
-
-					echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-					echo '<img data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
-					echo "</div>\n";
-				}
-			}
-		}
-
-		function getImagesInFolder($folderPath) {
-			$folderFiles = @scandir($folderPath);
-
-			if(is_bool($folderFiles)) {
-				return [];
-			}
-
-			$images = [];
-
-			foreach ($folderFiles as $file) {
-				if ($file === '.' || $file === '..') {
-					continue;
-				}
-
-				$filePath = $folderPath . '/' . $file;
-
-				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-				if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-					$images[] = [
-						'name' => $file,
-						'path' => $filePath
-					];
-				}
-			}
-
-			return $images;
-		}
-
-		function getRandomImageFromSubfolders($folderPath) {
-			$subfolders = glob($folderPath . '/*', GLOB_ONLYDIR);
-
-			if (count($subfolders) == 0) {
-				$images = getImagesInFolder($folderPath);
-
-				if (!empty($images)) {
-					return $images[array_rand($images)];
-				}
-			} else {
-				foreach ($subfolders as $subfolder) {
-					$images_in_folder = getImagesInFolder($subfolder);
-					if(count($images_in_folder)) {
-						$images[] = $images_in_folder[0];
-					}
-				}
-
-				if (!empty($images)) {
-					return $images[array_rand($images)];
-				}
-			}
-
-			return null;
-		}
 ?>
 
 		<script>
