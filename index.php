@@ -1235,6 +1235,9 @@ if(!file_exists($jquery_file)) {
 			var json_cache = {};
 
 			function showPageLoadingIndicator() {
+				if($(".loading-indicator").length) {
+					return;
+				}
 				const loadingIndicator = document.createElement('div');
 				loadingIndicator.classList.add('loading-indicator');
 				document.body.appendChild(loadingIndicator);
