@@ -1221,7 +1221,6 @@ if(!file_exists($jquery_file)) {
 				await _promise;
 
 				hidePageLoadingIndicator();
-
 			}
 		</script>
 
@@ -1241,6 +1240,8 @@ if(!file_exists($jquery_file)) {
 				loadingIndicator.classList.add('loading-indicator');
 				document.body.appendChild(loadingIndicator);
 			}
+
+			showPageLoadingIndicator();
 
 			function hidePageLoadingIndicator() {
 				const loadingIndicator = document.querySelector('.loading-indicator');
@@ -1536,7 +1537,6 @@ if(!file_exists($jquery_file)) {
 			$(document).ready(async function() {
 				$("#delete_search").hide();
 				addLinkHighlightEffect();
-				showPageLoadingIndicator();
 				await delete_search();
 
 				await load_folder(getCurrentFolderParameter());
