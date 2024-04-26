@@ -842,6 +842,7 @@ if(!file_exists($jquery_file)) {
 							success: async function (response) {
 								await displaySearchResults(searchTerm, response["files"]);
 								customizeCursorForLinks();
+								hidePageLoadingIndicator();
 							},
 							error: function (xhr, status, error) {
 								console.error(error);
@@ -853,8 +854,6 @@ if(!file_exists($jquery_file)) {
 						$("#gallery").show();
 						await draw_map_from_current_images();
 					}
-
-					hidePageLoadingIndicator();
 				}
 
 				// Starten der Suche nach 10 ms Verzögerung
