@@ -828,7 +828,7 @@ if(!file_exists($jquery_file)) {
 						if (result.type === 'folder') {
 							var folderThumbnail = result.thumbnail;
 							if (folderThumbnail) {
-								var folder_line = `<a href="?folder=${encodeURI(result.path)}"><div class="thumbnail_folder">`;
+								var folder_line = `<a onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 								// Ersetze das Vorschaubild mit einem Lade-Spinner
 								folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${encodeURIComponent(folderThumbnail)}">`;
