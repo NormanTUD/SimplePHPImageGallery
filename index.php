@@ -1289,7 +1289,7 @@ if(!file_exists($jquery_file)) {
 				return false;
 			}
 
-			async function draw_map_from_current_images () {
+			async function get_map_data () {
 				var data = [];
 
 				var $folders = $(".loading-thumbnail-search,.thumbnail_folder");
@@ -1360,6 +1360,12 @@ if(!file_exists($jquery_file)) {
 				while ($filtered_folders.length > folders_gone_through) {
 					await sleep(100);
 				}
+
+				return data;
+			}
+
+			async function draw_map_from_current_images () {
+				var data = await get_map_data();
 
 				//log("$filtered_folders:", $filtered_folders);
 				//log("data:", data);
