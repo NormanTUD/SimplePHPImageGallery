@@ -330,7 +330,8 @@
 				$thumbnails[] = [
 					'name' => $file,
 					'thumbnail' => $thumbnailPath,
-					'path' => $filePath
+					'path' => $filePath,
+					"counted_thumbs" => count($folderImages)
 				];
 			} else {
 				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
@@ -354,7 +355,7 @@
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
 				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
-				echo '<img data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
+				echo '<img title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
 				echo "</div></a>\n";
 			}
