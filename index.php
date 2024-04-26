@@ -627,6 +627,27 @@ if(!file_exists($jquery_file)) {
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			@keyframes aurora {
+				0% {
+					background-color: #4e54c8; /* Dunkelblau */
+				}
+				50% {
+					background-color: #8f94fb; /* Hellblau */
+				}
+				100% {
+					background-color: #4e54c8; /* Dunkelblau */
+				}
+			}
+
+			.loading-indicator {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 10px;
+				animation: aurora 3s infinite;
+			}
+
 			.loading-thumbnail:hover {
 				transform: scale(1.1); /* Example of hover effect */
 			}
@@ -808,6 +829,8 @@ if(!file_exists($jquery_file)) {
 					// Abbrechen der vorherigen Anfrage, falls vorhanden
 					abortPreviousRequest();
 
+					showPageLoadingIndicator();
+
 					if (!/^\s*$/.test(searchTerm)) {
 						$("#delete_search").show();
 						$("#searchResults").show();
@@ -830,6 +853,8 @@ if(!file_exists($jquery_file)) {
 						$("#gallery").show();
 						await draw_map_from_current_images();
 					}
+
+					hidePageLoadingIndicator();
 				}
 
 				// Starten der Suche nach 10 ms Verzögerung
@@ -1179,6 +1204,8 @@ if(!file_exists($jquery_file)) {
 			async function load_folder (folder) {
 				updateUrlParameter(folder);
 
+				showPageLoadingIndicator()
+
 				var content = url_content("index.php?gallery=" + folder);
 
 				$("#searchInput").val("");
@@ -1194,6 +1221,8 @@ if(!file_exists($jquery_file)) {
 
 				await _promise;
 
+				hidePageLoadingIndicator();
+
 			}
 		</script>
 
@@ -1204,6 +1233,20 @@ if(!file_exists($jquery_file)) {
 
 		<script>
 			var json_cache = {};
+
+			function showPageLoadingIndicator() {
+				const loadingIndicator = document.createElement('div');
+				loadingIndicator.classList.add('loading-indicator');
+				document.body.appendChild(loadingIndicator);
+			}
+
+			function hidePageLoadingIndicator() {
+				const loadingIndicator = document.querySelector('.loading-indicator');
+				if (loadingIndicator) {
+					loadingIndicator.remove();
+				}
+			}
+
 
 			function customizeCursorForLinks() {
 				const links = document.querySelectorAll('a');
@@ -1491,9 +1534,11 @@ if(!file_exists($jquery_file)) {
 			$(document).ready(async function() {
 				$("#delete_search").hide();
 				addLinkHighlightEffect();
+				showPageLoadingIndicator();
 				await delete_search();
 
-				await load_folder(getCurrentFolderParameter())
+				await load_folder(getCurrentFolderParameter());
+				hidePageLoadingIndicator();
 			});
 		</script>
 
