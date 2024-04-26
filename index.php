@@ -831,7 +831,7 @@ if(!file_exists($jquery_file)) {
 								var folder_line = `<a class='img_element' onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 								// Ersetze das Vorschaubild mit einem Lade-Spinner
-								folder_line += `<img class='img_element' src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-line="Y" data-original-url="index.php?preview=${encodeURIComponent(folderThumbnail)}">`;
+								folder_line += `<img class='img_element' src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-line="Y" data-original-url="index.php?preview=${folderThumbnail}">`;
 
 								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 								$searchResults.append(folder_line);
