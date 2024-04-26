@@ -1388,8 +1388,11 @@ if(!file_exists($jquery_file)) {
 
 						var link = document.createElement('a');
 						link.classList.add("breadcrumb_nav");
-						link.href = '?folder=' + encodeURIComponent(fullPath);
 						link.textContent = folderName;
+
+						eval(`$(link).on("click", function () {
+							load_folder("${fullPath}")
+						});`);
 
 						breadcrumb.appendChild(link);
 
