@@ -1245,9 +1245,9 @@ if(!file_exists($jquery_file)) {
 
 					var text = "<img id='preview_" + hash + 
 						"' src='index.php?preview=" +
-						encodeURIComponent(url.replace(/index.php\?preview=/, "")) +
+						url.replace(/index.php\?preview=/, "") +
 						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-						encodeURIComponent(url.replace(/index.php\?preview=/, "")) + "\");' />";
+						url.replace(/index.php\?preview=/, "") + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
 						var popup = L.popup().setContent(\`${text}\`);
