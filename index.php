@@ -1093,6 +1093,31 @@ if(!file_exists($jquery_file)) {
 				}
 			});
 
+			function url_content (strUrl) {
+				var strReturn = "";
+
+				jQuery.ajax({
+					url: strUrl,
+					success: function(html) {
+						strReturn = html;
+					},
+					async:false
+				});
+
+				return strReturn;
+			}
+
+			async function load_folder (folder) {
+				var content = url_content("index.php?gallery=" + folder);
+
+				$("#gallery").html(content);
+
+				var _promise = draw_map_from_current_images();
+
+				loadAndReplaceImages();
+
+				await _promise;
+			}
 		</script>
 
 		<!-- Ergebnisse der Suche hier einfügen -->
