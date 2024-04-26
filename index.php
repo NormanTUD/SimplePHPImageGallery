@@ -626,6 +626,10 @@ if(!file_exists($jquery_file)) {
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			.loading-thumbnail:hover {
+				transform: scale(1.1); /* Example of hover effect */
+			}
+
 			#searchInput {
 				width: 20vw;
 				height: 4vw;
