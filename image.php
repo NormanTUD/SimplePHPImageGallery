@@ -8,7 +8,7 @@ if (is_dir($images_path)) {
 
 $filepath = $_GET["path"];
 
-if (preg_match("/\.\./", $filepath)) {
+if (preg_match("/\.\.\//", $filepath)) {
 	echo "Nice try";
 	exit(1);
 }
