@@ -353,7 +353,7 @@
 
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
-				echo '<a onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
+				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
 				echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
 				echo "</div></a>\n";
@@ -1301,14 +1301,14 @@ if(!file_exists($jquery_file)) {
 							link_element = $(link_element).parent()[0];
 						}
 
-						if(link_element.hasAttribute("href")) {
+						if($(link_element).hasClass("img_element")) {
 							$filtered_folders.push(link_element);
 						}
 					}
 				});
 
 				$filtered_folders.forEach(async function (e, i) {
-					var folder = decodeURIComponent($(e).attr("href").replace(/.*\?folder=/, ""));
+					var folder = decodeURIComponent($(e).data("href").replace(/.*\?folder=/, ""));
 
 					var url = `index.php?geolist=${folder}`;
 					try {
