@@ -828,17 +828,17 @@ if(!file_exists($jquery_file)) {
 						if (result.type === 'folder') {
 							var folderThumbnail = result.thumbnail;
 							if (folderThumbnail) {
-								var folder_line = `<a onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
+								var folder_line = `<a class='img_element' onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 								// Ersetze das Vorschaubild mit einem Lade-Spinner
-								folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${encodeURIComponent(folderThumbnail)}">`;
+								folder_line += `<img class='img_element' src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${encodeURIComponent(folderThumbnail)}">`;
 
 								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 								$searchResults.append(folder_line);
 							}
 						} else if (result.type === 'file') {
 							var fileName = result.path.split('/').pop();
-							var image_line = `<div class="thumbnail" href="${result.path}" onclick="showImage('${result.path}')">`;
+							var image_line = `<div class="thumbnail" class='img_element' href="${result.path}" onclick="showImage('${result.path}')">`;
 
 							var gps_data_string = "";
 
@@ -1312,7 +1312,7 @@ if(!file_exists($jquery_file)) {
 				});
 
 				$filtered_folders.forEach(async function (e, i) {
-					var folder = decodeURIComponent($(e).data("href").replace(/.*\?folder=/, ""));
+					var folder = decodeURIComponent($(e).data("href"));
 
 					var url = `index.php?geolist=${folder}`;
 					try {
@@ -1356,6 +1356,8 @@ if(!file_exists($jquery_file)) {
 						data.push(this_data);
 					}
 				});
+
+				log("$filtered_folders:", $filtered_folders);
 
 				while ($filtered_folders.length > folders_gone_through) {
 					await sleep(100);
