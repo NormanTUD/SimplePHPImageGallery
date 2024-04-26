@@ -354,7 +354,7 @@
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
 				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
-				echo '<img draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
+				echo '<img data-line="<?php print __LINE__; ?>" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
 				echo "</div></a>\n";
 			}
@@ -372,7 +372,7 @@
 				}
 
 				echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-				echo '<img data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				echo '<img data-line="<?php print __LINE__; ?>" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
 				echo "</div>\n";
 			}
 		}
@@ -831,7 +831,7 @@ if(!file_exists($jquery_file)) {
 								var folder_line = `<a class='img_element' onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 								// Ersetze das Vorschaubild mit einem Lade-Spinner
-								folder_line += `<img class='img_element' src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${encodeURIComponent(folderThumbnail)}">`;
+								folder_line += `<img class='img_element' src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-line="Y" data-original-url="index.php?preview=${encodeURIComponent(folderThumbnail)}">`;
 
 								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
 								$searchResults.append(folder_line);
@@ -847,7 +847,7 @@ if(!file_exists($jquery_file)) {
 							}
 
 							// Ersetze das Vorschaubild mit einem Lade-Spinner
-							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-original-url="index.php?preview=${encodeURIComponent(result.path)}">`;
+							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-line='X' data-original-url="index.php?preview=${encodeURIComponent(result.path)}">`;
 
 							image_line += `</div>`;
 							$searchResults.append(image_line);
@@ -1248,10 +1248,10 @@ if(!file_exists($jquery_file)) {
 					markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
 					var text = "<img id='preview_" + hash + 
-						"' src='index.php?preview=" +
-						url.replace(/index.php\?preview=/, "") +
+						"' data-line='__A__' src='index.php?preview=" +
+						decodeURI(url.replace(/index.php\?preview=/, "")) +
 						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
-						url.replace(/index.php\?preview=/, "") + "\");' />";
+						decodeURI(url.replace(/index.php\?preview=/, "")) + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
 						var popup = L.popup().setContent(\`${text}\`);
