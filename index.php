@@ -1347,10 +1347,10 @@ if(!file_exists($jquery_file)) {
 					}
 				});
 
-				log("filtered_img_elements:", filtered_img_elements);
+				//log("filtered_img_elements:", filtered_img_elements);
 
 				filtered_img_elements.forEach(function (e, i) {
-					log(e);
+					//log(e);
 					var src = $(e).data("original-url");
 					var hash = $(e).data("hash");
 					var lat = $(e).data("latitude");
@@ -1371,7 +1371,7 @@ if(!file_exists($jquery_file)) {
 				while ($filtered_folders.length > folders_gone_through) {
 					await sleep(100);
 				}
-				log("filtered_folders: ", $filtered_folders);
+				//log("filtered_folders: ", $filtered_folders);
 
 				return data;
 			}
