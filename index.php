@@ -710,6 +710,7 @@ if(!file_exists($jquery_file)) {
 			}
 
 			#breadcrumb {
+				font-size: 2.7vw;
 				padding: 10px;
 			}
 
