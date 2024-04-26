@@ -371,7 +371,7 @@
 					$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
 				}
 
-				echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
+				echo '<div class="thumbnail" onclick="showImage(\'' . urlencode($image['path']) . '\')">';
 				echo '<img data-line="YYY" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
 				echo "</div>\n";
 			}
