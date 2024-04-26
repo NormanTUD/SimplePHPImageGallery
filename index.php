@@ -818,6 +818,7 @@ if(!file_exists($jquery_file)) {
 							data: { search: searchTerm },
 							success: async function (response) {
 								await displaySearchResults(searchTerm, response["files"]);
+								customizeCursorForLinks();
 							},
 							error: function (xhr, status, error) {
 								console.error(error);
@@ -1204,6 +1205,13 @@ if(!file_exists($jquery_file)) {
 		<script>
 			var json_cache = {};
 
+			function customizeCursorForLinks() {
+				const links = document.querySelectorAll('a');
+				links.forEach(link => {
+				link.style.cursor = 'pointer';
+				});
+			}
+
 			// JavaScript
 			function addLinkHighlightEffect() {
 				const style = document.createElement('style');
@@ -1451,6 +1459,8 @@ if(!file_exists($jquery_file)) {
 						breadcrumb.appendChild(document.createTextNode(' / '));
 					}
 				});
+
+				customizeCursorForLinks();
 			}
 
 			// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
