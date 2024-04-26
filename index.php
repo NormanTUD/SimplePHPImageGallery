@@ -1161,7 +1161,7 @@ if(!file_exists($jquery_file)) {
 
 				var content = url_content("index.php?gallery=" + folder);
 
-				$("#searchResults").hide();
+				$("#searchResults").empty().hide();
 				$("#gallery").html(content).show();
 
 				var _promise = draw_map_from_current_images();
