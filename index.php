@@ -1161,6 +1161,8 @@ if(!file_exists($jquery_file)) {
 
 				var content = url_content("index.php?gallery=" + folder);
 
+				$("#searchInput").val("");
+
 				$("#searchResults").empty().hide();
 				$("#gallery").html(content).show();
 
@@ -1387,7 +1389,7 @@ if(!file_exists($jquery_file)) {
 
 						var link = document.createElement('a');
 						link.classList.add("breadcrumb_nav");
-						link.textContent = folderName;
+						link.textContent = decodeURI(folderName);
 
 						eval(`$(link).on("click", function () {
 							load_folder("${fullPath}")
