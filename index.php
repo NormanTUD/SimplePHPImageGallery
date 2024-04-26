@@ -1107,7 +1107,61 @@ if(!file_exists($jquery_file)) {
 				return strReturn;
 			}
 
+			function updateUrlParameter(folder) {
+				try {
+					// Aktuelle URL holen
+					let currentUrl = window.location.href;
+
+					// Überprüfen, ob der Parameter "folder" bereits vorhanden ist
+					if (currentUrl.includes('?folder=')) {
+						// Falls vorhanden, aktualisieren wir den Wert des Parameters
+						currentUrl = currentUrl.replace(/(\?|&)folder=[^&]*/, `$1folder=${folder}`);
+					} else {
+						// Ansonsten fügen wir den Parameter hinzu
+						const separator = currentUrl.includes('?') ? '&' : '?';
+						currentUrl += `${separator}folder=${folder}`;
+					}
+
+					// Die aktualisierte URL in der Adressleiste setzen
+					window.history.replaceState(null, null, currentUrl);
+
+					// Loggen der erfolgreichen Aktualisierung
+					console.log('URL parameter "folder" updated successfully.');
+				} catch (error) {
+					// Fehlerbehandlung
+					console.warn('An error occurred while updating URL parameter "folder":', error);
+				}
+			}
+
+			function getCurrentFolderParameter() {
+				try {
+					// Aktuelle URL holen
+					const currentUrl = window.location.href;
+
+					// Regex-Muster, um den Wert des "folder"-Parameters zu extrahieren
+					const folderRegex = /[?&]folder=([^&]*)/;
+
+					// Den Wert des "folder"-Parameters aus der URL extrahieren
+					const match = currentUrl.match(folderRegex);
+
+					// Falls der Parameter nicht vorhanden ist, "./" zurückgeben
+					if (!match) {
+						return "./";
+					}
+
+					// Den extrahierten Wert des "folder"-Parameters zurückgeben
+					return decodeURIComponent(match[1]);
+				} catch (error) {
+					// Fehlerbehandlung
+					console.warn('An error occurred while getting current folder parameter:', error);
+					// Falls ein Fehler auftritt, "./" zurückgeben
+					return "./";
+				}
+			}
+
 			async function load_folder (folder) {
+				updateUrlParameter(folder);
+
 				var content = url_content("index.php?gallery=" + folder);
 
 				$("#gallery").html(content);
@@ -1116,6 +1170,8 @@ if(!file_exists($jquery_file)) {
 
 				loadAndReplaceImages();
 
+				createBreadcrumb(folder);
+
 				await _promise;
 			}
 		</script>
@@ -1123,9 +1179,7 @@ if(!file_exists($jquery_file)) {
 		<!-- Ergebnisse der Suche hier einfügen -->
 		<div id="searchResults"></div>
 
-		<div id="gallery">
-			<?php displayGallery($folderPath); ?>
-		</div>
+		<div id="gallery"></div>
 
 		<script>
 			var json_cache = {};
@@ -1373,9 +1427,7 @@ if(!file_exists($jquery_file)) {
 				$("#delete_search").hide();
 				await delete_search();
 
-				loadAndReplaceImages();
-
-				await draw_map_from_current_images();
+				await load_folder(getCurrentFolderParameter())
 			});
 		</script>
 
