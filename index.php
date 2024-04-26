@@ -1,360 +1,360 @@
 <?php
-$GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png');
+	$GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png');
 
-$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
+	$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
 
-if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
-	$folderPath = $_GET['folder'];
-}
+	if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
+		$folderPath = $_GET['folder'];
+	}
 
-ini_set('memory_limit', '2048M');
-$images_path = "/docker_images/";
-setLocale(LC_ALL, ["en.utf", "en_US.utf", "en_US.UTF-8", "en", "en_US"]);
+	ini_set('memory_limit', '2048M');
+	$images_path = "/docker_images/";
+	setLocale(LC_ALL, ["en.utf", "en_US.utf", "en_US.UTF-8", "en", "en_US"]);
 
-if (is_dir($images_path)) {
-	chdir($images_path);
-}
+	if (is_dir($images_path)) {
+		chdir($images_path);
+	}
 
-function normalize_special_characters($text) {
-	$normalized_text = preg_replace_callback('/[^\x20-\x7E]/u', function ($match) {
-		$char = $match[0];
-		$normalized_char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
-		return $normalized_char !== false ? $normalized_char : ''; // Überprüfe auf Fehler bei der Konvertierung
-	}, $text);
+	function normalize_special_characters($text) {
+		$normalized_text = preg_replace_callback('/[^\x20-\x7E]/u', function ($match) {
+			$char = $match[0];
+			$normalized_char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
+			return $normalized_char !== false ? $normalized_char : ''; // Überprüfe auf Fehler bei der Konvertierung
+		}, $text);
 
-	$normalized_text = mb_strtolower($normalized_text, 'UTF-8');
+		$normalized_text = mb_strtolower($normalized_text, 'UTF-8');
 
-	return $normalized_text;
-}
+		return $normalized_text;
+	}
 
-function dier ($msg) {
-	print("<pre>");
-	print(var_dump($msg));
-	print("</pre>");
-	exit(0);
-}
+	function dier ($msg) {
+		print("<pre>");
+		print(var_dump($msg));
+		print("</pre>");
+		exit(0);
+	}
 
-function getImagesInDirectory($directory) {
-	$images = [];
+	function getImagesInDirectory($directory) {
+		$images = [];
 
-	// Überprüfen, ob das Verzeichnis existiert und lesbar ist
-	assert(is_dir($directory), "Das Verzeichnis existiert nicht oder ist nicht lesbar: $directory");
+		// Überprüfen, ob das Verzeichnis existiert und lesbar ist
+		assert(is_dir($directory), "Das Verzeichnis existiert nicht oder ist nicht lesbar: $directory");
 
-	// Verzeichnisinhalt lesen
-	try {
-		$files = scandir($directory);
-	} catch (Exception $e) {
-		// Fehler beim Lesen des Verzeichnisses
-		warn("Fehler beim Lesen des Verzeichnisses $directory: " . $e->getMessage());
+		// Verzeichnisinhalt lesen
+		try {
+			$files = scandir($directory);
+		} catch (Exception $e) {
+			// Fehler beim Lesen des Verzeichnisses
+			warn("Fehler beim Lesen des Verzeichnisses $directory: " . $e->getMessage());
+			return $images;
+		}
+
+		foreach ($files as $file) {
+			if ($file !== '.' && $file !== '..') {
+				$filePath = $directory . '/' . $file;
+				if (is_dir($filePath)) {
+					// Rekursiv alle Bilder im Unterverzeichnis sammeln
+					$images = array_merge($images, getImagesInDirectory($filePath));
+				} else {
+					// Überprüfen, ob die Datei eine unterstützte Bildendung hat
+					$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+					if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+						// Bild zur Liste hinzufügen
+						$images[] = $filePath;
+					}
+				}
+			}
+		}
+
 		return $images;
 	}
 
-	foreach ($files as $file) {
-		if ($file !== '.' && $file !== '..') {
-			$filePath = $directory . '/' . $file;
+	if (isset($_GET["geolist"])) {
+		$geolist = $_GET["geolist"];
+
+		$files = [];
+
+		if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist)) {
+			$files = getImagesInDirectory($geolist);
+		} else {
+			die("Wrongly formed geolist: ".$geolist);
+		}
+
+		foreach ($untested_files as $file) {
+			if(!preg_match("/\.\.\//", $file) && is_valid_image_file($file)) {
+				$files[] = $file;
+			}
+		}
+
+		$s = array();
+
+		foreach ($files as $file) {
+			$hash = md5($file);
+
+			$gps = get_image_gps($file);
+
+			if ($gps) {
+				$s[] = array(
+					'url' => $file,
+					"latitude" => $gps["latitude"],
+					"longitude" => $gps["longitude"],
+					"hash" => $hash
+				);
+			}
+
+		}
+
+		header('Content-type: application/json; charset=utf-8');
+		print json_encode($s);
+
+		exit(0);
+	}
+
+	if (isset($_GET['preview'])) {
+		$imagePath = $_GET['preview'];
+		$thumbnailMaxWidth = 150; // Definiere maximale Thumbnail-Breite
+		$thumbnailMaxHeight = 150; // Definiere maximale Thumbnail-Höhe
+		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+
+		if(is_dir("/docker_tmp/")) {
+			$cacheFolder = "/docker_tmp/";
+		}
+
+		// Überprüfe, ob die Datei existiert
+		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
+			// Generiere einen eindeutigen Dateinamen für das Thumbnail
+			$thumbnailFileName = md5($imagePath) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
+
+			// Überprüfe, ob das Thumbnail im Cache vorhanden ist
+			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
+			if (file_exists($cachedThumbnailPath)) {
+				// Das Thumbnail existiert im Cache, geben Sie es direkt aus
+				header('Content-Type: image/jpeg');
+				readfile($cachedThumbnailPath);
+				exit;
+			} else {
+				// Das Thumbnail ist nicht im Cache vorhanden, erstelle es
+
+				// Hole Bildabmessungen und Typ
+				list($width, $height, $type) = getimagesize($imagePath);
+
+				// Lade Bild basierend auf dem Typ
+				switch ($type) {
+					case IMAGETYPE_JPEG:
+						$image = imagecreatefromjpeg($imagePath);
+						break;
+					case IMAGETYPE_PNG:
+						$image = imagecreatefrompng($imagePath);
+						break;
+					case IMAGETYPE_GIF:
+						$image = imagecreatefromgif($imagePath);
+						break;
+					default:
+						echo 'Unsupported image type.';
+						exit;
+				}
+
+				// Überprüfe und korrigiere Bildausrichtung gegebenenfalls
+				$exif = @exif_read_data($imagePath);
+				if (!empty($exif['Orientation'])) {
+					switch ($exif['Orientation']) {
+					case 3:
+						$image = imagerotate($image, 180, 0);
+						break;
+					case 6:
+						$image = imagerotate($image, -90, 0);
+						list($width, $height) = [$height, $width];
+						break;
+					case 8:
+						$image = imagerotate($image, 90, 0);
+						list($width, $height) = [$height, $width];
+						break;
+					}
+				}
+
+				// Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
+				$aspectRatio = $width / $height;
+				$thumbnailWidth = $thumbnailMaxWidth;
+				$thumbnailHeight = $thumbnailMaxHeight;
+				if ($width > $height) {
+					// Landscape orientation
+					$thumbnailHeight = $thumbnailWidth / $aspectRatio;
+				} else {
+					// Portrait or square orientation
+					$thumbnailWidth = $thumbnailHeight * $aspectRatio;
+				}
+
+				// Erstelle ein neues Bild mit Thumbnail-Abmessungen
+				$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
+
+				// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
+				$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
+				imagefill($thumbnail, 0, 0, $backgroundColor);
+
+				// Verkleinere Originalbild auf Thumbnail-Abmessungen
+				imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
+
+				// Speichere das Thumbnail im Cache
+				imagejpeg($thumbnail, $cachedThumbnailPath);
+
+				// Gib Bild direkt im Browser aus
+				header('Content-Type: image/jpeg'); // Passe den Inhaltstyp basierend auf dem Bildtyp an
+				imagejpeg($thumbnail); // Gib JPEG-Thumbnail aus (ändern Sie den Funktionsaufruf für PNG/GIF)
+
+				// Freigabe des Speichers
+				imagedestroy($image);
+				imagedestroy($thumbnail);
+
+				// Beende die Skriptausführung
+				exit;
+			}
+		} else {
+			echo 'File not found.';
+		}
+
+		// Beende die Skriptausführung
+		exit;
+	}
+
+	function removeFileExtensionFromString ($string) {
+		$string = preg_replace("/\.[a-z0-9_]*$/i", "", $string);
+		return $string;
+	}
+
+	function searchImageFileByTXT($txtFilePath) {
+		$pathWithoutExtension = removeFileExtensionFromString($txtFilePath);
+		$fp = dirname($txtFilePath);
+
+		$files = scandir($fp);
+
+		foreach ($files as $file) {
+			$fullFilePath = $fp . DIRECTORY_SEPARATOR . $file;
+
+			if (is_file($fullFilePath)) {
+				$fileExtension = strtolower(pathinfo($fullFilePath, PATHINFO_EXTENSION));
+
+				if ($fileExtension !== 'txt' && $pathWithoutExtension == removeFileExtensionFromString($fullFilePath) && preg_match("/\.(?:jpe?g|gif|png)$/i", $fullFilePath)) {
+					return $fullFilePath;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	function sortAndCleanString($inputString) {
+		// Leerzeichen am Anfang und Ende entfernen und doppelte Leerzeichen zusammenführen
+		$cleanedString = trim(preg_replace('/\s+/', ' ', $inputString));
+
+		// String in ein Array von Wörtern aufteilen und alphabetisch sortieren
+		$wordsArray = explode(' ', $cleanedString);
+		sort($wordsArray);
+
+		// Array von Wörtern zu einem String mit Leerzeichen als Trennzeichen zusammenführen
+		$sortedString = implode(' ', $wordsArray);
+
+		return $sortedString;
+	}
+
+	// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
+	function searchFiles($fp, $searchTerm) {
+		$results = [];
+
+		if (!is_dir($fp)) {
+			return [];
+		}
+
+		$files = @scandir($fp);
+
+		if(is_bool($files)) {
+			return [];
+		}
+
+		$searchTerm = sortAndCleanString($searchTerm);
+
+		$searchTermLower = strtolower($searchTerm);
+		$normalized = normalize_special_characters($searchTerm);
+
+		foreach ($files as $file) {
+			if ($file === '.' || $file === '..' || $file === '.git' || $file === "thumbnails_cache") {
+				continue;
+			}
+
+			$filePath = $fp . '/' . $file;
+
+			$file_without_ending = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
+
 			if (is_dir($filePath)) {
-				// Rekursiv alle Bilder im Unterverzeichnis sammeln
-				$images = array_merge($images, getImagesInDirectory($filePath));
-			} else {
-				// Überprüfen, ob die Datei eine unterstützte Bildendung hat
-				$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-				if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-					// Bild zur Liste hinzufügen
-					$images[] = $filePath;
+				#print("stripos(".normalize_special_characters($file).", ".$normalized.")\n");
+				if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file_without_ending), $normalized) !== false) {
+					$randomImage = getRandomImageFromSubfolders($filePath);
+					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
+
+					$results[] = [
+						'path' => $filePath,
+						'type' => 'folder',
+						'thumbnail' => $thumbnailPath
+					];
 				}
-			}
-		}
-	}
 
-	return $images;
-}
-
-if (isset($_GET["geolist"])) {
-	$geolist = $_GET["geolist"];
-
-	$files = [];
-
-	if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist)) {
-		$files = getImagesInDirectory($geolist);
-	} else {
-		die("Wrongly formed geolist: ".$geolist);
-	}
-
-	foreach ($untested_files as $file) {
-		if(!preg_match("/\.\.\//", $file) && is_valid_image_file($file)) {
-			$files[] = $file;
-		}
-	}
-
-	$s = array();
-
-	foreach ($files as $file) {
-		$hash = md5($file);
-
-		$gps = get_image_gps($file);
-
-		if ($gps) {
-			$s[] = array(
-				'url' => $file,
-				"latitude" => $gps["latitude"],
-				"longitude" => $gps["longitude"],
-				"hash" => $hash
-			);
-		}
-
-	}
-
-	header('Content-type: application/json; charset=utf-8');
-	print json_encode($s);
-
-	exit(0);
-}
-
-if (isset($_GET['preview'])) {
-	$imagePath = $_GET['preview'];
-	$thumbnailMaxWidth = 150; // Definiere maximale Thumbnail-Breite
-	$thumbnailMaxHeight = 150; // Definiere maximale Thumbnail-Höhe
-	$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
-
-	if(is_dir("/docker_tmp/")) {
-		$cacheFolder = "/docker_tmp/";
-	}
-
-	// Überprüfe, ob die Datei existiert
-	if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
-		// Generiere einen eindeutigen Dateinamen für das Thumbnail
-		$thumbnailFileName = md5($imagePath) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
-
-		// Überprüfe, ob das Thumbnail im Cache vorhanden ist
-		$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
-		if (file_exists($cachedThumbnailPath)) {
-			// Das Thumbnail existiert im Cache, geben Sie es direkt aus
-			header('Content-Type: image/jpeg');
-			readfile($cachedThumbnailPath);
-			exit;
-		} else {
-			// Das Thumbnail ist nicht im Cache vorhanden, erstelle es
-
-			// Hole Bildabmessungen und Typ
-			list($width, $height, $type) = getimagesize($imagePath);
-
-			// Lade Bild basierend auf dem Typ
-			switch ($type) {
-				case IMAGETYPE_JPEG:
-					$image = imagecreatefromjpeg($imagePath);
-					break;
-				case IMAGETYPE_PNG:
-					$image = imagecreatefrompng($imagePath);
-					break;
-				case IMAGETYPE_GIF:
-					$image = imagecreatefromgif($imagePath);
-					break;
-				default:
-					echo 'Unsupported image type.';
-					exit;
-			}
-
-			// Überprüfe und korrigiere Bildausrichtung gegebenenfalls
-			$exif = @exif_read_data($imagePath);
-			if (!empty($exif['Orientation'])) {
-				switch ($exif['Orientation']) {
-				case 3:
-					$image = imagerotate($image, 180, 0);
-					break;
-				case 6:
-					$image = imagerotate($image, -90, 0);
-					list($width, $height) = [$height, $width];
-					break;
-				case 8:
-					$image = imagerotate($image, 90, 0);
-					list($width, $height) = [$height, $width];
-					break;
-				}
-			}
-
-			// Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
-			$aspectRatio = $width / $height;
-			$thumbnailWidth = $thumbnailMaxWidth;
-			$thumbnailHeight = $thumbnailMaxHeight;
-			if ($width > $height) {
-				// Landscape orientation
-				$thumbnailHeight = $thumbnailWidth / $aspectRatio;
+				$subResults = searchFiles($filePath, $searchTerm);
+				$results = array_merge($results, $subResults);
 			} else {
-				// Portrait or square orientation
-				$thumbnailWidth = $thumbnailHeight * $aspectRatio;
-			}
+				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			// Erstelle ein neues Bild mit Thumbnail-Abmessungen
-			$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
+				if ($fileExtension === 'txt') {
+					$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
+					if (stripos($textContent, $searchTermLower) !== false || stripos(normalize_special_characters($textContent), $normalized) !== false) {
+						$imageFilePath = searchImageFileByTXT($filePath);
 
-			// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
-			$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
-			imagefill($thumbnail, 0, 0, $backgroundColor);
-
-			// Verkleinere Originalbild auf Thumbnail-Abmessungen
-			imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
-
-			// Speichere das Thumbnail im Cache
-			imagejpeg($thumbnail, $cachedThumbnailPath);
-
-			// Gib Bild direkt im Browser aus
-			header('Content-Type: image/jpeg'); // Passe den Inhaltstyp basierend auf dem Bildtyp an
-			imagejpeg($thumbnail); // Gib JPEG-Thumbnail aus (ändern Sie den Funktionsaufruf für PNG/GIF)
-
-			// Freigabe des Speichers
-			imagedestroy($image);
-			imagedestroy($thumbnail);
-
-			// Beende die Skriptausführung
-			exit;
-		}
-	} else {
-		echo 'File not found.';
-	}
-
-	// Beende die Skriptausführung
-	exit;
-}
-
-function removeFileExtensionFromString ($string) {
-	$string = preg_replace("/\.[a-z0-9_]*$/i", "", $string);
-	return $string;
-}
-
-function searchImageFileByTXT($txtFilePath) {
-	$pathWithoutExtension = removeFileExtensionFromString($txtFilePath);
-	$fp = dirname($txtFilePath);
-
-	$files = scandir($fp);
-
-	foreach ($files as $file) {
-		$fullFilePath = $fp . DIRECTORY_SEPARATOR . $file;
-
-		if (is_file($fullFilePath)) {
-			$fileExtension = strtolower(pathinfo($fullFilePath, PATHINFO_EXTENSION));
-
-			if ($fileExtension !== 'txt' && $pathWithoutExtension == removeFileExtensionFromString($fullFilePath) && preg_match("/\.(?:jpe?g|gif|png)$/i", $fullFilePath)) {
-				return $fullFilePath;
-			}
-		}
-	}
-
-	return null;
-}
-
-function sortAndCleanString($inputString) {
-	// Leerzeichen am Anfang und Ende entfernen und doppelte Leerzeichen zusammenführen
-	$cleanedString = trim(preg_replace('/\s+/', ' ', $inputString));
-
-	// String in ein Array von Wörtern aufteilen und alphabetisch sortieren
-	$wordsArray = explode(' ', $cleanedString);
-	sort($wordsArray);
-
-	// Array von Wörtern zu einem String mit Leerzeichen als Trennzeichen zusammenführen
-	$sortedString = implode(' ', $wordsArray);
-
-	return $sortedString;
-}
-
-// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
-function searchFiles($fp, $searchTerm) {
-	$results = [];
-
-	if (!is_dir($fp)) {
-		return [];
-	}
-
-	$files = @scandir($fp);
-
-	if(is_bool($files)) {
-		return [];
-	}
-
-	$searchTerm = sortAndCleanString($searchTerm);
-
-	$searchTermLower = strtolower($searchTerm);
-	$normalized = normalize_special_characters($searchTerm);
-
-	foreach ($files as $file) {
-		if ($file === '.' || $file === '..' || $file === '.git' || $file === "thumbnails_cache") {
-			continue;
-		}
-
-		$filePath = $fp . '/' . $file;
-
-		$file_without_ending = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
-
-		if (is_dir($filePath)) {
-			#print("stripos(".normalize_special_characters($file).", ".$normalized.")\n");
-			if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file_without_ending), $normalized) !== false) {
-				$randomImage = getRandomImageFromSubfolders($filePath);
-				$thumbnailPath = $randomImage ? $randomImage['path'] : '';
-
-				$results[] = [
-					'path' => $filePath,
-					'type' => 'folder',
-					'thumbnail' => $thumbnailPath
-				];
-			}
-
-			$subResults = searchFiles($filePath, $searchTerm);
-			$results = array_merge($results, $subResults);
-		} else {
-			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-			if ($fileExtension === 'txt') {
-				$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
-				if (stripos($textContent, $searchTermLower) !== false || stripos(normalize_special_characters($textContent), $normalized) !== false) {
-					$imageFilePath = searchImageFileByTXT($filePath);
-
-					if($imageFilePath) {
+						if($imageFilePath) {
+							$results[] = [
+								'path' => $imageFilePath,
+								'type' => 'file'
+							];
+						}
+					}
+				} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+					if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
 						$results[] = [
-							'path' => $imageFilePath,
+							'path' => $filePath,
 							'type' => 'file'
 						];
 					}
 				}
-			} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-				if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
-					$results[] = [
-						'path' => $filePath,
-						'type' => 'file'
-					];
+			}
+		}
+
+		return $results;
+	}
+
+	// AJAX-Handler für die Suche
+	if (isset($_GET['search'])) {
+		$searchTerm = $_GET['search'];
+		$results = array();
+		$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
+
+		$i = 0;
+		foreach ($results["files"] as $this_result) {
+			$path = $this_result["path"];
+			$type = $this_result["type"];
+
+			if($type == "file") {
+				$gps = get_image_gps($path);
+				if($gps) {
+					$results["files"][$i]["latitude"] = $gps["latitude"];
+					$results["files"][$i]["longitude"] = $gps["longitude"];
 				}
+				$results["files"][$i]["hash"] = md5($path);
 			}
-		}
-	}
 
-	return $results;
-}
-
-// AJAX-Handler für die Suche
-if (isset($_GET['search'])) {
-	$searchTerm = $_GET['search'];
-	$results = array();
-	$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
-
-	$i = 0;
-	foreach ($results["files"] as $this_result) {
-		$path = $this_result["path"];
-		$type = $this_result["type"];
-
-		if($type == "file") {
-			$gps = get_image_gps($path);
-			if($gps) {
-				$results["files"][$i]["latitude"] = $gps["latitude"];
-				$results["files"][$i]["longitude"] = $gps["longitude"];
-			}
-			$results["files"][$i]["hash"] = md5($path);
+			$i++;
 		}
 
-		$i++;
+		header('Content-type: application/json; charset=utf-8');
+		echo json_encode($results);
+		exit;
 	}
-
-	header('Content-type: application/json; charset=utf-8');
-	echo json_encode($results);
-	exit;
-}
 ?>
 <!DOCTYPE html>
 <html>
