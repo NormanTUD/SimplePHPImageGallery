@@ -1357,8 +1357,6 @@ if(!file_exists($jquery_file)) {
 					}
 				});
 
-				log("$filtered_folders:", $filtered_folders);
-
 				while ($filtered_folders.length > folders_gone_through) {
 					await sleep(100);
 				}
