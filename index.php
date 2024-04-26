@@ -721,6 +721,10 @@ if(!file_exists($jquery_file)) {
 				border-radius: 5px;
 				margin: 3px;
 				padding: 3px;
+				height: 3vw;
+				display: inline-block;
+				min-height: 20px;
+				font-size: 2.7vw;
 			}
 		</style>
 
