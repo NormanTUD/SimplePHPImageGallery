@@ -1204,6 +1204,18 @@ if(!file_exists($jquery_file)) {
 		<script>
 			var json_cache = {};
 
+			// JavaScript
+			function addLinkHighlightEffect() {
+				const style = document.createElement('style');
+				style.textContent = `
+					a:hover {
+						color: #ff6600; /* Change to your desired highlight color */
+					}
+				`;
+
+				document.head.appendChild(style);
+			}
+
 			async function get_json_cached (url) {
 				if (Object.keys(json_cache).includes(url)) {
 					return json_cache[url];
@@ -1468,6 +1480,7 @@ if(!file_exists($jquery_file)) {
 
 			$(document).ready(async function() {
 				$("#delete_search").hide();
+				addLinkHighlightEffect();
 				await delete_search();
 
 				await load_folder(getCurrentFolderParameter())
