@@ -354,7 +354,7 @@
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
 				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
-				echo '<img data-line="<?php print __LINE__; ?>" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
+				echo '<img data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
 				echo "</div></a>\n";
 			}
@@ -372,7 +372,7 @@
 				}
 
 				echo '<div class="thumbnail" onclick="showImage(\'' . $image['path'] . '\')">';
-				echo '<img data-line="<?php print __LINE__; ?>" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				echo '<img data-line="YYY" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
 				echo "</div>\n";
 			}
 		}
