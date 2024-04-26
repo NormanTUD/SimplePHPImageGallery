@@ -468,6 +468,11 @@
 	}
 
 	function displayGallery($fp) {
+		if(preg_match("/\.\./", $fp)) {
+			print("Invalid folder");
+			return [];
+		}
+
 		if(!is_dir($fp)) {
 			print("Folder not found");
 			return [];
