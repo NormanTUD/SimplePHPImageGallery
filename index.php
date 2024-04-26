@@ -1161,7 +1161,8 @@ if(!file_exists($jquery_file)) {
 
 				var content = url_content("index.php?gallery=" + folder);
 
-				$("#gallery").html(content);
+				$("#searchResults").hide();
+				$("#gallery").html(content).show();
 
 				var _promise = draw_map_from_current_images();
 
@@ -1170,6 +1171,7 @@ if(!file_exists($jquery_file)) {
 				createBreadcrumb(folder);
 
 				await _promise;
+
 			}
 		</script>
 
