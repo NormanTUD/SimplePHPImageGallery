@@ -1339,7 +1339,18 @@ if(!file_exists($jquery_file)) {
 					img_elements = $("#searchResults").find("img");
 				}
 
+				var filtered_img_elements = [];
+
 				img_elements.each(function (i, e) {
+					if(!is_hidden_or_has_hidden_parent(e)) {
+						filtered_img_elements.push(e);
+					}
+				});
+
+				log("filtered_img_elements:", filtered_img_elements);
+
+				filtered_img_elements.forEach(function (e, i) {
+					log(e);
 					var src = $(e).data("original-url");
 					var hash = $(e).data("hash");
 					var lat = $(e).data("latitude");
@@ -1360,6 +1371,7 @@ if(!file_exists($jquery_file)) {
 				while ($filtered_folders.length > folders_gone_through) {
 					await sleep(100);
 				}
+				log("filtered_folders: ", $filtered_folders);
 
 				return data;
 			}
