@@ -732,6 +732,15 @@ if(!file_exists($jquery_file)) {
 				min-height: 20px;
 				font-size: 2.7vw;
 			}
+
+			.box-shadow {
+				box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+				transition: 0.3s;
+			}
+
+			.box-shadow:hover {
+				box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+			}
 		</style>
 
 		<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -857,7 +866,7 @@ if(!file_exists($jquery_file)) {
 							}
 
 							// Ersetze das Vorschaubild mit einem Lade-Spinner
-							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search" data-line='X' data-original-url="index.php?preview=${encodeURIComponent(result.path)}">`;
+							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search img_element" data-line='X' data-original-url="index.php?preview=${encodeURIComponent(result.path)}">`;
 
 							image_line += `</div>`;
 							$searchResults.append(image_line);
@@ -1417,6 +1426,7 @@ if(!file_exists($jquery_file)) {
 
 						var link = document.createElement('a');
 						link.classList.add("breadcrumb_nav");
+						link.classList.add("box-shadow");
 						link.textContent = decodeURI(folderName);
 
 						eval(`$(link).on("click", async function () {
@@ -1445,6 +1455,7 @@ if(!file_exists($jquery_file)) {
 					var img = new Image();
 					img.onload = function() {
 						$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+						$thumbnail[0].classList.add("box-shadow");
 					};
 					img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
 				});
