@@ -607,6 +607,10 @@
 		exit(0);
 	}
 
+	if (isset($_GET["gallery"])) {
+		displayGallery($_GET["gallery"]);
+		exit(0);
+	}
 ?>
 <!DOCTYPE html>
 <html>
