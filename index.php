@@ -1048,6 +1048,12 @@ if(file_exists($filename)) {
 					}
 				};
 				request.send();
+
+				$(fullscreen).on("click", function (i) {
+					if(!["INPUT", "IMG", "LABEL"].includes(i.target.nodeName) && i.target.id != "swipe_toggle") {
+						$(fullscreen).remove();
+					}
+				})
 			}
 
 			function getToggleSwitchValue() {
