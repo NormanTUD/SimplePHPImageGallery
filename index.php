@@ -1046,7 +1046,7 @@ if(file_exists($filename)) {
 						<label class="toggle-switch-label" for="toggleSwitch"></label>
 					</div>
 				`;
-				fullscreen.appendChild(toggleSwitch);
+				swiperContainer.appendChild(toggleSwitch);
 
 				// Initialize Swiper
 				var swiper = new Swiper('.swiper-container', {
