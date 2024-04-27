@@ -700,6 +700,7 @@ if(!file_exists($jquery_file)) {
 				align-items: center;
 				box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0);
 				padding: 5px;
+				font-size: 3vw;
 			}
 
 			@keyframes aurora {
