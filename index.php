@@ -1006,6 +1006,10 @@ if(file_exists($filename)) {
 				}
 			}
 
+			function isSwipeDevice() {
+				return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+			}
+
 			function showImage(imagePath) {
 				$(fullscreen).remove();
 
@@ -1022,17 +1026,19 @@ if(file_exists($filename)) {
 				fullscreen.appendChild(image);
 				document.body.appendChild(fullscreen);
 
-				// Create and append toggle switch
-				var toggleSwitch = document.createElement('div');
-				toggleSwitch.classList.add('toggle-switch');
-				toggleSwitch.innerHTML = `
-					<div onclick="toggleSwitch()" id="swipe_toggle">
-						Swipe?
-						<input type="checkbox" id="toggleSwitch" checked>
-						<label class="toggle-switch-label" for="toggleSwitch"></label>
-					</div>
-				`;
-				fullscreen.appendChild(toggleSwitch);
+				if(isSwipeDevice()) {
+					// Create and append toggle switch
+					var toggleSwitch = document.createElement('div');
+					toggleSwitch.classList.add('toggle-switch');
+					toggleSwitch.innerHTML = `
+						<div onclick="toggleSwitch()" id="swipe_toggle">
+							Swipe?
+							<input type="checkbox" id="toggleSwitch" checked>
+							<label class="toggle-switch-label" for="toggleSwitch"></label>
+						</div>
+					`;
+					fullscreen.appendChild(toggleSwitch);
+				}
 
 				// Start separate request to load the correct image
 				var url = "image.php?path=" + imagePath;
