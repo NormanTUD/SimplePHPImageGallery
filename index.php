@@ -1012,28 +1012,13 @@ if(file_exists($filename)) {
 				fullscreen = document.createElement('div');
 				fullscreen.classList.add('fullscreen');
 
-				// Create Swiper container
-				var swiperContainer = document.createElement('div');
-				swiperContainer.classList.add('swiper-container');
-
-				// Create Swiper wrapper
-				var swiperWrapper = document.createElement('div');
-				swiperWrapper.classList.add('swiper-wrapper');
-
-				// Create Swiper slide
-				var swiperSlide = document.createElement('div');
-				swiperSlide.classList.add('swiper-slide');
-
 				// Create image element with loading.gif initially
 				var image = document.createElement('img');
 				image.src = "loading.gif";
 				image.setAttribute('draggable', false);
 
-				// Append image to Swiper slide
-				swiperSlide.appendChild(image);
-				swiperWrapper.appendChild(swiperSlide);
-				swiperContainer.appendChild(swiperWrapper);
-				fullscreen.appendChild(swiperContainer);
+				// Append image to fullscreen div
+				fullscreen.appendChild(image);
 				document.body.appendChild(fullscreen);
 
 				// Create and append toggle switch
@@ -1046,16 +1031,7 @@ if(file_exists($filename)) {
 						<label class="toggle-switch-label" for="toggleSwitch"></label>
 					</div>
 				`;
-				swiperContainer.appendChild(toggleSwitch);
-
-				// Initialize Swiper
-				var swiper = new Swiper('.swiper-container', {
-				loop: true,
-					navigation: {
-					nextEl: '.swiper-button-next',
-						prevEl: '.swiper-button-prev',
-				},
-				});
+				fullscreen.appendChild(toggleSwitch);
 
 				// Start separate request to load the correct image
 				var url = "image.php?path=" + imagePath;
