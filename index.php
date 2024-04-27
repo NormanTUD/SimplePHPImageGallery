@@ -627,6 +627,81 @@ if(!file_exists($jquery_file)) {
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			.fullscreen {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-color: rgba(0, 0, 0, 0.8);
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+			.swiper-container {
+				width: 80%;
+				height: 80%;
+			}
+			.swiper-slide img {
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+			}
+			.toggle-switch {
+				position: absolute;
+				top: 10px;
+				left: 10px;
+				z-index: 9999;
+				cursor: pointer;
+			}
+			.toggle-switch input[type="checkbox"] {
+				display: none;
+			}
+			.toggle-switch-label {
+				display: block;
+				position: relative;
+				width: 40px;
+				height: 20px;
+				background-color: #ccc;
+				border-radius: 20px;
+			}
+			.toggle-switch-label:before {
+				content: '';
+				position: absolute;
+				width: 16px;
+				height: 16px;
+				top: 50%;
+				transform: translateY(-50%);
+				background-color: white;
+				border-radius: 50%;
+				transition: transform 0.3s ease-in-out;
+			}
+			.toggle-switch input[type="checkbox"]:checked + .toggle-switch-label {
+				background-color: #2ecc71;
+			}
+			.toggle-switch input[type="checkbox"]:checked + .toggle-switch-label:before {
+				transform: translateX(20px) translateY(-50%);
+			}
+
+			.toggle-switch {
+				width: 100%;
+				display: flex;
+				justify-content: center;
+			}
+
+			#swipe_toggle {
+				background-color: red;
+				width: fit-content;
+				background-color: white;
+				border-radius: 20px;
+				overflow: hidden;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0);
+				padding: 5px;
+			}
+
 			@keyframes aurora {
 				0% {
 					background-color: #4e54c8; /* Dunkelblau */
@@ -765,30 +840,32 @@ if(!file_exists($jquery_file)) {
 		</style>
 
 		<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+		<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+		<link rel="stylesheet" href="swiper-bundle.min.css" />
 	</head>
 	<body>
 		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
 		<button style="display: none" id="delete_search" onclick='delete_search()'>&#x2715;</button>
 <?php
-		$filename = 'links.txt';
+$filename = 'links.txt';
 
-		if(file_exists($filename)) {
-			$file = fopen($filename, 'r');
+if(file_exists($filename)) {
+	$file = fopen($filename, 'r');
 
-			if ($file) {
-				while (($line = fgets($file)) !== false) {
-					$parts = explode(',', $line);
+	if ($file) {
+		while (($line = fgets($file)) !== false) {
+			$parts = explode(',', $line);
 
-					$link = trim($parts[0]);
-					$text = trim($parts[1]);
+			$link = trim($parts[0]);
+			$text = trim($parts[1]);
 
-					echo '<a target="_blank" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
-				}
-
-				fclose($file);
-			}
+			echo '<a target="_blank" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
 		}
+
+		fclose($file);
+	}
+}
 ?>
 
 		<div id="breadcrumb"></div>
@@ -919,24 +996,66 @@ if(!file_exists($jquery_file)) {
 
 			var fullscreen;
 
+			function toggleSwitch() {
+				var toggleSwitchLabel = document.querySelector('.toggle-switch-label');
+				if (toggleSwitchLabel) {
+					toggleSwitchLabel.click();
+				} else {
+					console.warn("Toggle switch label not found!");
+				}
+			}
+
 			function showImage(imagePath) {
 				$(fullscreen).remove();
 
 				// Create fullscreen div
 				fullscreen = document.createElement('div');
 				fullscreen.classList.add('fullscreen');
-				fullscreen.onclick = function() {
-					fullscreen.parentNode.removeChild(fullscreen);
-				};
+
+				// Create Swiper container
+				var swiperContainer = document.createElement('div');
+				swiperContainer.classList.add('swiper-container');
+
+				// Create Swiper wrapper
+				var swiperWrapper = document.createElement('div');
+				swiperWrapper.classList.add('swiper-wrapper');
+
+				// Create Swiper slide
+				var swiperSlide = document.createElement('div');
+				swiperSlide.classList.add('swiper-slide');
 
 				// Create image element with loading.gif initially
 				var image = document.createElement('img');
 				image.src = "loading.gif";
 				image.setAttribute('draggable', false);
 
-				// Append image to fullscreen div
-				fullscreen.appendChild(image);
+				// Append image to Swiper slide
+				swiperSlide.appendChild(image);
+				swiperWrapper.appendChild(swiperSlide);
+				swiperContainer.appendChild(swiperWrapper);
+				fullscreen.appendChild(swiperContainer);
 				document.body.appendChild(fullscreen);
+
+				// Create and append toggle switch
+				var toggleSwitch = document.createElement('div');
+				toggleSwitch.classList.add('toggle-switch');
+				toggleSwitch.innerHTML = `
+					<div onclick="toggleSwitch()" id="swipe_toggle">
+						Swipe?
+						<input type="checkbox" id="toggleSwitch" checked>
+						<label class="toggle-switch-label" for="toggleSwitch"></label>
+					</div>
+				`;
+				fullscreen.appendChild(toggleSwitch);
+
+				// Initialize Swiper
+				var swiper = new Swiper('.swiper-container', {
+				loop: true,
+					navigation: {
+					nextEl: '.swiper-button-next',
+						prevEl: '.swiper-button-prev',
+				},
+				});
 
 				// Start separate request to load the correct image
 				var url = "image.php?path=" + imagePath;
@@ -953,6 +1072,16 @@ if(!file_exists($jquery_file)) {
 					}
 				};
 				request.send();
+			}
+
+			function getToggleSwitchValue() {
+				var toggleSwitch = document.getElementById('toggleSwitch');
+				if (toggleSwitch) {
+					return toggleSwitch.checked;
+				} else {
+					console.warn("Toggle switch element not found!");
+					return null;
+				}
 			}
 
 			function get_fullscreen_img_name () {
@@ -1050,6 +1179,10 @@ if(!file_exists($jquery_file)) {
 			}
 
 			function handleSwipe(event) { // Übernimm das Event-Objekt als Parameter
+				if(getToggleSwitchValue()) {
+					return;
+				}
+
 				var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
 
 				var deltaX = touchEndX - touchStartX;
