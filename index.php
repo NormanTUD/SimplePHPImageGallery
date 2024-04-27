@@ -660,16 +660,16 @@ if(!file_exists($jquery_file)) {
 			.toggle-switch-label {
 				display: block;
 				position: relative;
-				width: 40px;
-				height: 20px;
+				width: 10vw;
+				height: 5vw;
 				background-color: #ccc;
 				border-radius: 20px;
 			}
 			.toggle-switch-label:before {
 				content: '';
 				position: absolute;
-				width: 16px;
-				height: 16px;
+				width: 4vw;
+				height: 4vw;
 				top: 50%;
 				transform: translateY(-50%);
 				background-color: white;
@@ -680,7 +680,7 @@ if(!file_exists($jquery_file)) {
 				background-color: #2ecc71;
 			}
 			.toggle-switch input[type="checkbox"]:checked + .toggle-switch-label:before {
-				transform: translateX(20px) translateY(-50%);
+				transform: translateX(5vw) translateY(-50%);
 			}
 
 			.toggle-switch {
@@ -700,7 +700,7 @@ if(!file_exists($jquery_file)) {
 				align-items: center;
 				box-shadow: inset 0 0 0 20px rgba(255, 255, 255, 0);
 				padding: 5px;
-				font-size: 3vw;
+				font-size: 5vh;
 			}
 
 			@keyframes aurora {
@@ -1162,7 +1162,7 @@ if(file_exists($filename)) {
 			}
 
 			function handleSwipe(event) { // Übernimm das Event-Objekt als Parameter
-				if(getToggleSwitchValue()) {
+				if(!getToggleSwitchValue()) {
 					return;
 				}
 
