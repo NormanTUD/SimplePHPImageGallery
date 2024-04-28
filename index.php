@@ -1700,6 +1700,8 @@ if(file_exists($filename)) {
 				}
 			}
 
+			var fill_cache_images = [];
+
 			async function fill_cache (nr=5) {
 				var promises = [];
 				for (var i = 0; i < nr; i++) {
@@ -1707,6 +1709,8 @@ if(file_exists($filename)) {
 				}
 
 				await Promise.all(promises);
+
+				log("Done filling cache");
 			}
 
 			function shuffleArray(array) {
@@ -1719,7 +1723,7 @@ if(file_exists($filename)) {
 			}
 
 			// Funktion zum Anzeigen der Bilder
-			async function _fill_cache (id) {
+			async function _fill_cache(id) {
 				try {
 					var imageList = await getListAllJSON();
 					shuffleArray(imageList);
@@ -1728,16 +1732,28 @@ if(file_exists($filename)) {
 
 					for (let i = 0; i < imageList.length; i++) {
 						const imageUrl = `index.php?preview=${imageList[i]}`;
-						const imageElement = document.createElement('img');
-						imageElement.setAttribute('src', imageUrl);
+						if (!fill_cache_images.includes(imageUrl)) {
+							const imageElement = document.createElement('img');
+							imageElement.setAttribute('src', imageUrl);
 
-						// Bild anzeigen und warten
-						document.body.appendChild(container);
-						container.appendChild(imageElement);
-						await new Promise(resolve => setTimeout(resolve, 1000)); // Wartezeit in Millisekunden (hier 1 Sekunde)
+							// Bild anzeigen, wenn geladen, dann entfernen
+							await new Promise((resolve, reject) => {
+								imageElement.addEventListener('load', () => {
+									document.body.appendChild(container);
+									container.appendChild(imageElement);
+									setTimeout(() => {
+										container.removeChild(imageElement);
+										resolve();
+									}, 1000); // Optional: Hier können Sie die Wartezeit nach dem Laden des Bildes anpassen
+								});
+								imageElement.addEventListener('error', () => {
+									console.warn('Fehler beim Laden des Bildes:', imageUrl);
+									reject('Bildladefehler');
+								});
+							});
 
-						// Altes Bild entfernen
-						container.removeChild(imageElement);
+							fill_cache_images.push(imageUrl);
+						}
 					}
 
 					// Entferne den gesamten Container am Ende
@@ -1746,8 +1762,6 @@ if(file_exists($filename)) {
 					console.error('Fehler beim Anzeigen der Bilder:', error);
 					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
 				}
-
-				log("Done filling cache");
 			}
 
 			$(document).ready(async function() {
