@@ -1719,11 +1719,40 @@ if(file_exists($filename)) {
 
 			var fill_cache_images = [];
 
+			function splitArrayIntoSubarrays(arr, n) {
+				// Die Anzahl der Elemente in jedem Subarray berechnen
+				const elementsPerSubarray = Math.ceil(arr.length / n);
+
+				// Das neue Array für die Subarrays erstellen
+				const subarrays = [];
+
+				try {
+					// Das Eingabearray in Subarrays aufteilen
+					for (let i = 0; i < arr.length; i += elementsPerSubarray) {
+						const subarray = arr.slice(i, i + elementsPerSubarray);
+						subarrays.push(subarray);
+					}
+				} catch (error) {
+					// Fehlerbehandlung
+					console.error("Fehler beim Aufteilen des Arrays:", error);
+					return null;
+				}
+
+				// Die Subarrays zurückgeben
+				return subarrays;
+			}
+
+
 			async function fill_cache (nr=5) {
 				var promises = [];
 				var imageList = await getListAllJSON();
+				var num_total_items = imageList.length;
+
+				var sub_arrays = splitArrayIntoSubarrays(imageList, nr);
+
 				for (var i = 0; i < nr; i++) {
-					promises.push(_fill_cache(JSON.parse(JSON.stringify(imageList)), i));
+					var this_images = JSON.parse(JSON.stringify(sub_arrays));
+					promises.push(_fill_cache(this_images, i, num_total_items));
 				}
 
 				await Promise.all(promises);
@@ -1741,7 +1770,7 @@ if(file_exists($filename)) {
 				}
 			}
 
-			async function _fill_cache(imageList, id) {
+			async function _fill_cache(imageList, id, num_total_items) {
 				try {
 					if(id == 0) {
 						percentage_element = document.createElement('div');
@@ -1779,10 +1808,10 @@ if(file_exists($filename)) {
 
 							fill_cache_images.push(imageUrl);
 
-							var percent = Math.round((fill_cache_images.length / imageList.length) * 100);
+							var percent = Math.round((fill_cache_images.length / num_total_items) * 100);
 
 							$("#fill_cache_percentage").html(
-								`Cache-filling: ${fill_cache_images.length}/${imageList.length} (${percent}%)`
+								`Cache-filling: ${fill_cache_images.length}/${num_total_items} (${percent}%)`
 							);
 						}
 					}
