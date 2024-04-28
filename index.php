@@ -1740,7 +1740,6 @@ if(file_exists($filename)) {
 				}
 			}
 
-			// Funktion zum Anzeigen der Bilder
 			async function _fill_cache(imageList, id) {
 				try {
 					shuffleArray(imageList);
