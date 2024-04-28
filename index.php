@@ -138,8 +138,10 @@
 			$file_without_ending = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
 
 			if (is_dir($filePath)) {
-				#print("stripos(".normalize_special_characters($file).", ".$normalized.")\n");
-				if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file_without_ending), $normalized) !== false) {
+				if (
+					stripos($file_without_ending, $searchTermLower) !== false ||
+					stripos(normalize_special_characters($file_without_ending), $normalized) !== false
+				) {
 					$randomImage = getRandomImageFromSubfolders($filePath);
 					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 
@@ -157,7 +159,10 @@
 
 				if ($fileExtension === 'txt') {
 					$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
-					if (stripos($textContent, $searchTermLower) !== false || stripos(normalize_special_characters($textContent), $normalized) !== false) {
+					if (
+						stripos($textContent, $searchTermLower) !== false ||
+						stripos(normalize_special_characters($textContent), $normalized) !== false
+					) {
 						$imageFilePath = searchImageFileByTXT($filePath);
 
 						if($imageFilePath) {
@@ -168,7 +173,10 @@
 						}
 					}
 				} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-					if (stripos($file_without_ending, $searchTermLower) !== false || stripos(normalize_special_characters($file), $normalized) !== false) {
+					if (
+						stripos($file_without_ending, $searchTermLower) !== false ||
+						stripos(normalize_special_characters($file), $normalized) !== false
+					) {
 						$results[] = [
 							'path' => $filePath,
 							'type' => 'file'
@@ -1454,10 +1462,10 @@ if(file_exists($filename)) {
 
 					markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
-					var text = "<img id='preview_" + hash + 
+					var text = "<img id='preview_" + hash +
 						"' data-line='__A__' src='index.php?preview=" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) +
-						"' style='width: 100px; height: 100px;' onclick='showImage(\"" + 
+						"' style='width: 100px; height: 100px;' onclick='showImage(\"" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
