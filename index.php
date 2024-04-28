@@ -637,15 +637,18 @@
 				justify-content: center;
 				align-items: center;
 			}
+
 			.swiper-container {
 				width: 80%;
 				height: 80%;
 			}
+
 			.swiper-slide img {
 				width: 100%;
 				height: 100%;
 				object-fit: contain;
 			}
+
 			.toggle-switch {
 				position: absolute;
 				top: 10px;
@@ -653,9 +656,11 @@
 				z-index: 9999;
 				cursor: pointer;
 			}
+
 			.toggle-switch input[type="checkbox"] {
 				display: none;
 			}
+
 			.toggle-switch-label {
 				display: block;
 				position: relative;
@@ -664,6 +669,7 @@
 				background-color: #ccc;
 				border-radius: 20px;
 			}
+
 			.toggle-switch-label:before {
 				content: '';
 				position: absolute;
@@ -675,9 +681,11 @@
 				border-radius: 50%;
 				transition: transform 0.3s ease-in-out;
 			}
+
 			.toggle-switch input[type="checkbox"]:checked + .toggle-switch-label {
 				background-color: #2ecc71;
 			}
+
 			.toggle-switch input[type="checkbox"]:checked + .toggle-switch-label:before {
 				transform: translateX(5vw) translateY(-50%);
 			}
