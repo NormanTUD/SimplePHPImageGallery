@@ -1688,6 +1688,47 @@ if(file_exists($filename)) {
 				await start_search();
 			}
 
+			// Funktion zum Abrufen der JSON-Datei
+			async function getListAllJSON() {
+				try {
+					const response = await fetch('index.php?list_all=1');
+					const data = await response.json();
+					return data;
+				} catch (error) {
+					console.error('Fehler beim Abrufen der JSON-Datei:', error);
+					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
+				}
+			}
+
+			// Funktion zum Anzeigen der Bilder
+			async function fill_cache () {
+				try {
+					const imageList = await getListAllJSON();
+					const container = document.createElement('div');
+					container.setAttribute('id', 'image-container');
+
+					for (let i = 0; i < imageList.length; i++) {
+						const imageUrl = `index.php?preview=${imageList[i]}`;
+						const imageElement = document.createElement('img');
+						imageElement.setAttribute('src', imageUrl);
+
+						// Bild anzeigen und warten
+						document.body.appendChild(container);
+						container.appendChild(imageElement);
+						await new Promise(resolve => setTimeout(resolve, 1000)); // Wartezeit in Millisekunden (hier 1 Sekunde)
+
+						// Altes Bild entfernen
+						container.removeChild(imageElement);
+					}
+
+					// Entferne den gesamten Container am Ende
+					document.body.removeChild(container);
+				} catch (error) {
+					console.error('Fehler beim Anzeigen der Bilder:', error);
+					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
+				}
+			}
+
 			$(document).ready(async function() {
 				$("#delete_search").hide();
 				addLinkHighlightEffect();
