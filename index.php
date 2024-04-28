@@ -1346,14 +1346,7 @@ if(file_exists($filename)) {
 
 				hidePageLoadingIndicator();
 			}
-		</script>
 
-		<!-- Ergebnisse der Suche hier einfügen -->
-		<div id="searchResults"></div>
-
-		<div id="gallery"></div>
-
-		<script>
 			var json_cache = {};
 
 			function showPageLoadingIndicator() {
@@ -1667,6 +1660,11 @@ if(file_exists($filename)) {
 				hidePageLoadingIndicator();
 			});
 		</script>
+
+		<!-- Ergebnisse der Suche hier einfügen -->
+		<div id="searchResults"></div>
+
+		<div id="gallery"></div>
 
 		<div id="map_container" style="display: none">
 			<div id="map" style="height: 400px; width: 100%;"></div>
