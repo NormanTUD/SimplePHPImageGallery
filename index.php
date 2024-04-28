@@ -890,7 +890,7 @@
 				height: 3vw;
 				display: inline-block;
 				min-height: 20px;
-				font-size: 2.7vw;
+				font-size: calc(12px + 1.5vw);;
 			}
 
 			.box-shadow {
