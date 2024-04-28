@@ -1728,6 +1728,7 @@ if(file_exists($filename)) {
 
 				await Promise.all(promises);
 
+				$("#fill_cache_percentage").remove();
 				log("Done filling cache");
 			}
 
@@ -1742,10 +1743,18 @@ if(file_exists($filename)) {
 
 			async function _fill_cache(imageList, id) {
 				try {
+					if(id == 0) {
+						percentage_element = document.createElement('div');
+						percentage_element.setAttribute('id', 'fill_cache_percentage');
+						document.body.appendChild(percentage_element);
+					}
+
 					shuffleArray(imageList);
 					const container = document.createElement('div');
 					container.setAttribute('id', 'image-container_' + id);
 					document.body.appendChild(container);
+
+					var percentage_element = null;
 
 					for (let i = 0; i < imageList.length; i++) {
 						const imageUrl = `index.php?preview=${imageList[i]}`;
@@ -1769,6 +1778,12 @@ if(file_exists($filename)) {
 							});
 
 							fill_cache_images.push(imageUrl);
+
+							var percent = Math.round((fill_cache_images.length / imageList.length) * 100);
+
+							$("#fill_cache_percentage").html(
+								`${fill_cache_images.length}/${imageList.length} (${percent}%)`
+							);
 						}
 					}
 
