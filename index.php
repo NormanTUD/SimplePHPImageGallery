@@ -86,7 +86,11 @@
 			if (is_file($fullFilePath)) {
 				$fileExtension = strtolower(pathinfo($fullFilePath, PATHINFO_EXTENSION));
 
-				if ($fileExtension !== 'txt' && $pathWithoutExtension == removeFileExtensionFromString($fullFilePath) && preg_match("/\.(?:jpe?g|gif|png)$/i", $fullFilePath)) {
+				if (
+					$fileExtension !== 'txt' &&
+					$pathWithoutExtension == removeFileExtensionFromString($fullFilePath) &&
+					preg_match("/\.(?:jpe?g|gif|png)$/i", $fullFilePath)
+				) {
 					return $fullFilePath;
 				}
 			}
@@ -110,7 +114,7 @@
 	}
 
 	function file_or_folder_matches ($file_or_folder, $searchTermLower, $normalized) {
-		return 
+		return
 			stripos($file_or_folder, $searchTermLower) !== false ||
 			stripos(normalize_special_characters($file_or_folder), $normalized) !== false
 		;
@@ -145,9 +149,7 @@
 			$file_without_ending = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
 
 			if (is_dir($filePath)) {
-				if (
-					file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)
-				) {
+				if (file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)) {
 					$randomImage = getRandomImageFromSubfolders($filePath);
 					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 
@@ -165,9 +167,7 @@
 
 				if ($fileExtension === 'txt') {
 					$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
-					if (
-						file_or_folder_matches($textContent, $searchTermLower, $normalized)
-					) {
+					if (file_or_folder_matches($textContent, $searchTermLower, $normalized)) {
 						$imageFilePath = searchImageFileByTXT($filePath);
 
 						if($imageFilePath) {
@@ -178,9 +178,7 @@
 						}
 					}
 				} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-					if (
-						file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)
-					) {
+					if (file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)) {
 						$results[] = [
 							'path' => $filePath,
 							'type' => 'file'
