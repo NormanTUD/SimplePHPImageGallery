@@ -875,14 +875,11 @@ if(file_exists($filename)) {
 	}
 }
 ?>
-
 		<div id="breadcrumb"></div>
-
-<?php
-?>
-
 		<script>
 			var map = null;
+			var fullscreen;
+
 			const log = console.log;
 			const debug = console.debug;
 			const l = log;
@@ -1002,8 +999,6 @@ if(file_exists($filename)) {
 				await draw_map_from_current_images();
 			}
 
-			var fullscreen;
-
 			function toggleSwitch() {
 				var toggleSwitchLabel = document.querySelector('.toggle-switch-label');
 				if (toggleSwitchLabel) {
@@ -1113,13 +1108,13 @@ if(file_exists($filename)) {
 				var $thumbnails = $(".thumbnail");
 
 				$thumbnails.each((i, e) => {
-				var onclick = $(e).attr("onclick");
+					var onclick = $(e).attr("onclick");
 
-				onclick = onclick.replace(/.*\//, "").replace(/'.*/, "");
+					onclick = onclick.replace(/.*\//, "").replace(/'.*/, "");
 
-				if(onclick == current_fullscreen) {
-					current_idx = i;
-				}
+					if(onclick == current_fullscreen) {
+						current_idx = i;
+					}
 				});
 
 				var next_idx = current_idx + 1;
