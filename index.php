@@ -1076,12 +1076,10 @@ if(file_exists($filename)) {
 			}
 
 			function get_fullscreen_img_name () {
-				var src = $(".fullscreen").find("img").attr("src");
+				var src = decodeURIComponent($(".fullscreen").find("img").attr("src"));
 
 				if(src) {
-					src = src.replace(/.*\//, "");
-
-					return src;
+					return src.replace(/.*path=/, "");
 				} else {
 					console.warn("No index");
 					return "";
@@ -1110,9 +1108,9 @@ if(file_exists($filename)) {
 				$thumbnails.each((i, e) => {
 					var onclick = $(e).attr("onclick");
 
-					onclick = onclick.replace(/.*\//, "").replace(/'.*/, "");
+					var img_url = decodeURIComponent(onclick.replace(/^.*?'/, "").replace(/'.*/, ""));
 
-					if(onclick == current_fullscreen) {
+					if(img_url == current_fullscreen) {
 						current_idx = i;
 					}
 				});
