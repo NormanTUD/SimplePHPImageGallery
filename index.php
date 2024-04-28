@@ -1746,28 +1746,22 @@ if(file_exists($filename)) {
 			async function fill_cache (nr=5) {
 				var promises = [];
 				var imageList = await getListAllJSON();
+				if(imageList.length == 0) {
+					log("No uncached images");
+					return;
+				}
 				var num_total_items = imageList.length;
 
 				var sub_arrays = splitArrayIntoSubarrays(imageList, nr);
 
 				for (var i = 0; i < nr; i++) {
-					var this_images = JSON.parse(JSON.stringify(sub_arrays));
-					promises.push(_fill_cache(this_images, i, num_total_items));
+					promises.push(_fill_cache(sub_arrays[i], i, num_total_items));
 				}
 
 				await Promise.all(promises);
 
 				$("#fill_cache_percentage").remove();
 				log("Done filling cache");
-			}
-
-			function shuffleArray(array) {
-				for (var i = array.length - 1; i > 0; i--) {
-					var j = Math.floor(Math.random() * (i + 1));
-					var temp = array[i];
-					array[i] = array[j];
-					array[j] = temp;
-				}
 			}
 
 			async function _fill_cache(imageList, id, num_total_items) {
@@ -1778,7 +1772,6 @@ if(file_exists($filename)) {
 						document.body.appendChild(percentage_element);
 					}
 
-					shuffleArray(imageList);
 					const container = document.createElement('div');
 					container.setAttribute('id', 'image-container_' + id);
 					document.body.appendChild(container);
