@@ -889,7 +889,7 @@
 				padding: 3px;
 				height: 3vw;
 				display: inline-block;
-				min-height: 20px;
+				min-height: 30px;
 				font-size: calc(12px + 1.5vw);;
 			}
 
