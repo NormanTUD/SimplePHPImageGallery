@@ -1782,7 +1782,7 @@ if(file_exists($filename)) {
 							var percent = Math.round((fill_cache_images.length / imageList.length) * 100);
 
 							$("#fill_cache_percentage").html(
-								`${fill_cache_images.length}/${imageList.length} (${percent}%)`
+								`Cache-filling: ${fill_cache_images.length}/${imageList.length} (${percent}%)`
 							);
 						}
 					}
