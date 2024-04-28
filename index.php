@@ -479,8 +479,6 @@
 		return $imageList;
 	}
 
-
-
 	// AJAX-Handler für die Suche
 	if (isset($_GET['search'])) {
 		$searchTerm = $_GET['search'];
@@ -1421,7 +1419,6 @@ if(file_exists($filename)) {
 				}
 			}
 
-
 			function customizeCursorForLinks() {
 				const links = document.querySelectorAll('a');
 				links.forEach(link => {
@@ -1741,7 +1738,6 @@ if(file_exists($filename)) {
 				// Die Subarrays zurückgeben
 				return subarrays;
 			}
-
 
 			async function fill_cache (nr=5) {
 				var promises = [];
