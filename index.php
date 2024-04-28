@@ -1704,8 +1704,9 @@ if(file_exists($filename)) {
 
 			async function fill_cache (nr=5) {
 				var promises = [];
+				var imageList = await getListAllJSON();
 				for (var i = 0; i < nr; i++) {
-					promises.push(_fill_cache(i));
+					promises.push(_fill_cache(JSON.parse(JSON.stringify(imageList)), i));
 				}
 
 				await Promise.all(promises);
@@ -1723,9 +1724,8 @@ if(file_exists($filename)) {
 			}
 
 			// Funktion zum Anzeigen der Bilder
-			async function _fill_cache(id) {
+			async function _fill_cache(imageList, id) {
 				try {
-					var imageList = await getListAllJSON();
 					shuffleArray(imageList);
 					const container = document.createElement('div');
 					container.setAttribute('id', 'image-container_' + id);
