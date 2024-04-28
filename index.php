@@ -205,24 +205,12 @@
 		return null;
 	}
 
-	function convertToDecimalLatitude($degrees, $minutes, $seconds, $direction) {
+	function convertLatLonToDecimal($degrees, $minutes, $seconds, $direction) {
 		// Convert degrees, minutes, and seconds to decimal
 		$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
 
 		// Adjust sign based on direction (N or S)
-		if ($direction == 'S') {
-			$decimal *= -1;
-		}
-
-		return $decimal;
-	}
-
-	function convertToDecimalLongitude($degrees, $minutes, $seconds, $direction) {
-		// Convert degrees, minutes, and seconds to decimal
-		$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
-
-		// Adjust sign based on direction (E or W)
-		if ($direction == 'W') {
+		if ($direction == 'S' || $direction == 'W') {
 			$decimal *= -1;
 		}
 
@@ -274,8 +262,8 @@
 		$longitude_direction = $exif['GPS']['GPSLongitudeRef'];
 
 		$res = array(
-			"latitude" => convertToDecimalLatitude($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
-			"longitude" => convertToDecimalLongitude($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
+			"latitude" => convertLatLonToDecimal($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
+			"longitude" => convertLatLonToDecimal($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
 		);
 
 		if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
