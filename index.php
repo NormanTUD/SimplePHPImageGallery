@@ -792,8 +792,8 @@
 			}
 
 			#searchInput {
-				width: 20vw;
-				height: 4vw;
+				width: calc(150px + 1.5vw);;
+				height: calc(50px + 1.5vw);;
 				max-height: 50px;
 				max-width: 400px;
 			}
