@@ -555,9 +555,6 @@
 				// Freigabe des Speichers
 				imagedestroy($image);
 				imagedestroy($thumbnail);
-
-				// Beende die Skriptausführung
-				exit;
 			}
 		} else {
 			echo 'File not found.';
