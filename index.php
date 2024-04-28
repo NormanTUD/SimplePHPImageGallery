@@ -1746,6 +1746,8 @@ if(file_exists($filename)) {
 					console.error('Fehler beim Anzeigen der Bilder:', error);
 					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
 				}
+
+				log("Done filling cache");
 			}
 
 			$(document).ready(async function() {
