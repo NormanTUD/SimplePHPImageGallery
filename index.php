@@ -109,6 +109,13 @@
 		return $sortedString;
 	}
 
+	function file_or_folder_matches ($file_or_folder, $searchTermLower, $normalized) {
+		return 
+			stripos($file_or_folder, $searchTermLower) !== false ||
+			stripos(normalize_special_characters($file_or_folder), $normalized) !== false
+		;
+	}
+
 	// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 	function searchFiles($fp, $searchTerm) {
 		$results = [];
@@ -139,8 +146,7 @@
 
 			if (is_dir($filePath)) {
 				if (
-					stripos($file_without_ending, $searchTermLower) !== false ||
-					stripos(normalize_special_characters($file_without_ending), $normalized) !== false
+					file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)
 				) {
 					$randomImage = getRandomImageFromSubfolders($filePath);
 					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
@@ -160,8 +166,7 @@
 				if ($fileExtension === 'txt') {
 					$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
 					if (
-						stripos($textContent, $searchTermLower) !== false ||
-						stripos(normalize_special_characters($textContent), $normalized) !== false
+						file_or_folder_matches($textContent, $searchTermLower, $normalized)
 					) {
 						$imageFilePath = searchImageFileByTXT($filePath);
 
@@ -174,8 +179,7 @@
 					}
 				} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
 					if (
-						stripos($file_without_ending, $searchTermLower) !== false ||
-						stripos(normalize_special_characters($file), $normalized) !== false
+						file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)
 					) {
 						$results[] = [
 							'path' => $filePath,
