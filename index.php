@@ -476,7 +476,7 @@
 		// Überprüfe, ob die Datei existiert
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
 			// Generiere einen eindeutigen Dateinamen für das Thumbnail
-			$thumbnailFileName = md5($imagePath) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
+			$thumbnailFileName = md5(file_get_contents($imagePath)) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
 
 			// Überprüfe, ob das Thumbnail im Cache vorhanden ist
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
