@@ -435,6 +435,35 @@
 		return null;
 	}
 
+	function listAllImageFiles($directory) {
+		if($directory == "./.git" || $directory == "./docker_tmp" || $directory == "./thumbnails_cache") {
+			return [];
+		}
+
+		$imageList = [];
+
+		$files = scandir($directory);
+
+		foreach ($files as $file) {
+			if ($file != '.' && $file != '..' && $file != "loading.gif") {
+				$filePath = $directory . '/' . $file;
+
+				if (is_dir($filePath)) {
+					$subDirectoryImages = listAllImageFiles($filePath);
+					$imageList = array_merge($imageList, $subDirectoryImages);
+				} else {
+					if (is_valid_image_file($filePath)) {
+						$imageList[] = $filePath;
+					}
+				}
+			}
+		}
+
+		return $imageList;
+	}
+
+
+
 	// AJAX-Handler für die Suche
 	if (isset($_GET['search'])) {
 		$searchTerm = $_GET['search'];
@@ -461,6 +490,15 @@
 		header('Content-type: application/json; charset=utf-8');
 		echo json_encode($results);
 		exit;
+	}
+
+	if (isset($_GET['list_all'])) {
+		$allImageFiles = listAllImageFiles('.');
+
+		header('Content-type: application/json; charset=utf-8');
+		echo json_encode($allImageFiles);
+
+		exit(0);
 	}
 
 	if (isset($_GET['preview'])) {
