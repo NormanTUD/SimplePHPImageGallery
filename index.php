@@ -435,7 +435,24 @@
 		return null;
 	}
 
-	function listAllImageFiles($directory) {
+	function is_cached_already ($path) {
+		$md5 = md5(file_get_contents($path));
+		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+
+		if(is_dir("/docker_tmp/")) {
+			$cacheFolder = "/docker_tmp/";
+		}
+
+		$path = $cacheFolder . $md5 . ".jpg";
+
+		if(file_exists($path) && is_valid_image_file($path)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	function listAllUncachedImageFiles($directory) {
 		if($directory == "./.git" || $directory == "./docker_tmp" || $directory == "./thumbnails_cache") {
 			return [];
 		}
@@ -449,10 +466,10 @@
 				$filePath = $directory . '/' . $file;
 
 				if (is_dir($filePath)) {
-					$subDirectoryImages = listAllImageFiles($filePath);
+					$subDirectoryImages = listAllUncachedImageFiles($filePath);
 					$imageList = array_merge($imageList, $subDirectoryImages);
 				} else {
-					if (is_valid_image_file($filePath)) {
+					if (is_valid_image_file($filePath) && !is_cached_already($filePath)) {
 						$imageList[] = $filePath;
 					}
 				}
@@ -493,7 +510,7 @@
 	}
 
 	if (isset($_GET['list_all'])) {
-		$allImageFiles = listAllImageFiles('.');
+		$allImageFiles = listAllUncachedImageFiles('.');
 
 		header('Content-type: application/json; charset=utf-8');
 		echo json_encode($allImageFiles);
