@@ -1746,6 +1746,7 @@ if(file_exists($filename)) {
 					shuffleArray(imageList);
 					const container = document.createElement('div');
 					container.setAttribute('id', 'image-container_' + id);
+					document.body.appendChild(container);
 
 					for (let i = 0; i < imageList.length; i++) {
 						const imageUrl = `index.php?preview=${imageList[i]}`;
@@ -1756,7 +1757,6 @@ if(file_exists($filename)) {
 							// Bild anzeigen, wenn geladen, dann entfernen
 							await new Promise((resolve, reject) => {
 								imageElement.addEventListener('load', () => {
-									document.body.appendChild(container);
 									container.appendChild(imageElement);
 									setTimeout(() => {
 										container.removeChild(imageElement);
