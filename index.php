@@ -276,6 +276,10 @@
 	}
 
 	function is_valid_image_file ($filepath) {
+		if(!is_file($filepath)) {
+			return false;
+		}
+
 		if(!is_readable($filepath)) {
 			return false;
 		}
@@ -614,10 +618,10 @@
 		<meta charset="UTF-8">
 		<title>Galerie</title>
 <?php
-$jquery_file = 'jquery-3.7.1.min.js';
-if(!file_exists($jquery_file)) {
-	$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
-}
+		$jquery_file = 'jquery-3.7.1.min.js';
+		if(!file_exists($jquery_file)) {
+			$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
+		}
 ?>
 		<script src="<?php print $jquery_file; ?>"></script>
 
