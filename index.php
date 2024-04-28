@@ -1700,12 +1700,31 @@ if(file_exists($filename)) {
 				}
 			}
 
+			async function fill_cache (nr=5) {
+				var promises = [];
+				for (var i = 0; i < nr; i++) {
+					promises.push(_fill_cache(i));
+				}
+
+				await Promise.all(promises);
+			}
+
+			function shuffleArray(array) {
+				for (var i = array.length - 1; i > 0; i--) {
+					var j = Math.floor(Math.random() * (i + 1));
+					var temp = array[i];
+					array[i] = array[j];
+					array[j] = temp;
+				}
+			}
+
 			// Funktion zum Anzeigen der Bilder
-			async function fill_cache () {
+			async function _fill_cache (id) {
 				try {
-					const imageList = await getListAllJSON();
+					var imageList = await getListAllJSON();
+					shuffleArray(imageList);
 					const container = document.createElement('div');
-					container.setAttribute('id', 'image-container');
+					container.setAttribute('id', 'image-container_' + id);
 
 					for (let i = 0; i < imageList.length; i++) {
 						const imageUrl = `index.php?preview=${imageList[i]}`;
