@@ -533,9 +533,8 @@
 
 			// Überprüfe, ob das Thumbnail im Cache vorhanden ist
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
-			if (file_exists($cachedThumbnailPath) && is_valid_image_file($thumbnails_cache)) {
+			if (file_exists($cachedThumbnailPath) && is_valid_image_file($cachedThumbnailPath)) {
 				// Das Thumbnail existiert im Cache, geben Sie es direkt aus
-				dier($cachedThumbnailPath);
 				header('Content-Type: image/jpeg');
 				readfile($cachedThumbnailPath);
 				exit;
