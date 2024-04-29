@@ -1390,11 +1390,13 @@ if(file_exists($filename)) {
 
 				var _promise = draw_map_from_current_images();
 
-				loadAndReplaceImages();
+				var _replace_images_promise = loadAndReplaceImages();
 
 				createBreadcrumb(folder);
 
 				await _promise;
+
+				await _replace_images_promise;
 
 				hidePageLoadingIndicator();
 			}
@@ -1682,7 +1684,7 @@ if(file_exists($filename)) {
 
 			$(".no_preview_available").parent().hide();
 
-			function loadAndReplaceImages() {
+			async function loadAndReplaceImages() {
 				$('.loading-thumbnail').each(function() {
 					var $thumbnail = $(this);
 					var originalUrl = $thumbnail.attr('data-original-url');
