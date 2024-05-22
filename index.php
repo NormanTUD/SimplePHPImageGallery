@@ -1636,12 +1636,16 @@ if(file_exists($filename)) {
 				//log("$filtered_folders:", $filtered_folders);
 				//log("data:", data);
 
-				var markers = _draw_map(data);
+				try {
+					var markers = _draw_map(data);
 
-				return {
-					"data": data,
-					"markers": markers
-				};
+					return {
+						"data": data,
+						"markers": markers
+					};
+				} catch (e) {
+					console.error("Error drawing map: ", e)
+				}
 			}
 
 			function createBreadcrumb(currentFolderPath) {
