@@ -12,3 +12,7 @@ links.txt
 docker-compose.custom.yml
 felix
 thumbnails_cache
+*.mp4
+*.MP4
+*.mP4
+*.Mp4
