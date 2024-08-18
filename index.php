@@ -709,11 +709,13 @@
 			die("Wrongly formed geolist: ".$geolist);
 		}
 
+		/*
 		foreach ($untested_files as $file) {
 			if(!preg_match("/\.\.\//", $file) && is_valid_image_file($file)) {
 				$files[] = $file;
 			}
 		}
+		 */
 
 		$s = array();
 
