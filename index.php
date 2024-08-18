@@ -86,7 +86,7 @@
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']]; // Handle single or multiple images
 				foreach ($images as $img) {
 					if (isValidPath($img) && file_exists($img)) {
-						if(preg_match("/\.(jpg|jpeg|png)$/i", $filePath)) {
+						if(preg_match("/\.(jpg|jpeg|png)$/i", $img)) {
 							$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
 						}
 					} else {
@@ -2090,7 +2090,7 @@
 							}
 
 							if(selectedImages.length) {
-								download_url_parts.push("img=" + selectedImages.join("&img="));
+								download_url_parts.push("img[]=" + selectedImages.join("&img[]="));
 							}
 
 							if(download_url_parts.length) {
