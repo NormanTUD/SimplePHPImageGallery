@@ -1552,13 +1552,20 @@
 
 			var json_cache = {};
 
-			function showPageLoadingIndicator() {
+			async function showPageLoadingIndicator(_sleep=0) {
 				if($(".loading-indicator").length) {
 					return;
 				}
+
 				const loadingIndicator = document.createElement('div');
 				loadingIndicator.classList.add('loading-indicator');
 				document.body.appendChild(loadingIndicator);
+
+				if(_sleep) {
+					await sleep(_sleep * 1000);
+
+					hidePageLoadingIndicator();
+				}
 			}
 
 			showPageLoadingIndicator();
@@ -1972,14 +1979,14 @@
 				var d = new Date();
 				select_folder_timer = d.getTime(); // Milliseconds since 1 Apr 1970
 
-				showPageLoadingIndicator();
+				showPageLoadingIndicator(1);
 			}
 
 			function onImageMouseDown(e){
 				var d = new Date();
 				select_image_timer = d.getTime(); // Milliseconds since 1 Apr 1970
 
-				showPageLoadingIndicator();
+				showPageLoadingIndicator(1);
 			}
 
 			function onFolderMouseUp(e){
