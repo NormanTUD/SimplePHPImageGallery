@@ -356,9 +356,10 @@
 
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
-				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
+				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
 				echo '<img title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
+				echo '<span class="checkmark">✅</span>';
 				echo "</div></a>\n";
 			}
 		}
@@ -972,6 +973,8 @@
 		<div id="breadcrumb"></div>
 		<script>
 			var select_image_timer = 0;
+			var select_folder_timer = 0;
+
 			var selectedImages = [];
 			var selectedFolders = [];
 
@@ -1054,12 +1057,12 @@
 						if (result.type === 'folder') {
 							var folderThumbnail = result.thumbnail;
 							if (folderThumbnail) {
-								var folder_line = `<a class='img_element' onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
+								var folder_line = `<a class='img_element' data-onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
 								// Ersetze das Vorschaubild mit einem Lade-Spinner
 								folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search img_element" data-line="Y" data-original-url="index.php?preview=${folderThumbnail}">`;
 
-								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3></div></a>`;
+								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3><span class="checkmark">✅</span></div></a>`;
 								$searchResults.append(folder_line);
 							}
 						} else if (result.type === 'file') {
@@ -1446,8 +1449,11 @@
 
 				hidePageLoadingIndicator();
 
-				$(".thumbnail").mousedown(onImageMouseDown)
-				$(".thumbnail").mouseup(onImageMouseUp)
+				$(".thumbnail_folder").mousedown(onFolderMouseDown);
+				$(".thumbnail_folder").mouseup(onFolderMouseUp);
+
+				$(".thumbnail").mousedown(onImageMouseDown);
+				$(".thumbnail").mouseup(onImageMouseUp);
 			}
 
 			var json_cache = {};
@@ -1868,9 +1874,47 @@
 				}
 			}
 
+			function onFolderMouseDown(e){
+				var d = new Date();
+				select_image_timer = d.getTime(); // Milliseconds since 1 Apr 1970
+			}
+
 			function onImageMouseDown(e){
 				var d = new Date();
 				select_image_timer = d.getTime(); // Milliseconds since 1 Apr 1970
+			}
+
+			function onFolderMouseUp(e){
+				var d = new Date();
+				var long_click = (d.getTime() - select_image_timer) > 1000;
+				if (long_click || enabled_selection_mode){
+					e.preventDefault();
+					// Click lasted longer than 1s (1000ms)
+					var container = e.target.closest('.thumbnail, .thumbnail_folder');
+					var checkmark = container.querySelector('.checkmark');
+					var item = container.querySelector('img').getAttribute('src');
+
+					item = decodeURIComponent(item.replace(/.*preview=/, ""));
+
+					if (selectedFolders.includes(item)) {
+						// Deselect item
+						selectedFolders = selectedFolders.filter(i => i !== item);
+						checkmark.style.display = 'none';
+					} else {
+						// Select item
+						selectedFolders.push(item);
+						checkmark.style.display = 'block';
+					}
+
+					updateDownloadButton();
+					updateUnselectButton();
+					enabled_selection_mode = true;
+				} else {
+					var _onclick = $(e.currentTarget).parent().data("onclick");
+					log(_onclick)
+					eval(_onclick);
+				}
+				select_image_timer = 0;
 			}
 
 			function onImageMouseUp(e){
@@ -1899,7 +1943,8 @@
 					updateUnselectButton();
 					enabled_selection_mode = true;
 				} else {
-					eval($(e.currentTarget).data("onclick"));
+					var _onclick = $(e.currentTarget).data("onclick");
+					eval(_onclick);
 				}
 				select_image_timer = 0;
 			}
@@ -1940,15 +1985,33 @@
 						log("Should be downloaded as zip!");
 					}
 
-					// Create a form or download process for the selected items
-					selectedImages.forEach(item => {
-						var a = document.createElement('a');
-						a.href = item;
-						a.download = item.split('/').pop(); // Extract filename
-						document.body.appendChild(a);
-						a.click();
-						document.body.removeChild(a);
-					});
+					if (selectedImages.length == 1 && selectedFolders.length == 0) {
+						selectedImages.forEach(item => {
+							var a = document.createElement('a');
+							a.href = item;
+							a.download = item.split('/').pop(); // Extract filename
+							document.body.appendChild(a);
+							a.click();
+							document.body.removeChild(a);
+						});
+					} else {
+						if(selectedImages.length || selectedFolders.length) {
+							var download_url_parts = [];
+
+							if(selectedFolders.length) {
+								download_url_parts.push("folder=" + selectedFolders.join("&folder="));
+							}
+
+							if(selectedImages.length) {
+								download_url_parts.push("img=" + selectedImages.join("&img="));
+							}
+
+							if(download_url_parts.length) {
+								var download_url = "index.php?" + download_url_parts.join("&");
+								log(download_url);
+							}
+						}
+					}
 				}
 			}
 
