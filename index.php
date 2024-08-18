@@ -533,9 +533,8 @@
 
 			// Überprüfe, ob das Thumbnail im Cache vorhanden ist
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
-			if (file_exists($cachedThumbnailPath) && is_valid_image_file($thumbnails_cache)) {
+			if (file_exists($cachedThumbnailPath) && is_valid_image_file($cachedThumbnailPath)) {
 				// Das Thumbnail existiert im Cache, geben Sie es direkt aus
-				dier($cachedThumbnailPath);
 				header('Content-Type: image/jpeg');
 				readfile($cachedThumbnailPath);
 				exit;
@@ -1390,11 +1389,13 @@ if(file_exists($filename)) {
 
 				var _promise = draw_map_from_current_images();
 
-				loadAndReplaceImages();
+				var _replace_images_promise = loadAndReplaceImages();
 
 				createBreadcrumb(folder);
 
 				await _promise;
+
+				await _replace_images_promise;
 
 				hidePageLoadingIndicator();
 			}
@@ -1635,12 +1636,16 @@ if(file_exists($filename)) {
 				//log("$filtered_folders:", $filtered_folders);
 				//log("data:", data);
 
-				var markers = _draw_map(data);
+				try {
+					var markers = _draw_map(data);
 
-				return {
-					"data": data,
-					"markers": markers
-				};
+					return {
+						"data": data,
+						"markers": markers
+					};
+				} catch (e) {
+					console.error("Error drawing map: ", e)
+				}
 			}
 
 			function createBreadcrumb(currentFolderPath) {
@@ -1682,7 +1687,7 @@ if(file_exists($filename)) {
 
 			$(".no_preview_available").parent().hide();
 
-			function loadAndReplaceImages() {
+			async function loadAndReplaceImages() {
 				$('.loading-thumbnail').each(function() {
 					var $thumbnail = $(this);
 					var originalUrl = $thumbnail.attr('data-original-url');
