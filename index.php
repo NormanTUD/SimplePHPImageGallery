@@ -971,8 +971,9 @@
 ?>
 		<div id="breadcrumb"></div>
 		<script>
-			var md_time = 0;
+			var select_image_timer = 0;
 			var selectedImages = [];
+			var selectedFolders = [];
 
 			var enabled_selection_mode = false;
 
@@ -1869,12 +1870,12 @@
 
 			function onImageMouseDown(e){
 				var d = new Date();
-				md_time = d.getTime(); // Milliseconds since 1 Apr 1970
+				select_image_timer = d.getTime(); // Milliseconds since 1 Apr 1970
 			}
 
 			function onImageMouseUp(e){
 				var d = new Date();
-				var long_click = (d.getTime()-md_time) > 1000;
+				var long_click = (d.getTime() - select_image_timer) > 1000;
 				if (long_click || enabled_selection_mode){
 					e.preventDefault();
 					// Click lasted longer than 1s (1000ms)
@@ -1900,7 +1901,7 @@
 				} else {
 					eval($(e.currentTarget).data("onclick"));
 				}
-				md_time = 0;
+				select_image_timer = 0;
 			}
 
 
@@ -1935,9 +1936,10 @@
 
 			function downloadSelected() {
 				if (selectedImages.length > 0) {
-					if (selectedImages.length > 1) {
+					if (selectedImages.length > 1 || selectedFolders.length > 0) {
 						log("Should be downloaded as zip!");
 					}
+
 					// Create a form or download process for the selected items
 					selectedImages.forEach(item => {
 						var a = document.createElement('a');
