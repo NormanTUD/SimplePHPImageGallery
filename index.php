@@ -764,6 +764,49 @@
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			.loading-bar-container {
+				position: fixed;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 5px;
+				background-color: rgba(0, 0, 0, 0.1);
+				z-index: 10000;
+			}
+
+			.loading-bar {
+				width: 0;
+				height: 100%;
+				background-color: #3498db;
+				animation: progress 1s ease-in-out;
+			}
+
+			/* CSS animation keyframes */
+			@keyframes progress {
+				0% {
+					width: 0;
+				}
+				100% {
+					width: 100%;
+				}
+			}
+
+			/* Optional: Adding undulating effect using a gradient */
+			.loading-bar.undulating {
+				background-image: linear-gradient(135deg, #3498db 25%, #1abc9c 50%, #3498db 75%);
+				background-size: 200% 100%;
+				animation: progress 1s ease-in-out, undulate 1s linear infinite;
+			}
+
+			@keyframes undulate {
+				0% {
+					background-position: 0% 0%;
+				}
+				100% {
+					background-position: 100% 100%;
+				}
+			}
+
 			.checkmark {
 				bottom: 5px;
 				left: 5px;
@@ -1072,6 +1115,32 @@
 
 			var searchTimer; // Globale Variable für den Timer
 			var lastSearch = "";
+
+			async function showProgressBar(_sleep = 1) {
+				// If a progress bar already exists, return early.
+				if (document.querySelector('.loading-bar-container')) {
+					return;
+				}
+
+				// Create the container and the progress bar
+				const container = document.createElement('div');
+				container.classList.add('loading-bar-container');
+
+				const loadingBar = document.createElement('div');
+				loadingBar.classList.add('loading-bar', 'undulating');
+
+				container.appendChild(loadingBar);
+				document.body.appendChild(container);
+
+				// Adjust the duration of the animation based on the _sleep parameter
+				loadingBar.style.animationDuration = `${_sleep}s`;
+
+				// Wait for the animation to complete
+				await sleep(_sleep * 1000);
+
+				// Remove the progress bar from the DOM
+				document.body.removeChild(container);
+			}
 
 			async function start_search() {
 				var searchTerm = $('#searchInput').val();
@@ -1979,14 +2048,14 @@
 				var d = new Date();
 				select_folder_timer = d.getTime(); // Milliseconds since 1 Apr 1970
 
-				showPageLoadingIndicator(1);
+				showProgressBar(1);
 			}
 
 			function onImageMouseDown(e){
 				var d = new Date();
 				select_image_timer = d.getTime(); // Milliseconds since 1 Apr 1970
 
-				showPageLoadingIndicator(1);
+				showProgressBar(1);
 			}
 
 			function onFolderMouseUp(e){
