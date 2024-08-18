@@ -2061,7 +2061,7 @@
 			}
 
 			function downloadSelected() {
-				if (selectedImages.length > 0 || selectedFolders > 0) {
+				if (selectedImages.length > 0 || selectedFolders.length > 0) {
 					if (selectedImages.length > 1 || selectedFolders.length > 0) {
 						log("Should be downloaded as zip!");
 					}
