@@ -46,14 +46,28 @@
 		if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
 			// Verarbeitung der folder-Parameter (beliebig viele Ordner)
 			if (isset($_GET['folder'])) {
-				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']]; // Handle single or multiple folders
+				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']]; // Handle single or multiple folders                                                                                       
 				foreach ($folders as $folder) {
 					if (isValidPath($folder) && is_dir($folder)) {
-						$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder));
+						$realFolderPath = realpath($folder); // Absoluten Pfad des Verzeichnisses holen
+
+						// Dateien im Verzeichnis rekursiv durchlaufen
+						$files = new RecursiveIteratorIterator(
+							new RecursiveDirectoryIterator($realFolderPath, RecursiveDirectoryIterator::SKIP_DOTS),
+							RecursiveIteratorIterator::SELF_FIRST
+						);
+
 						foreach ($files as $file) {
 							if (!$file->isDir()) { // Nur Dateien hinzufügen, keine Verzeichnisse
 								$filePath = $file->getRealPath();
-								$relativePath = substr($filePath, strlen($folder) + 1); // Relativer Pfad für die ZIP
+
+								// Berechnung des relativen Pfades, um die Verzeichnisstruktur beizubehalten
+								$cwd = getcwd();
+
+								$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
+								$relativePath = str_replace($realFolderPath . DIRECTORY_SEPARATOR, '', $relativePath);
+
+								// Datei zur ZIP hinzufügen
 								$zip->addFile($filePath, $relativePath);
 							}
 						}
@@ -63,6 +77,7 @@
 					}
 				}
 			}
+
 
 			// Verarbeitung der img-Parameter (beliebig viele Bilder)
 			if (isset($_GET['img'])) {
