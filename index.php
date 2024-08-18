@@ -1143,7 +1143,11 @@
 				await sleep(_sleep * 1000);
 
 				// Remove the progress bar from the DOM
-				document.body.removeChild(container);
+				try {
+					document.body.removeChild(container);
+				} catch (e) {
+					//
+				}
 			}
 
 			async function start_search() {
