@@ -1116,6 +1116,10 @@
 			var searchTimer; // Globale Variable für den Timer
 			var lastSearch = "";
 
+			function removeProgressBar() {
+				$(".loading-bar-container").remove();
+			}
+
 			async function showProgressBar(_sleep = 1) {
 				// If a progress bar already exists, return early.
 				if (document.querySelector('.loading-bar-container')) {
@@ -2059,6 +2063,8 @@
 			}
 
 			function onFolderMouseUp(e){
+				removeProgressBar();
+
 				var d = new Date();
 				var long_click = (d.getTime() - select_folder_timer) > 1000;
 				if (long_click || enabled_selection_mode){
@@ -2096,6 +2102,8 @@
 			}
 
 			function onImageMouseUp(e){
+				removeProgressBar();
+
 				var d = new Date();
 				var long_click = (d.getTime() - select_image_timer) > 1000;
 				if (long_click || enabled_selection_mode){
