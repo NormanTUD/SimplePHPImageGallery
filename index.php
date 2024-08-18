@@ -374,8 +374,9 @@
 					$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
 				}
 
-				echo '<div class="thumbnail" onclick="showImage(\'' . urlencode($image['path']) . '\')">';
+				echo '<div class="thumbnail" data-onclick="showImage(\'' . urlencode($image['path']) . '\')">';
 				echo '<img data-line="YYY" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				echo '<span class="checkmark">✅</span>';
 				echo "</div>\n";
 			}
 		}
@@ -679,6 +680,44 @@
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			.checkmark {
+				bottom: 5px;
+				left: 5px;
+				font-size: 24px;
+				color: green;
+				display: none; /* initially hidden */
+			}
+
+			.unselect-btn {
+				display: none; /* Initially hidden, only show when something is selected */
+				margin-top: 20px;
+				padding: 10px 20px;
+				background-color: red;
+				color: white;
+				border: none;
+				cursor: pointer;
+			}
+
+			.unselect-btn:disabled {
+				background-color: #ccc;
+				cursor: not-allowed;
+			}
+
+			.download-btn {
+				display: none; /* Initially hidden, only show when something is selected */
+				margin-top: 20px;
+				padding: 10px 20px;
+				background-color: #4CAF50;
+				color: white;
+				border: none;
+				cursor: pointer;
+			}
+
+			.download-btn:disabled {
+				background-color: #ccc;
+				cursor: not-allowed;
+			}
+
 			.fullscreen {
 				position: fixed;
 				top: 0;
@@ -908,6 +947,8 @@
 	<body>
 		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
 		<button style="display: none" id="delete_search" onclick='delete_search()'>&#x2715;</button>
+		<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
+		<button class="unselect-btn" id="unselectBtn" onclick="unselectSelection()">Unselect</button>
 <?php
 		$filename = 'links.txt';
 
@@ -930,6 +971,11 @@
 ?>
 		<div id="breadcrumb"></div>
 		<script>
+			var md_time = 0;
+			var selectedItems = [];
+
+			var enabled_selection_mode = false;
+
 			var map = null;
 			var fullscreen;
 
@@ -1017,7 +1063,7 @@
 							}
 						} else if (result.type === 'file') {
 							var fileName = result.path.split('/').pop();
-							var image_line = `<div class="thumbnail" class='img_element' href="${result.path}" onclick="showImage('${result.path}')">`;
+							var image_line = `<div class="thumbnail" class='img_element' href="${result.path}" data-onclick="showImage('${result.path}')">`;
 
 							var gps_data_string = "";
 
@@ -1398,6 +1444,9 @@
 				await _replace_images_promise;
 
 				hidePageLoadingIndicator();
+
+				$(".thumbnail").mousedown(onImageMouseDown)
+				$(".thumbnail").mouseup(onImageMouseUp)
 			}
 
 			var json_cache = {};
@@ -1504,7 +1553,7 @@
 					var text = "<img id='preview_" + hash +
 						"' data-line='__A__' src='index.php?preview=" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) +
-						"' style='width: 100px; height: 100px;' onclick='showImage(\"" +
+						"' style='width: 100px; height: 100px;' data-onclick='showImage(\"" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
@@ -1815,6 +1864,86 @@
 				} catch (error) {
 					console.error('Fehler beim Anzeigen der Bilder:', error);
 					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
+				}
+			}
+
+			function onImageMouseDown(e){
+				var d = new Date();
+				md_time = d.getTime(); // Milliseconds since 1 Apr 1970
+			}
+
+			function onImageMouseUp(e){
+				var d = new Date();
+				var long_click = (d.getTime()-md_time) > 1000;
+				if (long_click || enabled_selection_mode){
+					e.preventDefault();
+					// Click lasted longer than 1s (1000ms)
+					var container = e.target.closest('.thumbnail, .thumbnail_folder');
+					var checkmark = container.querySelector('.checkmark');
+					var item = container.querySelector('img').getAttribute('src');
+
+					item = decodeURIComponent(item.replace(/.*preview=/, ""));
+
+					if (selectedItems.includes(item)) {
+						// Deselect item
+						selectedItems = selectedItems.filter(i => i !== item);
+						checkmark.style.display = 'none';
+					} else {
+						// Select item
+						selectedItems.push(item);
+						checkmark.style.display = 'block';
+					}
+
+					updateDownloadButton();
+					updateUnselectButton();
+					enabled_selection_mode = true;
+				} else {
+					eval($(e.currentTarget).data("onclick"));
+				}
+				md_time = 0;
+			}
+
+
+			function updateUnselectButton() {
+				var unselectBtn = document.getElementById('unselectBtn');
+				if (selectedItems.length > 0) {
+					unselectBtn.style.display = 'inline-block';
+				} else {
+					unselectBtn.style.display = 'none';
+				}
+			}
+
+
+			function updateDownloadButton() {
+				var downloadBtn = document.getElementById('downloadBtn');
+				if (selectedItems.length > 0) {
+					downloadBtn.style.display = 'inline-block';
+				} else {
+					downloadBtn.style.display = 'none';
+				}
+			}
+
+			function unselectSelection() {
+				enabled_selection_mode = false;
+				selectedItems = [];
+
+				updateDownloadButton();
+				updateUnselectButton();
+
+				$(".checkmark").hide();
+			}
+
+			function downloadSelected() {
+				if (selectedItems.length > 0) {
+					// Create a form or download process for the selected items
+					selectedItems.forEach(item => {
+						var a = document.createElement('a');
+						a.href = item;
+						a.download = item.split('/').pop(); // Extract filename
+						document.body.appendChild(a);
+						a.click();
+						document.body.removeChild(a);
+					});
 				}
 			}
 
