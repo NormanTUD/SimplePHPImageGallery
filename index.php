@@ -1100,6 +1100,7 @@
 					showPageLoadingIndicator();
 
 					if (!/^\s*$/.test(searchTerm)) {
+						unselectSelection();
 						$("#delete_search").show();
 						$("#searchResults").show();
 						$("#gallery").hide();
@@ -1121,6 +1122,8 @@
 						$("#searchResults").hide();
 						$("#gallery").show();
 						await draw_map_from_current_images();
+
+						unselectSelection();
 					}
 				}
 
@@ -1130,6 +1133,7 @@
 
 			// Funktion zur Anzeige der Suchergebnisse
 			async function displaySearchResults(searchTerm, results) {
+				unselectSelection();
 				var $searchResults = $('#searchResults');
 				$searchResults.empty();
 
@@ -1185,6 +1189,7 @@
 				await draw_map_from_current_images();
 
 				add_listeners();
+				unselectSelection();
 			}
 
 			function toggleSwitch() {
