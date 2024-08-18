@@ -61,14 +61,16 @@
 							if (!$file->isDir()) { // Nur Dateien hinzufügen, keine Verzeichnisse
 								$filePath = $file->getRealPath();
 
-								// Berechnung des relativen Pfades, um die Verzeichnisstruktur beizubehalten
-								$cwd = getcwd();
+								if(preg_match("/\.(jpg|jpeg|png)$/i", $filePath)) {
+									// Berechnung des relativen Pfades, um die Verzeichnisstruktur beizubehalten
+									$cwd = getcwd();
 
-								$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
-								$relativePath = str_replace($realFolderPath . DIRECTORY_SEPARATOR, '', $relativePath);
+									$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
+									$relativePath = str_replace($realFolderPath . DIRECTORY_SEPARATOR, '', $relativePath);
 
-								// Datei zur ZIP hinzufügen
-								$zip->addFile($filePath, $relativePath);
+									// Datei zur ZIP hinzufügen
+									$zip->addFile($filePath, $relativePath);
+								}
 							}
 						}
 					} else {
@@ -84,7 +86,9 @@
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']]; // Handle single or multiple images
 				foreach ($images as $img) {
 					if (isValidPath($img) && file_exists($img)) {
-						$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
+						if(preg_match("/\.(jpg|jpeg|png)$/i", $filePath)) {
+							$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
+						}
 					} else {
 						echo 'Invalid image: ' . htmlspecialchars($img);
 						exit(0);
