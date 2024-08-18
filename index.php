@@ -909,24 +909,24 @@
 		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
 		<button style="display: none" id="delete_search" onclick='delete_search()'>&#x2715;</button>
 <?php
-$filename = 'links.txt';
+		$filename = 'links.txt';
 
-if(file_exists($filename)) {
-	$file = fopen($filename, 'r');
+		if(file_exists($filename)) {
+			$file = fopen($filename, 'r');
 
-	if ($file) {
-		while (($line = fgets($file)) !== false) {
-			$parts = explode(',', $line);
+			if ($file) {
+				while (($line = fgets($file)) !== false) {
+					$parts = explode(',', $line);
 
-			$link = trim($parts[0]);
-			$text = trim($parts[1]);
+					$link = trim($parts[0]);
+					$text = trim($parts[1]);
 
-			echo '<a target="_blank" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
+					echo '<a target="_blank" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
+				}
+
+				fclose($file);
+			}
 		}
-
-		fclose($file);
-	}
-}
 ?>
 		<div id="breadcrumb"></div>
 		<script>
