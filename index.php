@@ -1935,6 +1935,9 @@
 
 			function downloadSelected() {
 				if (selectedItems.length > 0) {
+					if (selectedItems.length > 1) {
+						log("Should be downloaded as zip!");
+					}
 					// Create a form or download process for the selected items
 					selectedItems.forEach(item => {
 						var a = document.createElement('a');
