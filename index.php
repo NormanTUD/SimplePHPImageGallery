@@ -108,10 +108,10 @@
 			readfile($zipFile);
 			unlink($zipFile);
 
-			exit(0); // Erfolgreiches Beenden mit Exit-Code 0
+			exit(0);
 		} else {
 			echo 'Failed to create zip file.';
-			exit(0); // Exit mit Code 0 auch bei Fehler
+			exit(1);
 		}
 	}
 
