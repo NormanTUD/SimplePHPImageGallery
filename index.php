@@ -1122,7 +1122,7 @@
 
 			async function showProgressBar(_sleep = 1) {
 				// If a progress bar already exists, return early.
-				if (document.querySelector('.loading-bar-container')) {
+				if (document.querySelector('.loading-bar-container') || enabled_selection_mode) {
 					return;
 				}
 
