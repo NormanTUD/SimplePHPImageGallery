@@ -2061,7 +2061,7 @@
 			}
 
 			function downloadSelected() {
-				if (selectedImages.length > 0) {
+				if (selectedImages.length > 0 || selectedFolders > 0) {
 					if (selectedImages.length > 1 || selectedFolders.length > 0) {
 						log("Should be downloaded as zip!");
 					}
@@ -2096,7 +2096,11 @@
 								document.body.appendChild(a);
 								a.click();
 								document.body.removeChild(a);
+							} else {
+								log("No download-url-parts found");
 							}
+						} else {
+							log("selectedImages and selectedFolders were empty");
 						}
 					}
 				}
