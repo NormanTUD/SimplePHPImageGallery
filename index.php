@@ -1161,7 +1161,7 @@
 							// Ersetze das Vorschaubild mit einem Lade-Spinner
 							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search img_element" data-line='X' data-original-url="index.php?preview=${encodeURIComponent(result.path)}">`;
 
-							image_line += `</div>`;
+							image_line += `<span class="checkmark">✅</span></div>`;
 							$searchResults.append(image_line);
 						}
 					});
@@ -1183,6 +1183,8 @@
 				}
 
 				await draw_map_from_current_images();
+
+				add_listeners();
 			}
 
 			function toggleSwitch() {
@@ -1508,6 +1510,14 @@
 				}
 			}
 
+			function add_listeners() {
+				$(".thumbnail_folder").mousedown(onFolderMouseDown);
+				$(".thumbnail_folder").mouseup(onFolderMouseUp);
+
+				$(".thumbnail").mousedown(onImageMouseDown);
+				$(".thumbnail").mouseup(onImageMouseUp);
+			}
+
 			async function load_folder (folder) {
 				updateUrlParameter(folder);
 
@@ -1532,11 +1542,7 @@
 
 				hidePageLoadingIndicator();
 
-				$(".thumbnail_folder").mousedown(onFolderMouseDown);
-				$(".thumbnail_folder").mouseup(onFolderMouseUp);
-
-				$(".thumbnail").mousedown(onImageMouseDown);
-				$(".thumbnail").mouseup(onImageMouseUp);
+				add_listeners();
 			}
 
 			var json_cache = {};
