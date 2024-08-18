@@ -1892,7 +1892,7 @@
 					// Click lasted longer than 1s (1000ms)
 					var container = e.target.closest('.thumbnail, .thumbnail_folder');
 					var checkmark = container.querySelector('.checkmark');
-					var item = container.querySelector('img').getAttribute('src');
+					var item = decodeURIComponent($(container.querySelector('img')).parent().parent().data("href"));
 
 					item = decodeURIComponent(item.replace(/.*preview=/, ""));
 
@@ -1902,6 +1902,7 @@
 						checkmark.style.display = 'none';
 					} else {
 						// Select item
+						log(item);
 						selectedFolders.push(item);
 						checkmark.style.display = 'block';
 					}
@@ -2007,7 +2008,7 @@
 							}
 
 							if(download_url_parts.length) {
-								var download_url = "index.php?" + download_url_parts.join("&");
+								var download_url = "index.php?zip=1&" + download_url_parts.join("&");
 								log(download_url);
 							}
 						}
