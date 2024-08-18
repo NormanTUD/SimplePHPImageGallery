@@ -2066,10 +2066,6 @@
 
 			function downloadSelected() {
 				if (selectedImages.length > 0 || selectedFolders.length > 0) {
-					if (selectedImages.length > 1 || selectedFolders.length > 0) {
-						log("Should be downloaded as zip!");
-					}
-
 					if (selectedImages.length == 1 && selectedFolders.length == 0) {
 						selectedImages.forEach(item => {
 							var a = document.createElement('a');
@@ -2093,7 +2089,6 @@
 
 							if(download_url_parts.length) {
 								var download_url = "index.php?zip=1&" + download_url_parts.join("&");
-								log(download_url);
 
 								var a = document.createElement('a');
 								a.href = download_url;
