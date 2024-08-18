@@ -972,7 +972,7 @@
 		<div id="breadcrumb"></div>
 		<script>
 			var md_time = 0;
-			var selectedItems = [];
+			var selectedImages = [];
 
 			var enabled_selection_mode = false;
 
@@ -1884,13 +1884,13 @@
 
 					item = decodeURIComponent(item.replace(/.*preview=/, ""));
 
-					if (selectedItems.includes(item)) {
+					if (selectedImages.includes(item)) {
 						// Deselect item
-						selectedItems = selectedItems.filter(i => i !== item);
+						selectedImages = selectedImages.filter(i => i !== item);
 						checkmark.style.display = 'none';
 					} else {
 						// Select item
-						selectedItems.push(item);
+						selectedImages.push(item);
 						checkmark.style.display = 'block';
 					}
 
@@ -1906,7 +1906,7 @@
 
 			function updateUnselectButton() {
 				var unselectBtn = document.getElementById('unselectBtn');
-				if (selectedItems.length > 0) {
+				if (selectedImages.length > 0) {
 					unselectBtn.style.display = 'inline-block';
 				} else {
 					unselectBtn.style.display = 'none';
@@ -1916,7 +1916,7 @@
 
 			function updateDownloadButton() {
 				var downloadBtn = document.getElementById('downloadBtn');
-				if (selectedItems.length > 0) {
+				if (selectedImages.length > 0) {
 					downloadBtn.style.display = 'inline-block';
 				} else {
 					downloadBtn.style.display = 'none';
@@ -1925,7 +1925,7 @@
 
 			function unselectSelection() {
 				enabled_selection_mode = false;
-				selectedItems = [];
+				selectedImages = [];
 
 				updateDownloadButton();
 				updateUnselectButton();
@@ -1934,12 +1934,12 @@
 			}
 
 			function downloadSelected() {
-				if (selectedItems.length > 0) {
-					if (selectedItems.length > 1) {
+				if (selectedImages.length > 0) {
+					if (selectedImages.length > 1) {
 						log("Should be downloaded as zip!");
 					}
 					// Create a form or download process for the selected items
-					selectedItems.forEach(item => {
+					selectedImages.forEach(item => {
 						var a = document.createElement('a');
 						a.href = item;
 						a.download = item.split('/').pop(); // Extract filename
