@@ -2103,6 +2103,8 @@
 							log("selectedImages and selectedFolders were empty");
 						}
 					}
+				} else {
+					log("selectedImages and selectedFolders were empty (top)");
 				}
 			}
 
