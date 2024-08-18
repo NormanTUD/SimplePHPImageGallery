@@ -2035,6 +2035,7 @@
 			function unselectSelection() {
 				enabled_selection_mode = false;
 				selectedImages = [];
+				selectedFolders = [];
 
 				updateDownloadButton();
 				updateUnselectButton();
