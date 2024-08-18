@@ -47,6 +47,7 @@
 			// Verarbeitung der folder-Parameter (beliebig viele Ordner)
 			if (isset($_GET['folder'])) {
 				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']]; // Handle single or multiple folders                                                                                       
+				dier($folders);
 				foreach ($folders as $folder) {
 					if (isValidPath($folder) && is_dir($folder)) {
 						$realFolderPath = realpath($folder); // Absoluten Pfad des Verzeichnisses holen
