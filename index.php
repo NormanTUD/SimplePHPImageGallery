@@ -34,6 +34,68 @@
 		exit(0);
 	}
 
+	function isValidPath($path) {
+		return strpos($path, '..') === false && strpos($path, '/') !== 0 && strpos($path, '\\') !== 0;
+	}
+
+	if (isset($_GET['zip']) && $_GET['zip'] == 1) {
+		$zipname = 'images.zip'; // Name der ZIP-Datei
+		$zip = new ZipArchive;
+		$zipFile = tempnam(sys_get_temp_dir(), 'zip');
+
+		if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
+			// Verarbeitung der folder-Parameter (beliebig viele Ordner)
+			if (isset($_GET['folder'])) {
+				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']]; // Handle single or multiple folders
+				foreach ($folders as $folder) {
+					if (isValidPath($folder) && is_dir($folder)) {
+						$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder));
+						foreach ($files as $file) {
+							if (!$file->isDir()) { // Nur Dateien hinzufügen, keine Verzeichnisse
+								$filePath = $file->getRealPath();
+								$relativePath = substr($filePath, strlen($folder) + 1); // Relativer Pfad für die ZIP
+								$zip->addFile($filePath, $relativePath);
+							}
+						}
+					} else {
+						echo 'Invalid folder: ' . htmlspecialchars($folder);
+						exit(0);
+					}
+				}
+			}
+
+			// Verarbeitung der img-Parameter (beliebig viele Bilder)
+			if (isset($_GET['img'])) {
+				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']]; // Handle single or multiple images
+				foreach ($images as $img) {
+					if (isValidPath($img) && file_exists($img)) {
+						$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
+					} else {
+						echo 'Invalid image: ' . htmlspecialchars($img);
+						exit(0);
+					}
+				}
+			}
+
+			// ZIP-Datei abschließen
+			$zip->close();
+
+			// HTTP Header für den Download der ZIP-Datei
+			header('Content-Type: application/zip');
+			header('Content-Disposition: attachment; filename="' . $zipname . '"');
+			header('Content-Length: ' . filesize($zipFile));
+
+			// Datei ausgeben und löschen
+			readfile($zipFile);
+			unlink($zipFile);
+
+			exit(0); // Erfolgreiches Beenden mit Exit-Code 0
+		} else {
+			echo 'Failed to create zip file.';
+			exit(0); // Exit mit Code 0 auch bei Fehler
+		}
+	}
+
 	function getImagesInDirectory($directory) {
 		$images = [];
 
@@ -2010,6 +2072,12 @@
 							if(download_url_parts.length) {
 								var download_url = "index.php?zip=1&" + download_url_parts.join("&");
 								log(download_url);
+
+								var a = document.createElement('a');
+								a.href = download_url;
+								document.body.appendChild(a);
+								a.click();
+								document.body.removeChild(a);
 							}
 						}
 					}
