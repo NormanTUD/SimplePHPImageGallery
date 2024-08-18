@@ -3,7 +3,7 @@
 
 	$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
 
-	if (isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
+	if (!isset($_GET["zip"]) && isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 		$folderPath = $_GET['folder'];
 	}
 
