@@ -2015,7 +2015,7 @@
 
 			function updateUnselectButton() {
 				var unselectBtn = document.getElementById('unselectBtn');
-				if (selectedImages.length > 0) {
+				if (selectedImages.length > 0 || selectedFolders.length > 0) {
 					unselectBtn.style.display = 'inline-block';
 				} else {
 					unselectBtn.style.display = 'none';
@@ -2025,7 +2025,7 @@
 
 			function updateDownloadButton() {
 				var downloadBtn = document.getElementById('downloadBtn');
-				if (selectedImages.length > 0) {
+				if (selectedImages.length > 0 || selectedFolders.length > 0) {
 					downloadBtn.style.display = 'inline-block';
 				} else {
 					downloadBtn.style.display = 'none';
