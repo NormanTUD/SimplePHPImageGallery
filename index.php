@@ -49,8 +49,9 @@
 				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']]; // Handle single or multiple folders                                                                                       
 				foreach ($folders as $folder) {
 					if (isValidPath($folder) && is_dir($folder)) {
-						$realFolderPath = realpath($folder);
+						$realFolderPath = realpath($folder); // Absoluten Pfad des Verzeichnisses holen
 
+						// Dateien im Verzeichnis rekursiv durchlaufen
 						$files = new RecursiveIteratorIterator(
 							new RecursiveDirectoryIterator($realFolderPath, RecursiveDirectoryIterator::SKIP_DOTS),
 							RecursiveIteratorIterator::SELF_FIRST
@@ -117,12 +118,15 @@
 	function getImagesInDirectory($directory) {
 		$images = [];
 
-		assert(is_dir($directory), "The directory doesn't exist or isn't readable: $directory");
+		// Überprüfen, ob das Verzeichnis existiert und lesbar ist
+		assert(is_dir($directory), "Das Verzeichnis existiert nicht oder ist nicht lesbar: $directory");
 
+		// Verzeichnisinhalt lesen
 		try {
 			$files = scandir($directory);
 		} catch (Exception $e) {
-			warn("Error reading the directory $directory: " . $e->getMessage());
+			// Fehler beim Lesen des Verzeichnisses
+			warn("Fehler beim Lesen des Verzeichnisses $directory: " . $e->getMessage());
 			return $images;
 		}
 
@@ -562,6 +566,7 @@
 	if (isset($_GET['search'])) {
 		$searchTerm = $_GET['search'];
 		$results = array();
+		$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
 
 		$i = 0;
 		foreach ($results["files"] as $this_result) {
