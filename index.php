@@ -7,6 +7,8 @@
 		$validTypes = array_merge($validTypes, ['mp4', 'mov']);
 	}
 
+	set_time_limit(60);
+
 	$GLOBALS["FILETYPES"] = $validTypes;
 	$GLOBALS["valid_file_ending_regex"] = "/\.(" . implode("|", $validTypes) . ")$/i";
 
