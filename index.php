@@ -1,5 +1,7 @@
 <?php
-	$GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png', 'mov', 'mp4');
+	$GLOBALS["FILETYPES"] = ['jpg', 'jpeg', 'png', 'mov', 'mp4', "gif"];
+
+	$GLOBALS["valid_file_ending_regex"] = "/\.(jpg|jpeg|png|mp4|mov|gif)$/i";
 
 	$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
 
@@ -61,7 +63,7 @@
 							if (!$file->isDir()) { // Nur Dateien hinzufügen, keine Verzeichnisse
 								$filePath = $file->getRealPath();
 
-								if(preg_match("/\.(jpg|jpeg|png|mov|mp4)$/i", $filePath)) {
+								if(preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
 									// Berechnung des relativen Pfades, um die Verzeichnisstruktur beizubehalten
 									$cwd = getcwd();
 
@@ -86,7 +88,7 @@
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']]; // Handle single or multiple images
 				foreach ($images as $img) {
 					if (isValidPath($img) && file_exists($img)) {
-						if(preg_match("/\.(jpg|jpeg|png|mp4|mov)$/i", $img)) {
+						if(preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
 							$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
 						}
 					} else {
@@ -139,7 +141,7 @@
 				} else {
 					// Überprüfen, ob die Datei eine unterstützte Bildendung hat
 					$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-					if (in_array($extension, ['jpg', 'jpeg', 'png', 'mp4', 'mov'])) {
+					if (in_array($extension, $GLOBALS["FILETYPES"])) {
 						// Bild zur Liste hinzufügen
 						$images[] = $filePath;
 					}
@@ -170,7 +172,7 @@
 				if (
 					$fileExtension !== 'txt' &&
 					$pathWithoutExtension == removeFileExtensionFromString($fullFilePath) &&
-					preg_match("/\.(?:jpe?g|gif|png)$/i", $fullFilePath)
+					preg_match($GLOBALS["valid_file_ending_regex"], $fullFilePath)
 				) {
 					return $fullFilePath;
 				}
@@ -436,7 +438,7 @@
 		});
 
 		foreach ($thumbnails as $thumbnail) {
-			if(preg_match('/jpg|jpeg|png|mov|mp4/i', $thumbnail["thumbnail"])) {
+			if(preg_match($GLOBALS["valid_file_ending_regex"], $thumbnail["thumbnail"])) {
 				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
 				echo '<img title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
