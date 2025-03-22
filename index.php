@@ -530,7 +530,11 @@
 	}
 
 	function is_cached_already ($path) {
-		$md5 = md5(file_get_contents($path));
+		$what_to_hash = $imagePath;
+		if(!preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+			$what_to_hash = file_get_contents($imagePath);
+		}
+		$md5 = md5($what_to_hash);
 		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
 
 		if(is_dir("/docker_tmp/")) {
@@ -621,7 +625,11 @@
 		}
 
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
-			$thumbnailFileName = md5(file_get_contents($imagePath)) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
+			$what_to_hash = $imagePath;
+			if(!preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+				$what_to_hash = file_get_contents($imagePath);
+			}
+			$thumbnailFileName = md5($what_to_hash) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
