@@ -632,6 +632,7 @@
 					$middleTime = $duration / 2;
 
 					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"thumbnail,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -frames:v 1 \"$cachedThumbnailPath\" -ss $middleTime";
+					fwrite(STDERR, "ffmpeg command:\n$ffmpeg");
 					shell_exec($ffmpeg);
 
 					if (file_exists($cachedThumbnailPath)) {
