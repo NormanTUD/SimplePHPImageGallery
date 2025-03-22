@@ -530,9 +530,9 @@
 	}
 
 	function is_cached_already ($path) {
-		$what_to_hash = $imagePath;
-		if(!preg_match("/\.(mov|mp4)$/i", $imagePath)) {
-			$what_to_hash = file_get_contents($imagePath);
+		$what_to_hash = $path;
+		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
+			$what_to_hash = file_get_contents($path);
 		}
 		$md5 = md5($what_to_hash);
 		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
