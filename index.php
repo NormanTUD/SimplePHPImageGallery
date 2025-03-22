@@ -1,7 +1,12 @@
 <?php
-	$GLOBALS["FILETYPES"] = ['jpg', 'jpeg', 'png', 'mov', 'mp4', "gif"];
+	$validTypes = ['jpg', 'jpeg', 'png', 'gif'];
 
-	$GLOBALS["valid_file_ending_regex"] = "/\.(jpg|jpeg|png|mp4|mov|gif)$/i";
+	if (shell_exec('which ffmpeg')) {
+		$validTypes = array_merge($validTypes, ['mp4', 'mov']);
+	}
+
+	$GLOBALS["FILETYPES"] = $validTypes;
+	$GLOBALS["valid_file_ending_regex"] = "/\.(" . implode("|", $validTypes) . ")$/i";
 
 	$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
 
