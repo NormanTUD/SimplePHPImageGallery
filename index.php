@@ -630,35 +630,50 @@
 			$what_to_hash = $imagePath;
 			$file_ending = "jpg";
 
-			if(!preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+			if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
 				$what_to_hash = $imagePath;
-				$file_ending = "jpg";
+				$file_ending = "gif";
 			}
 
 			$thumbnailFileName = md5($what_to_hash) . '.' . $file_ending;
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
-				header('Content-Type: image/jpeg');
+				if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+					header('Content-Type: image/gif');
+				} else {
+					header('Content-Type: image/jpeg');
+				}
 				readfile($cachedThumbnailPath);
 				exit;
 			} else {
 				if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+					// Video-Dauer ermitteln
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
-					$middleTime = $duration / 2;
+					// GIF Dauer (10 Sekunden) und Startzeit (vom Anfang)
+					$gifDuration = 10;  // Dauer des GIFs in Sekunden
+					$startTime = 0;     // Beginn der Extraktion (kann auch angepasst werden)
 
-					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"thumbnail,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -frames:v 1 \"$cachedThumbnailPath\" -ss $middleTime";
+					// Berechnung der Anzahl der Frames (falls z.B. 10 Bilder pro Sekunde gewünscht sind)
+					$frameRate = 10;  // Frames pro Sekunde
+					$frameCount = $gifDuration * $frameRate;
+
+					// Extrahiere Frames aus dem Video, gleichmäßig verteilt
+					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
 					fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
+
+					// GIF erstellen
 					shell_exec($ffmpeg);
 
 					if (file_exists($cachedThumbnailPath)) {
-						header('Content-Type: image/jpeg');
+						// GIF an den Browser senden
+						header('Content-Type: image/gif');
 						readfile($cachedThumbnailPath);
 						exit;
 					} else {
-						echo "Fehler beim Erstellen des Video-Thumbnails.";
+						echo "Fehler beim Erstellen des Video-GIFs.";
 						exit;
 					}
 				} else {
