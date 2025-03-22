@@ -532,9 +532,12 @@
 	}
 
 	function is_cached_already ($path) {
+		$ending = "jpg";
+
 		$what_to_hash = $path;
 		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
 			$what_to_hash = file_get_contents($path);
+			$ending = "gif";
 		}
 		$md5 = md5($what_to_hash);
 		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
@@ -543,7 +546,7 @@
 			$cacheFolder = "/docker_tmp/";
 		}
 
-		$path = $cacheFolder . $md5 . ".jpg";
+		$path = $cacheFolder . $md5 . "." . $ending;
 
 		if(file_exists($path) && is_valid_image_or_video_file($path)) {
 			return true;
