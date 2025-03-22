@@ -18,3 +18,5 @@ thumbnails_cache
 *.Mp4
 03_cairns
 07_outback/
+**/*.mov
+**/*.MOV
