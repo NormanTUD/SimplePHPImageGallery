@@ -379,7 +379,7 @@
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$type = finfo_file($finfo, $filepath);
 
-		if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif", "video/quicktime"))) {
+		if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif", "video/quicktime", "video/mp4"))) {
 			return true;
 		} else {
 			return false;
