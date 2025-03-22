@@ -1,4 +1,6 @@
 <?php
+	$GLOBALS["stderr"] = fopen('php://stderr', 'w');
+
 	$validTypes = ['jpg', 'jpeg', 'png', 'gif'];
 
 	if (shell_exec('which ffmpeg')) {
@@ -632,7 +634,7 @@
 					$middleTime = $duration / 2;
 
 					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"thumbnail,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -frames:v 1 \"$cachedThumbnailPath\" -ss $middleTime";
-					fwrite(STDERR, "ffmpeg command:\n$ffmpeg");
+					fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
 					shell_exec($ffmpeg);
 
 					if (file_exists($cachedThumbnailPath)) {
