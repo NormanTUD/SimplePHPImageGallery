@@ -1,10 +1,12 @@
 <?php
 	$GLOBALS["stderr"] = fopen('php://stderr', 'w');
 
+	$GLOBALS["allowed_content_types"] = ["image/png", "image/jpeg", "image/gif"];
 	$validTypes = ['jpg', 'jpeg', 'png', 'gif'];
 
 	if (shell_exec('which ffmpeg')) {
 		$validTypes = array_merge($validTypes, ['mp4', 'mov']);
+		$GLOBALS["allowed_content_types"] = array_merge($GLOBALS["allowed_content_types"], ["video/quicktime", "video/mp4"]);
 	}
 
 	set_time_limit(60);
@@ -379,7 +381,7 @@
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$type = finfo_file($finfo, $filepath);
 
-		if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif", "video/quicktime", "video/mp4"))) {
+		if (isset($type) && in_array($type, $GLOBALS["allowed_content_types"])) {
 			return true;
 		} else {
 			return false;
