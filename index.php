@@ -448,7 +448,7 @@
 		}
 
 		foreach ($images as $image) {
-			if(is_file($image["path"]) && is_valid_image_or_video_file($image["path"])) {
+			if(is_file($image["path"]) && is_valid_image_or_video_file($image["path"]) && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
 				$gps = get_image_gps($image["path"]);
 				$hash = md5($image["path"]);
 
