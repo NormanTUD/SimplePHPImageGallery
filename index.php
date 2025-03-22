@@ -540,7 +540,7 @@
 			$ending = "gif";
 		}
 		$md5 = md5($what_to_hash);
-		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+		$cacheFolder = './thumbnails_cache/';
 
 		if(is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
@@ -621,9 +621,9 @@
 
 	if (isset($_GET['preview'])) {
 		$imagePath = $_GET['preview'];
-		$thumbnailMaxWidth = 150; // Definiere maximale Thumbnail-Breite
-		$thumbnailMaxHeight = 150; // Definiere maximale Thumbnail-Höhe
-		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+		$thumbnailMaxWidth = 150;
+		$thumbnailMaxHeight = 150;
+		$cacheFolder = './thumbnails_cache/';
 
 		if(is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
