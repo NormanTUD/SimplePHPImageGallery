@@ -1287,24 +1287,37 @@
 				return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 			}
 
-			function showImage(imagePath) {
-				$(fullscreen).remove();
+			function showImage(imagePath) { 
+				$(fullscreen).remove(); 
 
 				// Create fullscreen div
 				fullscreen = document.createElement('div');
 				fullscreen.classList.add('fullscreen');
 
-				// Create image element with loading.gif initially
-				var image = document.createElement('img');
-				image.src = "loading.gif";
-				image.setAttribute('draggable', false);
+				var decodedPath = decodeURIComponent(imagePath);
 
-				// Append image to fullscreen div
-				fullscreen.appendChild(image);
+				if (decodedPath.match(/\.(mp4|mov)$/i)) {
+					// Create video element
+					var video = document.createElement('video');
+					video.src = decodedPath;
+					video.controls = true;
+					video.autoplay = true;
+					video.style.maxWidth = "100%";
+					video.style.maxHeight = "100%";
+
+					fullscreen.appendChild(video);
+				} else {
+					// Create image element
+					var image = document.createElement('img');
+					image.src = decodedPath;
+					image.setAttribute('draggable', false);
+
+					fullscreen.appendChild(image);
+				}
+
 				document.body.appendChild(fullscreen);
 
-				if(isSwipeDevice()) {
-					// Create and append toggle switch
+				if (isSwipeDevice()) {   
 					var toggleSwitch = document.createElement('div');
 					toggleSwitch.classList.add('toggle-switch');
 					toggleSwitch.innerHTML = `
@@ -1312,32 +1325,16 @@
 							Swipe?
 							<input type="checkbox" id="toggleSwitch" checked>
 							<label class="toggle-switch-label" for="toggleSwitch"></label>
-						</div>
+						</div>  
 					`;
 					fullscreen.appendChild(toggleSwitch);
 				}
 
-				// Start separate request to load the correct image
-				var url = "image.php?path=" + imagePath;
-				var request = new XMLHttpRequest();
-				request.open('GET', url, true);
-				request.onreadystatechange = function() {
-					if (request.readyState === XMLHttpRequest.DONE) {
-						if (request.status === 200) {
-							// Replace loading.gif with the correct image
-							image.src = url;
-						} else {
-							console.warn("Failed to load image:", request.status);
-						}
-					}
-				};
-				request.send();
-
 				$(fullscreen).on("click", function (i) {
-					if(!["INPUT", "IMG", "LABEL"].includes(i.target.nodeName) && i.target.id != "swipe_toggle") {
+					if (!["INPUT", "IMG", "LABEL", "VIDEO"].includes(i.target.nodeName) && i.target.id != "swipe_toggle") {
 						$(fullscreen).remove();
 					}
-				})
+				});
 			}
 
 			function getToggleSwitchValue() {
