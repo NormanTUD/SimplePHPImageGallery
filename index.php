@@ -1,5 +1,5 @@
 <?php
-	$GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png');
+	$GLOBALS["FILETYPES"] = array('jpg', 'jpeg', 'png', 'mov', 'mp4');
 
 	$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
 
@@ -61,7 +61,7 @@
 							if (!$file->isDir()) { // Nur Dateien hinzufügen, keine Verzeichnisse
 								$filePath = $file->getRealPath();
 
-								if(preg_match("/\.(jpg|jpeg|png)$/i", $filePath)) {
+								if(preg_match("/\.(jpg|jpeg|png|mov|mp4)$/i", $filePath)) {
 									// Berechnung des relativen Pfades, um die Verzeichnisstruktur beizubehalten
 									$cwd = getcwd();
 
@@ -86,7 +86,7 @@
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']]; // Handle single or multiple images
 				foreach ($images as $img) {
 					if (isValidPath($img) && file_exists($img)) {
-						if(preg_match("/\.(jpg|jpeg|png)$/i", $img)) {
+						if(preg_match("/\.(jpg|jpeg|png|mp4|mov)$/i", $img)) {
 							$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
 						}
 					} else {
@@ -139,7 +139,7 @@
 				} else {
 					// Überprüfen, ob die Datei eine unterstützte Bildendung hat
 					$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-					if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+					if (in_array($extension, ['jpg', 'jpeg', 'png', 'mp4', 'mov'])) {
 						// Bild zur Liste hinzufügen
 						$images[] = $filePath;
 					}
@@ -356,7 +356,7 @@
 		return $res;
 	}
 
-	function is_valid_image_file ($filepath) {
+	function is_valid_image_or_video_file ($filepath) {
 		if(!is_file($filepath)) {
 			return false;
 		}
@@ -368,7 +368,7 @@
 		$finfo = finfo_open(FILEINFO_MIME_TYPE);
 		$type = finfo_file($finfo, $filepath);
 
-		if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif"))) {
+		if (isset($type) && in_array($type, array("image/png", "image/jpeg", "image/gif", "video/quicktime"))) {
 			return true;
 		} else {
 			return false;
@@ -436,7 +436,7 @@
 		});
 
 		foreach ($thumbnails as $thumbnail) {
-			if(preg_match('/jpg|jpeg|png/i', $thumbnail["thumbnail"])) {
+			if(preg_match('/jpg|jpeg|png|mov|mp4/i', $thumbnail["thumbnail"])) {
 				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
 				echo '<img title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
@@ -446,7 +446,7 @@
 		}
 
 		foreach ($images as $image) {
-			if(is_file($image["path"]) && is_valid_image_file($image["path"])) {
+			if(is_file($image["path"]) && is_valid_image_or_video_file($image["path"])) {
 				$gps = get_image_gps($image["path"]);
 				$hash = md5($image["path"]);
 
@@ -528,7 +528,7 @@
 
 		$path = $cacheFolder . $md5 . ".jpg";
 
-		if(file_exists($path) && is_valid_image_file($path)) {
+		if(file_exists($path) && is_valid_image_or_video_file($path)) {
 			return true;
 		}
 
@@ -552,7 +552,7 @@
 					$subDirectoryImages = listAllUncachedImageFiles($filePath);
 					$imageList = array_merge($imageList, $subDirectoryImages);
 				} else {
-					if (is_valid_image_file($filePath) && !is_cached_already($filePath)) {
+					if (is_valid_image_or_video_file($filePath) && !is_cached_already($filePath)) {
 						$imageList[] = $filePath;
 					}
 				}
@@ -609,79 +609,92 @@
 			$cacheFolder = "/docker_tmp/";
 		}
 
-		// Überprüfe, ob die Datei existiert
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
-			// Generiere einen eindeutigen Dateinamen für das Thumbnail
 			$thumbnailFileName = md5(file_get_contents($imagePath)) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
 
-			// Überprüfe, ob das Thumbnail im Cache vorhanden ist
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
-			if (file_exists($cachedThumbnailPath) && is_valid_image_file($cachedThumbnailPath)) {
-				// Das Thumbnail existiert im Cache, geben Sie es direkt aus
+			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
 				header('Content-Type: image/jpeg');
 				readfile($cachedThumbnailPath);
 				exit;
 			} else {
-				// Das Thumbnail ist nicht im Cache vorhanden, erstelle es
+				if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
+					$duration = floatval(shell_exec($ffprobe));
 
-				// Hole Bildabmessungen und Typ
-				list($width, $height, $type) = getimagesize($imagePath);
+					// Wähle einen Frame aus der Mitte des Videos
+					$middleTime = $duration / 2;
 
-				// Lade Bild basierend auf dem Typ
-				switch ($type) {
-					case IMAGETYPE_JPEG:
-						$image = imagecreatefromjpeg($imagePath);
-						break;
-					case IMAGETYPE_PNG:
-						$image = imagecreatefrompng($imagePath);
-						break;
-					case IMAGETYPE_GIF:
-						$image = imagecreatefromgif($imagePath);
-						break;
-					default:
-						echo 'Unsupported image type.';
+					// Erzeuge ein Thumbnail mit ffmpeg
+					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"thumbnail,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -frames:v 1 \"$cachedThumbnailPath\" -ss $middleTime";
+					shell_exec($ffmpeg);
+
+					// Prüfe, ob das Bild existiert
+					if (file_exists($cachedThumbnailPath)) {
+						header('Content-Type: image/jpeg');
+						readfile($cachedThumbnailPath);
 						exit;
-				}
-
-				// Überprüfe und korrigiere Bildausrichtung gegebenenfalls
-				$exif = @exif_read_data($imagePath);
-				if (!empty($exif['Orientation'])) {
-					switch ($exif['Orientation']) {
-					case 3:
-						$image = imagerotate($image, 180, 0);
-						break;
-					case 6:
-						$image = imagerotate($image, -90, 0);
-						list($width, $height) = [$height, $width];
-						break;
-					case 8:
-						$image = imagerotate($image, 90, 0);
-						list($width, $height) = [$height, $width];
-						break;
+					} else {
+						echo "Fehler beim Erstellen des Video-Thumbnails.";
+						exit;
 					}
-				}
-
-				// Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
-				$aspectRatio = $width / $height;
-				$thumbnailWidth = $thumbnailMaxWidth;
-				$thumbnailHeight = $thumbnailMaxHeight;
-				if ($width > $height) {
-					// Landscape orientation
-					$thumbnailHeight = $thumbnailWidth / $aspectRatio;
 				} else {
-					// Portrait or square orientation
-					$thumbnailWidth = $thumbnailHeight * $aspectRatio;
+					list($width, $height, $type) = getimagesize($imagePath);
+
+					switch ($type) {
+						case IMAGETYPE_JPEG:
+							$image = imagecreatefromjpeg($imagePath);
+							break;
+						case IMAGETYPE_PNG:
+							$image = imagecreatefrompng($imagePath);
+							break;
+						case IMAGETYPE_GIF:
+							$image = imagecreatefromgif($imagePath);
+							break;
+						default:
+							echo 'Unsupported image type.';
+							exit;
+					}
+
+					$exif = @exif_read_data($imagePath);
+					if (!empty($exif['Orientation'])) {
+						switch ($exif['Orientation']) {
+						case 3:
+							$image = imagerotate($image, 180, 0);
+							break;
+						case 6:
+							$image = imagerotate($image, -90, 0);
+							list($width, $height) = [$height, $width];
+							break;
+						case 8:
+							$image = imagerotate($image, 90, 0);
+							list($width, $height) = [$height, $width];
+							break;
+						}
+					}
+
+					// Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
+					$aspectRatio = $width / $height;
+					$thumbnailWidth = $thumbnailMaxWidth;
+					$thumbnailHeight = $thumbnailMaxHeight;
+					if ($width > $height) {
+						// Landscape orientation
+						$thumbnailHeight = $thumbnailWidth / $aspectRatio;
+					} else {
+						// Portrait or square orientation
+						$thumbnailWidth = $thumbnailHeight * $aspectRatio;
+					}
+
+					// Erstelle ein neues Bild mit Thumbnail-Abmessungen
+					$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
+
+					// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
+					$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
+					imagefill($thumbnail, 0, 0, $backgroundColor);
+
+					// Verkleinere Originalbild auf Thumbnail-Abmessungen
+					imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
 				}
-
-				// Erstelle ein neues Bild mit Thumbnail-Abmessungen
-				$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
-
-				// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
-				$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
-				imagefill($thumbnail, 0, 0, $backgroundColor);
-
-				// Verkleinere Originalbild auf Thumbnail-Abmessungen
-				imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
 
 				// Speichere das Thumbnail im Cache
 				imagejpeg($thumbnail, $cachedThumbnailPath);
@@ -712,14 +725,6 @@
 		} else {
 			die("Wrongly formed geolist: ".$geolist);
 		}
-
-		/*
-		foreach ($untested_files as $file) {
-			if(!preg_match("/\.\.\//", $file) && is_valid_image_file($file)) {
-				$files[] = $file;
-			}
-		}
-		 */
 
 		$s = array();
 
