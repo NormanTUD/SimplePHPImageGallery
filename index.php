@@ -1371,7 +1371,7 @@
 				var $thumbnails = $(".thumbnail");
 
 				$thumbnails.each((i, e) => {
-					var onclick = $(e).attr("onclick");
+					var onclick = $(e).data("onclick");
 
 					var img_url = decodeURIComponent(onclick.replace(/^.*?'/, "").replace(/'.*/, ""));
 
@@ -1381,6 +1381,7 @@
 				});
 
 				var next_idx = current_idx + 1;
+
 				if(!next) {
 					next_idx = current_idx - 1;
 				}
@@ -1391,7 +1392,7 @@
 
 				next_idx = next_idx %  $thumbnails.length;
 
-				var next_img = $($thumbnails[next_idx]).attr("onclick").replace(/.*?'/, '').replace(/'.*/, "");
+				var next_img = $($thumbnails[next_idx]).data("onclick").replace(/.*?'/, '').replace(/'.*/, "");
 
 				showImage(next_img);
 			}
@@ -1444,7 +1445,10 @@
 				var absDeltaX = Math.abs(deltaX);
 				var absDeltaY = Math.abs(deltaY);
 
-				if (!isZooming(event) && absDeltaX >= swipeThreshold && absDeltaX > absDeltaY) {
+				var deltaXLargerThanThreshold = absDeltaX >= swipeThreshold;
+				var deltaXLargerThanDeltaY = absDeltaX > absDeltaY;
+
+				if (deltaXLargerThanThreshold && deltaXLargerThanDeltaY) {
 					if (deltaX > 0) {
 						prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
 					} else {
