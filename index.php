@@ -664,7 +664,8 @@
 					$frameCount = $gifDuration * $frameRate;
 
 					// Extrahiere Frames aus dem Video, gleichmäßig verteilt
-					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
+					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
+
 					fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
 
 					// GIF erstellen
