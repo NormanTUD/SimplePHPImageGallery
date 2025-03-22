@@ -1330,7 +1330,7 @@
 
 					video.onerror = function () {
 						console.warn("Failed to load video:", decodedPath);
-						image.src = "error.png"; // Optional: Fehlermeldung anzeigen
+						image.src = "error.svg"; // Optional: Fehlermeldung anzeigen
 					};
 
 					video.src = decodedPath;
@@ -1341,7 +1341,7 @@
 					};
 					img.onerror = function () {
 						console.warn("Failed to load image:", decodedPath);
-						image.src = "error.png"; // Optional: Fehlermeldung anzeigen
+						image.src = "error.svg"; // Optional: Fehlermeldung anzeigen
 					};
 					img.src = decodedPath;
 				}
