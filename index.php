@@ -1287,37 +1287,23 @@
 				return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 			}
 
-			function showImage(imagePath) { 
-				$(fullscreen).remove(); 
+	
+			function showImage(imagePath) {
+				$(fullscreen).remove();
 
 				// Create fullscreen div
 				fullscreen = document.createElement('div');
 				fullscreen.classList.add('fullscreen');
 
-				var decodedPath = decodeURIComponent(imagePath);
+				// Create image element with loading.gif initially
+				var image = document.createElement('img');
+				image.src = "loading.gif";
+				image.setAttribute('draggable', false);
 
-				if (decodedPath.match(/\.(mp4|mov)$/i)) {
-					// Create video element
-					var video = document.createElement('video');
-					video.src = decodedPath;
-					video.controls = true;
-					video.autoplay = true;
-					video.style.maxWidth = "100%";
-					video.style.maxHeight = "100%";
-
-					fullscreen.appendChild(video);
-				} else {
-					// Create image element
-					var image = document.createElement('img');
-					image.src = decodedPath;
-					image.setAttribute('draggable', false);
-
-					fullscreen.appendChild(image);
-				}
-
+				fullscreen.appendChild(image);
 				document.body.appendChild(fullscreen);
 
-				if (isSwipeDevice()) {   
+				if (isSwipeDevice()) {
 					var toggleSwitch = document.createElement('div');
 					toggleSwitch.classList.add('toggle-switch');
 					toggleSwitch.innerHTML = `
@@ -1325,9 +1311,40 @@
 							Swipe?
 							<input type="checkbox" id="toggleSwitch" checked>
 							<label class="toggle-switch-label" for="toggleSwitch"></label>
-						</div>  
+						</div>
 					`;
 					fullscreen.appendChild(toggleSwitch);
+				}
+
+				var decodedPath = decodeURIComponent(imagePath);
+
+				if (decodedPath.match(/\.(mp4|mov)$/i)) {
+					var video = document.createElement('video');
+					video.controls = true;
+					video.autoplay = true;
+					video.style.maxWidth = "100%";
+					video.style.maxHeight = "100%";
+
+					video.onloadeddata = function () {
+						fullscreen.replaceChild(video, image); // Ersetze loading.gif mit Video
+					};
+
+					video.onerror = function () {
+						console.warn("Failed to load video:", decodedPath);
+						image.src = "error.png"; // Optional: Fehlermeldung anzeigen
+					};
+
+					video.src = decodedPath;
+				} else {
+					var img = new Image();
+					img.onload = function () {
+						fullscreen.replaceChild(img, image); // Ersetze loading.gif mit Bild
+					};
+					img.onerror = function () {
+						console.warn("Failed to load image:", decodedPath);
+						image.src = "error.png"; // Optional: Fehlermeldung anzeigen
+					};
+					img.src = decodedPath;
 				}
 
 				$(fullscreen).on("click", function (i) {
@@ -1336,6 +1353,7 @@
 					}
 				});
 			}
+
 
 			function getToggleSwitchValue() {
 				var toggleSwitch = document.getElementById('toggleSwitch');
