@@ -628,10 +628,14 @@
 
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
 			$what_to_hash = $imagePath;
+			$file_ending = "jpg";
+
 			if(!preg_match("/\.(mov|mp4)$/i", $imagePath)) {
 				$what_to_hash = file_get_contents($imagePath);
+				$file_ending = "jpg";
 			}
-			$thumbnailFileName = md5($what_to_hash) . '.jpg'; // Hier verwenden wir MD5 für die Eindeutigkeit, und speichern als JPEG
+
+			$thumbnailFileName = md5($what_to_hash) . '.' . $file_ending;
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
