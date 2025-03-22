@@ -631,7 +631,7 @@
 			$file_ending = "jpg";
 
 			if(!preg_match("/\.(mov|mp4)$/i", $imagePath)) {
-				$what_to_hash = file_get_contents($imagePath);
+				$what_to_hash = $imagePath;
 				$file_ending = "jpg";
 			}
 
