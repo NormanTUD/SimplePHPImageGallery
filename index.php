@@ -622,14 +622,11 @@
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
-					// Wähle einen Frame aus der Mitte des Videos
 					$middleTime = $duration / 2;
 
-					// Erzeuge ein Thumbnail mit ffmpeg
 					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"thumbnail,scale=$thumbnailMaxWidth:$thumbnailMaxHeight\" -frames:v 1 \"$cachedThumbnailPath\" -ss $middleTime";
 					shell_exec($ffmpeg);
 
-					// Prüfe, ob das Bild existiert
 					if (file_exists($cachedThumbnailPath)) {
 						header('Content-Type: image/jpeg');
 						readfile($cachedThumbnailPath);
