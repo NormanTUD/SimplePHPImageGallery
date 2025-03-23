@@ -531,15 +531,21 @@
 		return null;
 	}
 
-	function is_cached_already ($path) {
-		$ending = "jpg";
-
+	function get_hash_from_file($path) {
 		$what_to_hash = $path;
 		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
 			$what_to_hash = file_get_contents($path);
 			$ending = "gif";
 		}
 		$md5 = md5($what_to_hash);
+
+		return $md5;
+	}
+
+	function is_cached_already ($path) {
+		$ending = "jpg";
+
+		$md5 = get_hash_from_file($path);
 		$cacheFolder = './thumbnails_cache/';
 
 		if(is_dir("/docker_tmp/")) {
@@ -630,15 +636,15 @@
 		}
 
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
-			$what_to_hash = $imagePath;
 			$file_ending = "jpg";
 
 			if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
-				$what_to_hash = $imagePath;
 				$file_ending = "gif";
 			}
 
-			$thumbnailFileName = md5($what_to_hash) . '.' . $file_ending;
+			$md5 = get_hash_from_file($imagePath);
+
+			$thumbnailFileName = $md5 . '.' . $file_ending;
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
