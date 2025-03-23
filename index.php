@@ -532,10 +532,10 @@
 	}
 
 	function get_hash_from_file($path) {
+		$path = preg_replace("/\/+/", "/", $path);
 		$what_to_hash = $path;
 		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
 			$what_to_hash = file_get_contents($path);
-			$ending = "gif";
 		}
 		$md5 = md5($what_to_hash);
 
@@ -545,7 +545,12 @@
 	function is_cached_already ($path) {
 		$ending = "jpg";
 
+		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
+			$ending = "gif";
+		}
+
 		$md5 = get_hash_from_file($path);
+
 		$cacheFolder = './thumbnails_cache/';
 
 		if(is_dir("/docker_tmp/")) {
