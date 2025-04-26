@@ -479,7 +479,7 @@
 					list($width, $height) = getImageSizeWithRotation($cached_preview);
 
 					if($width && $height) {
-						$wh_string = " width=$width height=$height ";
+						$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
 					}
 				}
 
