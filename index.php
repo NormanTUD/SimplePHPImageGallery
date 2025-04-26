@@ -576,9 +576,6 @@
 	function get_hash_from_file($path) {
 		$path = preg_replace("/\/+/", "/", $path);
 		$what_to_hash = $path;
-		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
-			$what_to_hash = file_get_contents($path);
-		}
 		$md5 = md5($what_to_hash);
 
 		return $md5;
