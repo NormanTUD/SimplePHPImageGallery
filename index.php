@@ -469,12 +469,54 @@
 					$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
 				}
 
+				$file_hash = get_hash_from_file($image["path"]);
+
+				$cached_preview = "thumbnails_cache/$file_hash.jpg";
+
+				$wh_string = "";
+
+				if (file_exists($cached_preview)) {
+					list($width, $height) = getImageSizeWithRotation($cached_preview);
+
+					if($width && $height) {
+						$wh_string = " width=$width height=$height ";
+					}
+				}
+
 				echo '<div class="thumbnail" data-onclick="showImage(\'' . urlencode($image['path']) . '\')">';
-				echo '<img data-line="YYY" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				echo '<img '.$wh_string.' data-line="YYY" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
 				echo '<span class="checkmark">✅</span>';
 				echo "</div>\n";
 			}
 		}
+	}
+
+	function getImageSizeWithRotation($path) {
+		if (!file_exists($path)) {
+			return false;
+		}
+
+		$size = getimagesize($path);
+		if ($size === false) {
+			return false;
+		}
+
+		$width = $size[0];
+		$height = $size[1];
+
+		// Exif-Daten nur bei JPEG prüfen
+		if (function_exists('exif_read_data') && in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II])) {
+			$exif = @exif_read_data($path);
+			if (!empty($exif['Orientation'])) {
+				// 5, 6, 7, 8 bedeuten gedreht
+				if (in_array($exif['Orientation'], [5, 6, 7, 8])) {
+					// Breite und Höhe tauschen
+					list($width, $height) = [$height, $width];
+				}
+			}
+		}
+
+		return [$width, $height];
 	}
 
 	function getImagesInFolder($folderPath) {
