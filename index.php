@@ -1198,6 +1198,11 @@
 			.box-shadow:hover {
 				box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
 			}
+
+			.leaflet-popup-content {
+				width: fit-content !important;
+				height: fit-content !important;
+			}
 		</style>
 
 		<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -1891,7 +1896,7 @@
 					var text = "<img id='preview_" + hash +
 						"' data-line='__A__' src='index.php?preview=" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) +
-						"' style='width: 100px; height: 100px;' data-onclick='showImage(\"" +
+						"' style='max-width: 150px; max-height: 150px;' onclick='showImage(\"" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
