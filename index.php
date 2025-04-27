@@ -485,7 +485,7 @@
 					$wh_string = getResizedImageStyle($image["path"]);
 				}
 
-				echo '<div class="thumbnail" data-onclick="showImage(\'' . urlencode($image['path']) . '\')">';
+				echo '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($image['path']) . '\')">';
 				echo '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
 				echo '<span class="checkmark">✅</span>';
 				echo "</div>\n";
