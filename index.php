@@ -460,13 +460,13 @@
 
 		foreach ($images as $image) {
 			if(is_file($image["path"]) && is_valid_image_or_video_file($image["path"]) && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
-				$gps = get_image_gps($image["path"]);
-				$hash = md5($image["path"]);
-
 				$gps_data_string = "";
 
-				if($gps) {
-					$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
+				if(!preg_match("/\.m(?:ov|p4)$/", $image["path"])) {
+					$gps = get_image_gps($image["path"]);
+					if($gps) {
+						$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
+					}
 				}
 
 				$file_hash = get_hash_from_file($image["path"]);
@@ -486,7 +486,7 @@
 				}
 
 				echo '<div class="thumbnail" data-onclick="showImage(\'' . urlencode($image['path']) . '\')">';
-				echo '<img '.$wh_string.' data-line="YYY" data-hash="'.$hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				echo '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
 				echo '<span class="checkmark">✅</span>';
 				echo "</div>\n";
 			}
