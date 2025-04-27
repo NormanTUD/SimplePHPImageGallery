@@ -903,6 +903,24 @@
 		<script src="<?php print $jquery_file; ?>"></script>
 
 		<style>
+			.toggle-switch {
+				width: 100%;
+				margin: 0 auto;
+			}
+
+			#toggleSwitch {
+				width: 40px; /* Passen Sie die Breite des Buttons auf mobilen Geräten an */
+				height: 20px; /* Höhe des Buttons */
+				}
+
+			#swipe_toggle {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 10px;
+			}
+
+
 			.loading-bar-container {
 				position: fixed;
 				top: 0;
