@@ -1226,6 +1226,14 @@
 				width: fit-content !important;
 				height: fit-content !important;
 			}
+
+			#searchInput {
+				padding-left: 45px; /* Ensures space for the icon */
+				background-image: url('search.svg'); /* Replace with your actual path to the search.svg */
+				background-size: 32px 32px; /* Set the icon size */
+				background-position: 10px center; /* Position the icon inside the input */
+				background-repeat: no-repeat; /* Prevent background image repetition */
+			}
 		</style>
 
 		<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
