@@ -477,7 +477,7 @@
 			if(is_file($image["path"]) && is_valid_image_or_video_file($image["path"]) && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
 				$gps_data_string = "";
 
-				if(!preg_match("/\.m(?:ov|p4)$i/", $image["path"])) {
+				if(!preg_match("/\.m(?:ov|p4)$/i", $image["path"])) {
 					$gps = get_image_gps($image["path"]);
 					if($gps) {
 						$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
