@@ -450,8 +450,23 @@
 
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match($GLOBALS["valid_file_ending_regex"], $thumbnail["thumbnail"])) {
+				$wh_string = "";
+
+				$file_hash = get_hash_from_file($thumbnail["thumbnail"]);
+				$cached_preview = "thumbnails_cache/$file_hash.jpg";
+
+				if (file_exists($cached_preview)) {
+					list($width, $height) = getImageSizeWithRotation($cached_preview);
+
+					if($width && $height) {
+						$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
+					}
+				} else {
+					$wh_string = getResizedImageStyle($thumbnail["thumbnail"]);
+				}
+
 				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
-				echo '<img title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
+				echo '<img '.$wh_string.' title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
 				echo '<h3>' . $thumbnail['name'] . '</h3>';
 				echo '<span class="checkmark">✅</span>';
 				echo "</div></a>\n";
@@ -470,7 +485,6 @@
 				}
 
 				$file_hash = get_hash_from_file($image["path"]);
-
 				$cached_preview = "thumbnails_cache/$file_hash.jpg";
 
 				$wh_string = "";
