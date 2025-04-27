@@ -1924,11 +1924,12 @@
 
 					markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
-					var text = "<img id='preview_" + hash +
-						"' data-line='__A__' src='index.php?preview=" +
-						decodeURI(url.replace(/index.php\?preview=/, "")) +
+					var text = "<img id='preview_" + hash + "' data-line='__A__' src='index.php?preview=" +
+						decodeURIComponent(url.replace(/index.php\?preview=/, "")) +
 						"' onclick='showImage(\"" +
-						decodeURI(url.replace(/index.php\?preview=/, "")) + "\");' />";
+						decodeURIComponent(url.replace(/index.php\?preview=/, "")).replace(/\+/g, ' ') +
+						"\");' />";
+
 
 					eval(`markers['${hash}'].on('click', function(e) {
 						var popup = L.popup().setContent(\`${text}\`);
