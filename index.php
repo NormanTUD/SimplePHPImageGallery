@@ -481,6 +481,8 @@
 					if($width && $height) {
 						$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
 					}
+				} else {
+					$wh_string = getResizedImageStyle($image["path"]);
 				}
 
 				echo '<div class="thumbnail" data-onclick="showImage(\'' . urlencode($image['path']) . '\')">';
@@ -630,6 +632,41 @@
 		}
 
 		return $imageList;
+	}
+
+	function getResizedImageStyle($imagePath, $thumbnailMaxWidth = 150, $thumbnailMaxHeight = 150) {
+		list($width, $height, $type) = getimagesize($imagePath);
+		if (!$width || !$height) {
+			return ''; // Fehler beim Lesen
+		}
+
+		// EXIF-Orientierung prüfen
+		if (function_exists('exif_read_data') && in_array($type, [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II])) {
+			$exif = @exif_read_data($imagePath);
+			if (!empty($exif['Orientation'])) {
+				if (in_array($exif['Orientation'], [6, 8])) {
+					// Hoch- oder Querformat vertauschen
+					list($width, $height) = [$height, $width];
+				}
+			}
+		}
+
+		$aspectRatio = $width / $height;
+		$thumbWidth = $thumbnailMaxWidth;
+		$thumbHeight = $thumbnailMaxHeight;
+
+		if ($width > $height) {
+			// Landscape
+			$thumbHeight = $thumbWidth / $aspectRatio;
+		} else {
+			// Portrait oder quadratisch
+			$thumbWidth = $thumbHeight * $aspectRatio;
+		}
+
+		$thumbWidth = intval($thumbWidth);
+		$thumbHeight = intval($thumbHeight);
+
+		return "width: {$thumbWidth}px; height: {$thumbHeight}px;";
 	}
 
 	// AJAX-Handler für die Suche
