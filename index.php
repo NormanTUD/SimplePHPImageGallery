@@ -1896,7 +1896,7 @@
 					var text = "<img id='preview_" + hash +
 						"' data-line='__A__' src='index.php?preview=" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) +
-						"' style='max-width: 150px; max-height: 150px;' onclick='showImage(\"" +
+						"' onclick='showImage(\"" +
 						decodeURI(url.replace(/index.php\?preview=/, "")) + "\");' />";
 
 					eval(`markers['${hash}'].on('click', function(e) {
