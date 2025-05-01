@@ -51,6 +51,49 @@
 		return strpos($path, '..') === false && strpos($path, '/') !== 0 && strpos($path, '\\') !== 0;
 	}
 
+	function print_file_metadata() {
+		$file_info = $_GET['file_info'] ?? '';
+
+		if (strpos($file_info, '..') !== false || realpath($file_info) === false) {
+			echo json_encode(["error" => "Invalid file path"]);
+			return;
+		}
+
+		if (!file_exists($file_info)) {
+			echo json_encode(["error" => "File not found"]);
+			return;
+		}
+
+		$metadata = [];
+
+		$metadata['name'] = basename($file_info);
+		$metadata['size'] = filesize($file_info);
+		$metadata['last_modified'] = date("Y-m-d H:i:s", filemtime($file_info));
+		$metadata['created_at'] = date("Y-m-d H:i:s", filectime($file_info));
+
+		if (exif_imagetype($file_info)) {
+			$image_info = getimagesize($file_info);
+			$metadata['image_width'] = $image_info[0];
+			$metadata['image_height'] = $image_info[1];
+			$metadata['image_type'] = image_type_to_mime_type($image_info[2]);
+
+			$exif_data = exif_read_data($file_info, 'IFD0');
+			if ($exif_data) {
+				$metadata['exif'] = $exif_data;
+			}
+		}
+
+		$metadata['permissions'] = substr(sprintf('%o', fileperms($file_info)), -4); // Berechtigungen im Oktalformat
+
+		echo json_encode($metadata);
+	}
+
+	if(isset($_GET["file_info"])) {
+		print_file_metadata();
+
+		exit(0);
+	}
+
 	if (isset($_GET['zip']) && $_GET['zip'] == 1) {
 		$zipname = 'gallery.zip';
 		$zip = new ZipArchive;
@@ -1499,7 +1542,68 @@
 				next_or_prev(0);
 			}
 
+			function show_image_info() {
+				hide_image_info();
+
+				const imageElement = document.querySelector('.fullscreen img');
+				if (!imageElement) return;
+
+				const imageSrc = get_fullscreen_img_name();
+
+				const overlay = document.createElement('div');
+				overlay.style.position = 'fixed';
+				overlay.style.top = '0';
+				overlay.style.left = '0';
+				overlay.style.width = '100vw';
+				overlay.style.height = '100vh';
+				overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+				overlay.style.zIndex = '9999';
+				overlay.style.display = 'flex';
+				overlay.style.alignItems = 'center';
+				overlay.style.justifyContent = 'center';
+				overlay.style.backdropFilter = 'blur(10px)';
+
+				fetch(`index.php?file_info=${encodeURIComponent(imageSrc)}`)
+					.then(response => response.json())
+					.then(data => {
+						if (data) {
+							const table = document.createElement('table');
+							table.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+							table.style.padding = '10px';
+							table.style.borderRadius = '10px';
+							table.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+
+							Object.keys(data).forEach(key => {
+							const row = document.createElement('tr');
+							const cell1 = document.createElement('td');
+							cell1.textContent = key;
+							const cell2 = document.createElement('td');
+							cell2.textContent = data[key];
+							row.appendChild(cell1);
+							row.appendChild(cell2);
+							table.appendChild(row);
+							});
+
+							overlay.appendChild(table);
+						}
+					})
+					.catch(error => {
+						console.error('Error fetching image info:', error);
+					});
+
+				document.body.appendChild(overlay);
+			}
+
+			function hide_image_info() {
+				const overlay = document.querySelector('div[style*="position: fixed"]');
+				if (overlay) {
+					overlay.remove();
+				}
+			}
+
 			function next_or_prev (next=1) {
+				hide_image_info();
+
 				var current_fullscreen = get_fullscreen_img_name();
 
 				if(!current_fullscreen) {
@@ -1543,15 +1647,16 @@
 				e = e || window.event;
 
 				if (e.keyCode == '38') {
-					// up arrow
+					show_image_info();
 				} else if (e.keyCode == '40') {
-					// down arrow
+					hide_image_info();
 				} else if (e.keyCode == '37') {
 					prev_image();
 				} else if (e.keyCode == '39') {
 					next_image();
 				} else if (e.key === "Escape") {
 					$(fullscreen).remove();
+					hide_image_info();
 				}
 			}
 
