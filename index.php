@@ -1620,6 +1620,12 @@
 						});
 
 						scrollContainer.appendChild(table);
+
+						const img = document.createElement("img");
+						img.src = `index.php?preview=${encodeURIComponent(imageSrc)}`;
+
+						overlay.appendChild(img);
+
 						overlay.appendChild(scrollContainer);
 					}
 					})
