@@ -32,7 +32,7 @@
 		$normalized_text = preg_replace_callback('/[^\x20-\x7E]/u', function ($match) {
 			$char = $match[0];
 			$normalized_char = iconv('UTF-8', 'ASCII//TRANSLIT', $char);
-			return $normalized_char !== false ? $normalized_char : ''; // Überprüfe auf Fehler bei der Konvertierung
+			return $normalized_char !== false ? $normalized_char : '';
 		}, $text);
 
 		$normalized_text = mb_strtolower($normalized_text, 'UTF-8');
@@ -61,7 +61,7 @@
 				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']];
 				foreach ($folders as $folder) {
 					if (isValidPath($folder) && is_dir($folder)) {
-						$realFolderPath = realpath($folder); // Absoluten Pfad des Verzeichnisses holen
+						$realFolderPath = realpath($folder);
 
 						// Dateien im Verzeichnis rekursiv durchlaufen
 						$files = new RecursiveIteratorIterator(
@@ -70,7 +70,7 @@
 						);
 
 						foreach ($files as $file) {
-							if (!$file->isDir()) { // Nur Dateien hinzufügen, keine Verzeichnisse
+							if (!$file->isDir()) {
 								$filePath = $file->getRealPath();
 
 								if(preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
@@ -95,11 +95,11 @@
 
 			// Verarbeitung der img-Parameter (beliebig viele Bilder)
 			if (isset($_GET['img'])) {
-				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']]; // Handle single or multiple images
+				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
 				foreach ($images as $img) {
 					if (isValidPath($img) && file_exists($img)) {
 						if(preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
-							$zip->addFile($img, basename($img)); // Bild zur ZIP hinzufügen
+							$zip->addFile($img, basename($img));
 						}
 					} else {
 						echo 'Invalid image: ' . htmlspecialchars($img);
@@ -300,7 +300,6 @@
 		// Convert degrees, minutes, and seconds to decimal
 		$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
 
-		// Adjust sign based on direction (N or S)
 		if ($direction == 'S' || $direction == 'W') {
 			$decimal *= -1;
 		}
@@ -309,7 +308,7 @@
 	}
 
 	function get_image_gps($img) {
-		$cacheFolder = './thumbnails_cache/'; // Ordner für den Zwischenspeicher
+		$cacheFolder = './thumbnails_cache/';
 
 		if(is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
@@ -334,7 +333,6 @@
 			return null;
 		}
 
-		// Latitude
 		$latitude['degrees'] = getCoord($exif['GPS']['GPSLatitude'][0]);
 		if(is_null($latitude["degrees"])) { return null; }
 		$latitude['minutes'] = getCoord($exif['GPS']['GPSLatitude'][1]);
@@ -343,7 +341,6 @@
 		if(is_null($latitude["seconds"])) { return null; }
 		$latitude_direction = $exif['GPS']['GPSLatitudeRef'];
 
-		// Longitude
 		$longitude['degrees'] = getCoord($exif['GPS']['GPSLongitude'][0]);
 		if(is_null($longitude["degrees"])) { return null; }
 		$longitude['minutes'] = getCoord($exif['GPS']['GPSLongitude'][1]);
@@ -414,7 +411,6 @@
 				$folderImages = getImagesInFolder($filePath);
 
 				if (empty($folderImages)) {
-					// If the folder itself doesn't have images, try to get a random image from subfolders
 					$randomImage = getRandomImageFromSubfolders($filePath);
 					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
 				} else {
@@ -519,13 +515,10 @@
 		$width = $size[0];
 		$height = $size[1];
 
-		// Exif-Daten nur bei JPEG prüfen
 		if (function_exists('exif_read_data') && in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II])) {
 			$exif = @exif_read_data($path);
 			if (!empty($exif['Orientation'])) {
-				// 5, 6, 7, 8 bedeuten gedreht
 				if (in_array($exif['Orientation'], [5, 6, 7, 8])) {
-					// Breite und Höhe tauschen
 					list($width, $height) = [$height, $width];
 				}
 			}
@@ -655,15 +648,13 @@
 		list($width, $height, $type) = getimagesize($imagePath);
 
 		if (!$width || !$height) {
-			return ''; // Fehler beim Lesen
+			return '';
 		}
 
-		// EXIF-Orientierung prüfen
 		if (function_exists('exif_read_data') && in_array($type, [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II])) {
 			$exif = @exif_read_data($imagePath);
 			if (!empty($exif['Orientation'])) {
 				if (in_array($exif['Orientation'], [6, 8])) {
-					// Hoch- oder Querformat vertauschen
 					list($width, $height) = [$height, $width];
 				}
 			}
@@ -674,10 +665,8 @@
 		$thumbHeight = $thumbnailMaxHeight;
 
 		if ($width > $height) {
-			// Landscape
 			$thumbHeight = $thumbWidth / $aspectRatio;
 		} else {
-			// Portrait oder quadratisch
 			$thumbWidth = $thumbHeight * $aspectRatio;
 		}
 
@@ -687,11 +676,10 @@
 		return "width: {$thumbWidth}px; height: {$thumbHeight}px;";
 	}
 
-	// AJAX-Handler für die Suche
 	if (isset($_GET['search'])) {
 		$searchTerm = $_GET['search'];
 		$results = array();
-		$results["files"] = searchFiles('.', $searchTerm); // Suche im aktuellen Verzeichnis
+		$results["files"] = searchFiles('.', $searchTerm);
 
 		$i = 0;
 		foreach ($results["files"] as $this_result) {
@@ -756,28 +744,22 @@
 				exit;
 			} else {
 				if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
-					// Video-Dauer ermitteln
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
-					// GIF Dauer (10 Sekunden) und Startzeit (vom Anfang)
-					$gifDuration = 10;  // Dauer des GIFs in Sekunden
-					$startTime = 0;     // Beginn der Extraktion (kann auch angepasst werden)
+					$gifDuration = 10; 
+					$startTime = 0;    
 
-					// Berechnung der Anzahl der Frames (falls z.B. 10 Bilder pro Sekunde gewünscht sind)
-					$frameRate = 10;  // Frames pro Sekunde
+					$frameRate = 10; 
 					$frameCount = $gifDuration * $frameRate;
 
-					// Extrahiere Frames aus dem Video, gleichmäßig verteilt
 					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
 
 					fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
 
-					// GIF erstellen
 					shell_exec($ffmpeg);
 
 					if (file_exists($cachedThumbnailPath)) {
-						// GIF an den Browser senden
 						header('Content-Type: image/gif');
 						readfile($cachedThumbnailPath);
 						exit;
@@ -820,37 +802,28 @@
 						}
 					}
 
-					// Berechne Thumbnail-Abmessungen unter Beibehaltung des Seitenverhältnisses und unter Berücksichtigung der maximalen Breite und Höhe
 					$aspectRatio = $width / $height;
 					$thumbnailWidth = $thumbnailMaxWidth;
 					$thumbnailHeight = $thumbnailMaxHeight;
 					if ($width > $height) {
-						// Landscape orientation
 						$thumbnailHeight = $thumbnailWidth / $aspectRatio;
 					} else {
-						// Portrait or square orientation
 						$thumbnailWidth = $thumbnailHeight * $aspectRatio;
 					}
 
-					// Erstelle ein neues Bild mit Thumbnail-Abmessungen
 					$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
 
-					// Fülle den Hintergrund des Thumbnails mit weißer Farbe, um schwarze Ränder zu vermeiden
 					$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
 					imagefill($thumbnail, 0, 0, $backgroundColor);
 
-					// Verkleinere Originalbild auf Thumbnail-Abmessungen
 					imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
 				}
 
-				// Speichere das Thumbnail im Cache
 				imagejpeg($thumbnail, $cachedThumbnailPath);
 
-				// Gib Bild direkt im Browser aus
-				header('Content-Type: image/jpeg'); // Passe den Inhaltstyp basierend auf dem Bildtyp an
-				imagejpeg($thumbnail); // Gib JPEG-Thumbnail aus (ändern Sie den Funktionsaufruf für PNG/GIF)
+				header('Content-Type: image/jpeg');
+				imagejpeg($thumbnail);
 
-				// Freigabe des Speichers
 				imagedestroy($image);
 				imagedestroy($thumbnail);
 			}
@@ -858,7 +831,6 @@
 			echo 'File not found.';
 		}
 
-		// Beende die Skriptausführung
 		exit;
 	}
 
@@ -1296,7 +1268,7 @@
 			const debug = console.debug;
 			const l = log;
 
-			var searchTimer; // Globale Variable für den Timer
+			var searchTimer;
 			var lastSearch = "";
 
 			function removeProgressBar() {
@@ -1304,12 +1276,10 @@
 			}
 
 			async function showProgressBar(_sleep = 1) {
-				// If a progress bar already exists, return early.
 				if (document.querySelector('.loading-bar-container') || enabled_selection_mode) {
 					return;
 				}
 
-				// Create the container and the progress bar
 				const container = document.createElement('div');
 				container.classList.add('loading-bar-container');
 
@@ -1319,13 +1289,10 @@
 				container.appendChild(loadingBar);
 				document.body.appendChild(container);
 
-				// Adjust the duration of the animation based on the _sleep parameter
 				loadingBar.style.animationDuration = `${_sleep}s`;
 
-				// Wait for the animation to complete
 				await sleep(_sleep * 1000);
 
-				// Remove the progress bar from the DOM
 				try {
 					document.body.removeChild(container);
 				} catch (e) {
@@ -1342,7 +1309,6 @@
 
 				lastSearch = searchTerm;
 
-				// Funktion zum Abbrechen der vorherigen Suchanfrage
 				function abortPreviousRequest() {
 					if (searchTimer) {
 						clearTimeout(searchTimer);
@@ -1352,9 +1318,7 @@
 
 				abortPreviousRequest();
 
-				// Funktion zum Durchführen der Suchanfrage
 				async function performSearch() {
-					// Abbrechen der vorherigen Anfrage, falls vorhanden
 					abortPreviousRequest();
 
 					showPageLoadingIndicator();
@@ -1387,11 +1351,9 @@
 					}
 				}
 
-				// Starten der Suche nach 10 ms Verzögerung
 				searchTimer = setTimeout(performSearch, 10);
 			}
 
-			// Funktion zur Anzeige der Suchergebnisse
 			async function displaySearchResults(searchTerm, results) {
 				unselectSelection();
 				var $searchResults = $('#searchResults');
@@ -1406,7 +1368,6 @@
 							if (folderThumbnail) {
 								var folder_line = `<a class='img_element' data-onclick="load_folder('${encodeURI(result.path)}')" data-href="${encodeURI(result.path)}"><div class="thumbnail_folder">`;
 
-								// Ersetze das Vorschaubild mit einem Lade-Spinner
 								folder_line += `<img src="loading.gif" alt="Loading..." class="loading-thumbnail-search img_element" data-line="Y" data-original-url="index.php?preview=${folderThumbnail}">`;
 
 								folder_line += `<h3>${result.path.replace(/\.\//, "")}</h3><span class="checkmark">✅</span></div></a>`;
@@ -1422,7 +1383,6 @@
 								gps_data_string = ` data-latitude="${result.latitude}" data-longitude="${result.longitude}" `;
 							}
 
-							// Ersetze das Vorschaubild mit einem Lade-Spinner
 							image_line += `<img data-hash="${result.hash}" ${gps_data_string} src="loading.gif" alt="Loading..." class="loading-thumbnail-search img_element" data-line='X' data-original-url="index.php?preview=${encodeURIComponent(result.path)}">`;
 
 							image_line += `<span class="checkmark">✅</span></div>`;
@@ -1430,12 +1390,10 @@
 						}
 					});
 
-					// Hintergrundladen und Austauschen der Vorschaubilder
 					$('.loading-thumbnail-search').each(function() {
 						var $thumbnail = $(this);
 						var originalUrl = $thumbnail.attr('data-original-url');
 
-						// Bild im Hintergrund laden
 						var img = new Image();
 						img.onload = function() {
 							$thumbnail.attr('src', originalUrl);
@@ -1516,7 +1474,7 @@
 				} else {
 					var img = new Image();
 					img.onload = function () {
-						fullscreen.replaceChild(img, image); // Ersetze loading.gif mit Bild
+						fullscreen.replaceChild(img, image);
 					};
 					img.onerror = function () {
 						console.warn("Failed to load image:", decodedPath);
@@ -2229,7 +2187,7 @@
 									setTimeout(() => {
 										container.removeChild(imageElement);
 										resolve();
-									}, 1000); // Optional: Hier können Sie die Wartezeit nach dem Laden des Bildes anpassen
+									}, 1000);
 								});
 								imageElement.addEventListener('error', () => {
 									console.warn('Fehler beim Laden des Bildes:', imageUrl);
