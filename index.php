@@ -63,7 +63,6 @@
 					if (isValidPath($folder) && is_dir($folder)) {
 						$realFolderPath = realpath($folder);
 
-						// Dateien im Verzeichnis rekursiv durchlaufen
 						$files = new RecursiveIteratorIterator(
 							new RecursiveDirectoryIterator($realFolderPath, RecursiveDirectoryIterator::SKIP_DOTS),
 							RecursiveIteratorIterator::SELF_FIRST
@@ -74,13 +73,11 @@
 								$filePath = $file->getRealPath();
 
 								if(preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
-									// Berechnung des relativen Pfades, um die Verzeichnisstruktur beizubehalten
 									$cwd = getcwd();
 
 									$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
 									$relativePath = str_replace($realFolderPath . DIRECTORY_SEPARATOR, '', $relativePath);
 
-									// Datei zur ZIP hinzufügen
 									$zip->addFile($filePath, $relativePath);
 								}
 							}
@@ -93,7 +90,6 @@
 			}
 
 
-			// Verarbeitung der img-Parameter (beliebig viele Bilder)
 			if (isset($_GET['img'])) {
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
 				foreach ($images as $img) {
@@ -108,15 +104,12 @@
 				}
 			}
 
-			// ZIP-Datei abschließen
 			$zip->close();
 
-			// HTTP Header für den Download der ZIP-Datei
 			header('Content-Type: application/zip');
 			header('Content-Disposition: attachment; filename="' . $zipname . '"');
 			header('Content-Length: ' . filesize($zipFile));
 
-			// Datei ausgeben und löschen
 			readfile($zipFile);
 			unlink($zipFile);
 
@@ -130,14 +123,11 @@
 	function getImagesInDirectory($directory) {
 		$images = [];
 
-		// Überprüfen, ob das Verzeichnis existiert und lesbar ist
 		assert(is_dir($directory), "Das Verzeichnis existiert nicht oder ist nicht lesbar: $directory");
 
-		// Verzeichnisinhalt lesen
 		try {
 			$files = scandir($directory);
 		} catch (Exception $e) {
-			// Fehler beim Lesen des Verzeichnisses
 			warn("Fehler beim Lesen des Verzeichnisses $directory: " . $e->getMessage());
 			return $images;
 		}
@@ -146,13 +136,10 @@
 			if ($file !== '.' && $file !== '..') {
 				$filePath = $directory . '/' . $file;
 				if (is_dir($filePath)) {
-					// Rekursiv alle Bilder im Unterverzeichnis sammeln
 					$images = array_merge($images, getImagesInDirectory($filePath));
 				} else {
-					// Überprüfen, ob die Datei eine unterstützte Bildendung hat
 					$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 					if (in_array($extension, $GLOBALS["FILETYPES"])) {
-						// Bild zur Liste hinzufügen
 						$images[] = $filePath;
 					}
 				}
@@ -193,14 +180,11 @@
 	}
 
 	function sortAndCleanString($inputString) {
-		// Leerzeichen am Anfang und Ende entfernen und doppelte Leerzeichen zusammenführen
 		$cleanedString = trim(preg_replace('/\s+/', ' ', $inputString));
 
-		// String in ein Array von Wörtern aufteilen und alphabetisch sortieren
 		$wordsArray = explode(' ', $cleanedString);
 		sort($wordsArray);
 
-		// Array von Wörtern zu einem String mit Leerzeichen als Trennzeichen zusammenführen
 		$sortedString = implode(' ', $wordsArray);
 
 		return $sortedString;
@@ -213,7 +197,6 @@
 		;
 	}
 
-	// Funktion zum Durchsuchen von Ordnern und Dateien rekursiv
 	function searchFiles($fp, $searchTerm) {
 		$results = [];
 
@@ -297,7 +280,6 @@
 	}
 
 	function convertLatLonToDecimal($degrees, $minutes, $seconds, $direction) {
-		// Convert degrees, minutes, and seconds to decimal
 		$decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
 
 		if ($direction == 'S' || $direction == 'W') {
@@ -342,9 +324,9 @@
 				if (is_null($value)) {
 					return null;
 				}
-				$$coord[$i] = $value;  // Assign value to $latitude[0], $latitude[1], $latitude[2], etc.
+				$$coord[$i] = $value;  
 			}
-			${$coord . '_direction'} = $exif['GPS'][$direction[$coord]];  // Set direction (Ref)
+			${$coord . '_direction'} = $exif['GPS'][$direction[$coord]];  
 		}
 
 
@@ -1426,11 +1408,9 @@
 			function showImage(imagePath) {
 				$(fullscreen).remove();
 
-				// Create fullscreen div
 				fullscreen = document.createElement('div');
 				fullscreen.classList.add('fullscreen');
 
-				// Create image element with loading.gif initially
 				var image = document.createElement('img');
 				image.src = "loading.gif";
 				image.setAttribute('draggable', false);
@@ -1630,10 +1610,8 @@
 				var charStr = String.fromCharCode(charCode);
 
 				if (charCode === 8) {
-					// Überprüfe, ob der Fokus im Suchfeld liegt
 					var searchInput = document.getElementById('searchInput');
 					if (document.activeElement !== searchInput) {
-						// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
 						searchInput.value = '';
 						$(searchInput).focus();
 					}
@@ -1651,37 +1629,28 @@
 				var charCode = event.which || event.keyCode;
 				var charStr = String.fromCharCode(charCode);
 
-				// Überprüfe, ob der eingegebene Wert ein Buchstabe oder eine Zahl ist
 				if (/[a-zA-Z0-9]/.test(charStr)) {
-					// Überprüfe, ob der Fokus nicht bereits im Suchfeld liegt
 					var searchInput = document.getElementById('searchInput');
 					if (document.activeElement !== searchInput) {
-						// Lösche die Suchanfrage, wenn der Fokus nicht im Suchfeld liegt
 						searchInput.value = '';
 					}
 
-					// Ersetze den markierten Text durch den eingegebenen Buchstaben oder die Zahl
 					var selectionStart = searchInput.selectionStart;
 					var selectionEnd = searchInput.selectionEnd;
 					var currentValue = searchInput.value;
 					var newValue = currentValue.substring(0, selectionStart) + charStr + currentValue.substring(selectionEnd);
 					searchInput.value = newValue;
 
-					// Aktualisiere die Position des Cursors
 					searchInput.selectionStart = searchInput.selectionEnd = selectionStart + 1;
 
-					// Fokussiere das Suchfeld
 					if (!$(searchInput).is(":focus")) {
 						searchInput.focus();
 					}
 
-					// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
 					event.preventDefault();
 				} else if (charCode === 8) {
-					// Überprüfe, ob der Fokus im Suchfeld liegt
 					var searchInput = document.getElementById('searchInput');
 					if (document.activeElement === searchInput) {
-						// Lösche den Inhalt des Suchfelds, wenn die Backspace-Taste gedrückt wird
 						searchInput.value = '';
 						$(searchInput).focus();
 					}
@@ -1704,49 +1673,36 @@
 
 			function updateUrlParameter(folder) {
 				try {
-					// Aktuelle URL holen
 					let currentUrl = window.location.href;
 
-					// Überprüfen, ob der Parameter "folder" bereits vorhanden ist
 					if (currentUrl.includes('?folder=')) {
-						// Falls vorhanden, aktualisieren wir den Wert des Parameters
 						currentUrl = currentUrl.replace(/(\?|&)folder=[^&]*/, `$1folder=${folder}`);
 					} else {
-						// Ansonsten fügen wir den Parameter hinzu
 						const separator = currentUrl.includes('?') ? '&' : '?';
 						currentUrl += `${separator}folder=${folder}`;
 					}
 
-					// Die aktualisierte URL in der Adressleiste setzen
 					window.history.replaceState(null, null, currentUrl);
 				} catch (error) {
-					// Fehlerbehandlung
 					console.warn('An error occurred while updating URL parameter "folder":', error);
 				}
 			}
 
 			function getCurrentFolderParameter() {
 				try {
-					// Aktuelle URL holen
 					const currentUrl = window.location.href;
 
-					// Regex-Muster, um den Wert des "folder"-Parameters zu extrahieren
 					const folderRegex = /[?&]folder=([^&]*)/;
 
-					// Den Wert des "folder"-Parameters aus der URL extrahieren
 					const match = currentUrl.match(folderRegex);
 
-					// Falls der Parameter nicht vorhanden ist, "./" zurückgeben
 					if (!match) {
 						return "./";
 					}
 
-					// Den extrahierten Wert des "folder"-Parameters zurückgeben
 					return decodeURIComponent(match[1]);
 				} catch (error) {
-					// Fehlerbehandlung
 					console.warn('An error occurred while getting current folder parameter:', error);
-					// Falls ein Fehler auftritt, "./" zurückgeben
 					return "./";
 				}
 			}
@@ -1820,7 +1776,6 @@
 				});
 			}
 
-			// JavaScript
 			function addLinkHighlightEffect() {
 				const style = document.createElement('style');
 				style.textContent = `
@@ -1860,7 +1815,6 @@
 				let minLon = data[0].longitude;
 				let maxLon = data[0].longitude;
 
-				// Durchlaufen der Daten, um die minimalen und maximalen Koordinaten zu finden
 				data.forEach(item => {
 					minLat = Math.min(minLat, item.latitude);
 					maxLat = Math.max(maxLat, item.latitude);
@@ -2068,7 +2022,6 @@
 
 						breadcrumb.appendChild(link);
 
-						// Füge ein Trennzeichen hinzu, außer beim letzten Element
 						breadcrumb.appendChild(document.createTextNode(' / '));
 					}
 				});
@@ -2076,7 +2029,6 @@
 				customizeCursorForLinks();
 			}
 
-			// Rufe die Funktion zum Erstellen der Breadcrumb-Leiste auf
 			createBreadcrumb('<?php echo $folderPath; ?>');
 
 			$(".no_preview_available").parent().hide();
@@ -2086,7 +2038,6 @@
 					var $thumbnail = $(this);
 					var originalUrl = $thumbnail.attr('data-original-url');
 
-					// Bild im Hintergrund laden
 					var img = new Image();
 					img.onload = function() {
 						$thumbnail.attr('src', originalUrl);
@@ -2101,7 +2052,6 @@
 				await start_search();
 			}
 
-			// Funktion zum Abrufen der JSON-Datei
 			async function getListAllJSON() {
 				try {
 					const response = await fetch('index.php?list_all=1');
@@ -2109,32 +2059,26 @@
 					return data;
 				} catch (error) {
 					console.error('Fehler beim Abrufen der JSON-Datei:', error);
-					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
 				}
 			}
 
 			var fill_cache_images = [];
 
 			function splitArrayIntoSubarrays(arr, n) {
-				// Die Anzahl der Elemente in jedem Subarray berechnen
 				const elementsPerSubarray = Math.ceil(arr.length / n);
 
-				// Das neue Array für die Subarrays erstellen
 				const subarrays = [];
 
 				try {
-					// Das Eingabearray in Subarrays aufteilen
 					for (let i = 0; i < arr.length; i += elementsPerSubarray) {
 						const subarray = arr.slice(i, i + elementsPerSubarray);
 						subarrays.push(subarray);
 					}
 				} catch (error) {
-					// Fehlerbehandlung
 					console.error("Fehler beim Aufteilen des Arrays:", error);
 					return null;
 				}
 
-				// Die Subarrays zurückgeben
 				return subarrays;
 			}
 
@@ -2179,7 +2123,6 @@
 							const imageElement = document.createElement('img');
 							imageElement.setAttribute('src', imageUrl);
 
-							// Bild anzeigen, wenn geladen, dann entfernen
 							await new Promise((resolve, reject) => {
 								imageElement.addEventListener('load', () => {
 									container.appendChild(imageElement);
@@ -2204,11 +2147,9 @@
 						}
 					}
 
-					// Entferne den gesamten Container am Ende
 					document.body.removeChild(container);
 				} catch (error) {
 					console.error('Fehler beim Anzeigen der Bilder:', error);
-					// Weitere Fehlerbehandlung hier einfügen, falls benötigt
 				}
 			}
 
@@ -2233,7 +2174,6 @@
 				var long_click = (d.getTime() - select_folder_timer) > 1000;
 				if (long_click || enabled_selection_mode){
 					e.preventDefault();
-					// Click lasted longer than 1s (1000ms)
 					var container = e.target.closest('.thumbnail, .thumbnail_folder');
 					var checkmark = container.querySelector('.checkmark');
 					var item = decodeURIComponent($(container.querySelector('img')).parent().parent().data("href"));
@@ -2241,11 +2181,9 @@
 					item = decodeURIComponent(item.replace(/.*preview=/, ""));
 
 					if (selectedFolders.includes(item)) {
-						// Deselect item
 						selectedFolders = selectedFolders.filter(i => i !== item);
 						checkmark.style.display = 'none';
 					} else {
-						// Select item
 						log(item);
 						selectedFolders.push(item);
 						checkmark.style.display = 'block';
@@ -2272,7 +2210,6 @@
 				var long_click = (d.getTime() - select_image_timer) > 1000;
 				if (long_click || enabled_selection_mode){
 					e.preventDefault();
-					// Click lasted longer than 1s (1000ms)
 					var container = e.target.closest('.thumbnail, .thumbnail_folder');
 					var checkmark = container.querySelector('.checkmark');
 					var item = container.querySelector('img').getAttribute('src');
@@ -2280,11 +2217,9 @@
 					item = decodeURIComponent(item.replace(/.*preview=/, ""));
 
 					if (selectedImages.includes(item)) {
-						// Deselect item
 						selectedImages = selectedImages.filter(i => i !== item);
 						checkmark.style.display = 'none';
 					} else {
-						// Select item
 						selectedImages.push(item);
 						checkmark.style.display = 'block';
 					}
