@@ -14,7 +14,7 @@
 	$GLOBALS["FILETYPES"] = $validTypes;
 	$GLOBALS["valid_file_ending_regex"] = "/\.(" . implode("|", $validTypes) . ")$/i";
 
-	$folderPath = './'; // Aktueller Ordner, in dem die index.php liegt
+	$folderPath = './';
 
 	if (!isset($_GET["zip"]) && isset($_GET['folder']) && !preg_match("/\.\./", $_GET["folder"])) {
 		$folderPath = $_GET['folder'];
@@ -52,14 +52,13 @@
 	}
 
 	if (isset($_GET['zip']) && $_GET['zip'] == 1) {
-		$zipname = 'images.zip'; // Name der ZIP-Datei
+		$zipname = 'gallery.zip';
 		$zip = new ZipArchive;
 		$zipFile = tempnam(sys_get_temp_dir(), 'zip');
 
 		if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
-			// Verarbeitung der folder-Parameter (beliebig viele Ordner)
 			if (isset($_GET['folder'])) {
-				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']]; // Handle single or multiple folders                                                                                       
+				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']];
 				foreach ($folders as $folder) {
 					if (isValidPath($folder) && is_dir($folder)) {
 						$realFolderPath = realpath($folder); // Absoluten Pfad des Verzeichnisses holen
@@ -1439,9 +1438,9 @@
 						// Bild im Hintergrund laden
 						var img = new Image();
 						img.onload = function() {
-							$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+							$thumbnail.attr('src', originalUrl);
 						};
-						img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
+						img.src = originalUrl;
 					});
 				} else {
 					$searchResults.append('<p>No results found.</p>');
@@ -1505,12 +1504,12 @@
 					video.style.maxHeight = "100%";
 
 					video.onloadeddata = function () {
-						fullscreen.replaceChild(video, image); // Ersetze loading.gif mit Video
+						fullscreen.replaceChild(video, image);
 					};
 
 					video.onerror = function () {
 						console.warn("Failed to load video:", decodedPath);
-						image.src = "error.svg"; // Optional: Fehlermeldung anzeigen
+						image.src = "error.svg";
 					};
 
 					video.src = decodedPath;
@@ -1521,7 +1520,7 @@
 					};
 					img.onerror = function () {
 						console.warn("Failed to load image:", decodedPath);
-						image.src = "error.svg"; // Optional: Fehlermeldung anzeigen
+						image.src = "error.svg";
 					};
 					img.src = decodedPath;
 				}
@@ -1624,25 +1623,25 @@
 
 			document.addEventListener('touchstart', function(event) {
 				touchStartX = event.touches[0].clientX;
-				touchStartY = event.touches[0].clientY; // Speichere auch die Start-Y-Position
+				touchStartY = event.touches[0].clientY;
 			}, false);
 
 			document.addEventListener('touchend', function(event) {
 				touchEndX = event.changedTouches[0].clientX;
-				touchEndY = event.changedTouches[0].clientY; // Speichere auch die End-Y-Position
-				handleSwipe(event); // Übergebe das Event-Objekt an die handleSwipe-Funktion
+				touchEndY = event.changedTouches[0].clientY;
+				handleSwipe(event);
 			}, false);
 
 			function isZooming(event) {
 				return event.touches.length > 1;
 			}
 
-			function handleSwipe(event) { // Übernimm das Event-Objekt als Parameter
+			function handleSwipe(event) {
 				if(!getToggleSwitchValue()) {
 					return;
 				}
 
-				var swipeThreshold = 50; // Mindestanzahl von Pixeln, die für einen Wisch erforderlich sind
+				var swipeThreshold = 50;
 
 				var deltaX = touchEndX - touchStartX;
 				var deltaY = touchEndY - touchStartY;
@@ -1654,14 +1653,14 @@
 
 				if (deltaXLargerThanThreshold && deltaXLargerThanDeltaY) {
 					if (deltaX > 0) {
-						prev_image(); // Wenn nach rechts gewischt wird, zeige das vorherige Bild an
+						prev_image();
 					} else {
-						next_image(); // Wenn nach links gewischt wird, zeige das nächste Bild an
+						next_image();
 					}
 				}
 
 				if (isZooming(event)) {
-					event.preventDefault(); // Verhindere das Standardverhalten des Events, wenn das Zoomen erkannt wird
+					event.preventDefault();
 				}
 			}
 
@@ -1673,7 +1672,7 @@
 				var charCode = event.which || event.keyCode;
 				var charStr = String.fromCharCode(charCode);
 
-				if (charCode === 8) { // Backspace-Taste (keyCode 8)
+				if (charCode === 8) {
 					// Überprüfe, ob der Fokus im Suchfeld liegt
 					var searchInput = document.getElementById('searchInput');
 					if (document.activeElement !== searchInput) {
@@ -1681,7 +1680,7 @@
 						searchInput.value = '';
 						$(searchInput).focus();
 					}
-				} else if (charCode == 27) { // Escape
+				} else if (charCode == 27) {
 					var searchInput = document.getElementById('searchInput');
 					searchInput.value = '';
 				}
@@ -1721,7 +1720,7 @@
 
 					// Verhindere das Standardverhalten des Zeichens (z. B. das Hinzufügen eines Zeichens in einem Textfeld)
 					event.preventDefault();
-				} else if (charCode === 8) { // Backspace-Taste (keyCode 8)
+				} else if (charCode === 8) {
 					// Überprüfe, ob der Fokus im Suchfeld liegt
 					var searchInput = document.getElementById('searchInput');
 					if (document.activeElement === searchInput) {
@@ -2133,10 +2132,10 @@
 					// Bild im Hintergrund laden
 					var img = new Image();
 					img.onload = function() {
-						$thumbnail.attr('src', originalUrl); // Bild austauschen, wenn geladen
+						$thumbnail.attr('src', originalUrl);
 						$thumbnail[0].classList.add("box-shadow");
 					};
-					img.src = originalUrl; // Starte das Laden des Bildes im Hintergrund
+					img.src = originalUrl;
 				});
 			}
 
@@ -2258,14 +2257,14 @@
 
 			function onFolderMouseDown(e){
 				var d = new Date();
-				select_folder_timer = d.getTime(); // Milliseconds since 1 Apr 1970
+				select_folder_timer = d.getTime();
 
 				showProgressBar(1);
 			}
 
 			function onImageMouseDown(e){
 				var d = new Date();
-				select_image_timer = d.getTime(); // Milliseconds since 1 Apr 1970
+				select_image_timer = d.getTime();
 
 				showProgressBar(1);
 			}
@@ -2383,7 +2382,7 @@
 						selectedImages.forEach(item => {
 							var a = document.createElement('a');
 							a.href = item;
-							a.download = item.split('/').pop(); // Extract filename
+							a.download = item.split('/').pop();
 							document.body.appendChild(a);
 							a.click();
 							document.body.removeChild(a);
