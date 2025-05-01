@@ -333,21 +333,20 @@
 			return null;
 		}
 
-		$latitude['degrees'] = getCoord($exif['GPS']['GPSLatitude'][0]);
-		if(is_null($latitude["degrees"])) { return null; }
-		$latitude['minutes'] = getCoord($exif['GPS']['GPSLatitude'][1]);
-		if(is_null($latitude["minutes"])) { return null; }
-		$latitude['seconds'] = getCoord($exif['GPS']['GPSLatitude'][2]);
-		if(is_null($latitude["seconds"])) { return null; }
-		$latitude_direction = $exif['GPS']['GPSLatitudeRef'];
+		$coordinates = ['latitude' => 'GPSLatitude', 'longitude' => 'GPSLongitude'];
+		$direction = ['latitude' => 'GPSLatitudeRef', 'longitude' => 'GPSLongitudeRef'];
 
-		$longitude['degrees'] = getCoord($exif['GPS']['GPSLongitude'][0]);
-		if(is_null($longitude["degrees"])) { return null; }
-		$longitude['minutes'] = getCoord($exif['GPS']['GPSLongitude'][1]);
-		if(is_null($longitude["minutes"])) { return null; }
-		$longitude['seconds'] = getCoord($exif['GPS']['GPSLongitude'][2]);
-		if(is_null($longitude["seconds"])) { return null; }
-		$longitude_direction = $exif['GPS']['GPSLongitudeRef'];
+		foreach ($coordinates as $coord => $coord_key) {
+			for ($i = 0; $i < 3; $i++) {
+				$value = getCoord($exif['GPS'][$coord_key][$i]);
+				if (is_null($value)) {
+					return null;
+				}
+				$$coord[$i] = $value;  // Assign value to $latitude[0], $latitude[1], $latitude[2], etc.
+			}
+			${$coord . '_direction'} = $exif['GPS'][$direction[$coord]];  // Set direction (Ref)
+		}
+
 
 		$res = array(
 			"latitude" => convertLatLonToDecimal($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
