@@ -1418,7 +1418,7 @@
 
 							var gps_data_string = "";
 
-							if(result.latitude && result.longitude) { // TODO: was für Geocoords 0, 0?
+							if (!isNaN(result.latitude) && !isNaN(result.longitude) && result.latitude !== 0 && result.longitude !== 0) {
 								gps_data_string = ` data-latitude="${result.latitude}" data-longitude="${result.longitude}" `;
 							}
 
