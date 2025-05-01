@@ -324,9 +324,9 @@
 				if (is_null($value)) {
 					return null;
 				}
-				$$coord[$i] = $value;  
+				$$coord[$i] = $value;
 			}
-			${$coord . '_direction'} = $exif['GPS'][$direction[$coord]];  
+			${$coord . '_direction'} = $exif['GPS'][$direction[$coord]];
 		}
 
 
@@ -728,10 +728,10 @@
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
-					$gifDuration = 10; 
-					$startTime = 0;    
+					$gifDuration = 10;
+					$startTime = 0;
 
-					$frameRate = 10; 
+					$frameRate = 10;
 					$frameCount = $gifDuration * $frameRate;
 
 					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
