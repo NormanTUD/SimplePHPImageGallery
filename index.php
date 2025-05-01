@@ -79,11 +79,18 @@
 
 			$exif_data = exif_read_data($file_info, 'IFD0');
 			if ($exif_data) {
-				$metadata['exif'] = $exif_data;
+				// exif als HTML-Tabelle codieren
+				$exif_html = '<table style="border-collapse:collapse;">';
+				foreach ($exif_data as $k => $v) {
+					if (is_array($v)) {
+						$v = implode(', ', $v);
+					}
+					$exif_html .= '<tr><td style="padding:2px 5px;"><b>' . htmlspecialchars($k) . '</b></td><td style="padding:2px 5px;">' . htmlspecialchars((string)$v) . '</td></tr>';
+				}
+				$exif_html .= '</table>';
+				$metadata['exif'] = $exif_html; // <-- als fertige HTML-Tabelle
 			}
 		}
-
-		$metadata['permissions'] = substr(sprintf('%o', fileperms($file_info)), -4); // Berechtigungen im Oktalformat
 
 		echo json_encode($metadata);
 	}
@@ -1543,7 +1550,10 @@
 			}
 
 			function show_image_info() {
-				hide_image_info();
+				const existing_overlay = document.querySelector('div[style*="position: fixed"]');
+				if (existing_overlay) {
+					return;
+				}
 
 				const imageElement = document.querySelector('.fullscreen img');
 				if (!imageElement) return;
@@ -1578,7 +1588,7 @@
 							const cell1 = document.createElement('td');
 							cell1.textContent = key;
 							const cell2 = document.createElement('td');
-							cell2.textContent = data[key];
+							cell2.innerHTML = data[key];
 							row.appendChild(cell1);
 							row.appendChild(cell2);
 							table.appendChild(row);
