@@ -1551,9 +1551,7 @@
 
 			function show_image_info() {
 				const existing_overlay = document.querySelector('div[style*="position: fixed"]');
-				if (existing_overlay) {
-					return;
-				}
+				if (existing_overlay) return;
 
 				const imageElement = document.querySelector('.fullscreen img');
 				if (!imageElement) return;
@@ -1573,29 +1571,57 @@
 				overlay.style.justifyContent = 'center';
 				overlay.style.backdropFilter = 'blur(10px)';
 
+				// Container für Scrollbarkeit
+				const scrollContainer = document.createElement('div');
+				scrollContainer.style.maxHeight = '80vh';
+				scrollContainer.style.overflowY = 'auto';
+				scrollContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+				scrollContainer.style.padding = '20px';
+				scrollContainer.style.borderRadius = '10px';
+				scrollContainer.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.3)';
+				scrollContainer.style.maxWidth = '90vw';
+
+				// ESC zum Schließen
+				overlay.addEventListener('click', e => {
+				if (e.target === overlay) overlay.remove();
+				});
+
+				document.addEventListener('keydown', function escListener(e) {
+					if (e.key === 'Escape') {
+						overlay.remove();
+						document.removeEventListener('keydown', escListener);
+					}
+				});
+
 				fetch(`index.php?file_info=${encodeURIComponent(imageSrc)}`)
 					.then(response => response.json())
 					.then(data => {
-						if (data) {
-							const table = document.createElement('table');
-							table.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-							table.style.padding = '10px';
-							table.style.borderRadius = '10px';
-							table.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+					if (data) {
+						const table = document.createElement('table');
+						table.style.width = '100%';
+						table.style.borderCollapse = 'collapse';
 
-							Object.keys(data).forEach(key => {
-							const row = document.createElement('tr');
-							const cell1 = document.createElement('td');
-							cell1.textContent = key;
-							const cell2 = document.createElement('td');
-							cell2.innerHTML = data[key];
-							row.appendChild(cell1);
-							row.appendChild(cell2);
-							table.appendChild(row);
-							});
+						Object.keys(data).forEach(key => {
+						const row = document.createElement('tr');
 
-							overlay.appendChild(table);
-						}
+						const cell1 = document.createElement('td');
+						cell1.textContent = key;
+						cell1.style.padding = '5px';
+						cell1.style.fontWeight = 'bold';
+						cell1.style.verticalAlign = 'top';
+
+						const cell2 = document.createElement('td');
+						cell2.innerHTML = data[key];
+						cell2.style.padding = '5px';
+
+						row.appendChild(cell1);
+						row.appendChild(cell2);
+						table.appendChild(row);
+						});
+
+						scrollContainer.appendChild(table);
+						overlay.appendChild(scrollContainer);
+					}
 					})
 					.catch(error => {
 						console.error('Error fetching image info:', error);
@@ -1603,6 +1629,7 @@
 
 				document.body.appendChild(overlay);
 			}
+
 
 			function hide_image_info() {
 				const overlay = document.querySelector('div[style*="position: fixed"]');
