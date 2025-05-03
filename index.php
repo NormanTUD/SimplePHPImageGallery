@@ -106,7 +106,7 @@
 		$zip = new ZipArchive;
 		$zipFile = tempnam(sys_get_temp_dir(), 'zip');
 
-		if ($zip->open($zipFile, ZipArchive::CREATE) === TRUE) {
+		if ($zip->open($zipFile, ZipArchive::CREATE) === true) {
 			if (isset($_GET['folder'])) {
 				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']];
 				foreach ($folders as $folder) {
