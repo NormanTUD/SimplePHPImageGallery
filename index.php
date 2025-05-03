@@ -1815,7 +1815,7 @@
 					success: function(html) {
 						strReturn = html;
 					},
-					async:false
+					async: false
 				});
 
 				return strReturn;
