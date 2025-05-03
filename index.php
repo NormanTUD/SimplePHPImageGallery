@@ -95,7 +95,7 @@
 		echo json_encode($metadata);
 	}
 
-	if(isset($_GET["file_info"])) {
+	if (isset($_GET["file_info"])) {
 		print_file_metadata();
 
 		exit(0);
@@ -122,7 +122,7 @@
 							if (!$file->isDir()) {
 								$filePath = $file->getRealPath();
 
-								if(preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
+								if (preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
 									$cwd = getcwd();
 
 									$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
@@ -144,7 +144,7 @@
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
 				foreach ($images as $img) {
 					if (isValidPath($img) && file_exists($img)) {
-						if(preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
+						if (preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
 							$zip->addFile($img, basename($img));
 						}
 					} else {
@@ -256,7 +256,7 @@
 
 		$files = @scandir($fp);
 
-		if(is_bool($files)) {
+		if (is_bool($files)) {
 			return [];
 		}
 
@@ -296,7 +296,7 @@
 					if (file_or_folder_matches($textContent, $searchTermLower, $normalized)) {
 						$imageFilePath = searchImageFileByTXT($filePath);
 
-						if($imageFilePath) {
+						if ($imageFilePath) {
 							$results[] = [
 								'path' => $imageFilePath,
 								'type' => 'file'
@@ -321,7 +321,7 @@
 		$expr_p = explode( '/', $expr );
 
 		if (count($expr_p) == 2) {
-			if($expr_p[1]) {
+			if ($expr_p[1]) {
 				return $expr_p[0] / $expr_p[1];
 			}
 		}
@@ -342,7 +342,7 @@
 	function get_image_gps($img) {
 		$cacheFolder = './thumbnails_cache/';
 
-		if(is_dir("/docker_tmp/")) {
+		if (is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
 		}
 
@@ -384,7 +384,7 @@
 			"longitude" => convertLatLonToDecimal($longitude['degrees'] ?? $longitude[0], $longitude['minutes'] ?? $longitude[1], $longitude['seconds'] ?? $longitude[2], $longitude_direction)
 		);
 
-		if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
+		if (is_nan($res["latitude"]) || is_nan($res["longitude"])) {
 			return null;
 		}
 
@@ -409,12 +409,12 @@
 	}
 
 	function displayGallery($fp) {
-		if(preg_match("/\.\./", $fp)) {
+		if (preg_match("/\.\./", $fp)) {
 			print("Invalid folder");
 			return [];
 		}
 
-		if(!is_dir($fp)) {
+		if (!is_dir($fp)) {
 			print("Folder not found");
 			return [];
 		}
@@ -560,7 +560,7 @@
 	function getImagesInFolder($folderPath) {
 		$folderFiles = @scandir($folderPath);
 
-		if(is_bool($folderFiles)) {
+		if (is_bool($folderFiles)) {
 			return [];
 		}
 
@@ -598,7 +598,7 @@
 		} else {
 			foreach ($subfolders as $subfolder) {
 				$images_in_folder = getImagesInFolder($subfolder);
-				if(count($images_in_folder)) {
+				if (count($images_in_folder)) {
 					$images[] = $images_in_folder[0];
 				}
 			}
@@ -622,7 +622,7 @@
 	function is_cached_already ($path) {
 		$ending = "jpg";
 
-		if(!preg_match("/\.(mov|mp4)$/i", $path)) {
+		if (!preg_match("/\.(mov|mp4)$/i", $path)) {
 			$ending = "gif";
 		}
 
@@ -630,13 +630,13 @@
 
 		$cacheFolder = './thumbnails_cache/';
 
-		if(is_dir("/docker_tmp/")) {
+		if (is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
 		}
 
 		$path = $cacheFolder . $md5 . "." . $ending;
 
-		if(file_exists($path) && is_valid_image_or_video_file($path)) {
+		if (file_exists($path) && is_valid_image_or_video_file($path)) {
 			return true;
 		}
 
@@ -644,7 +644,7 @@
 	}
 
 	function listAllUncachedImageFiles($directory) {
-		if($directory == "./.git" || $directory == "./docker_tmp" || $directory == "./thumbnails_cache") {
+		if ($directory == "./.git" || $directory == "./docker_tmp" || $directory == "./thumbnails_cache") {
 			return [];
 		}
 
@@ -671,7 +671,7 @@
 	}
 
 	function getResizedImageStyle($imagePath, $thumbnailMaxWidth = 150, $thumbnailMaxHeight = 150) {
-		if(preg_match("/\.m(ov|p4)$/i", $imagePath)) {
+		if (preg_match("/\.m(ov|p4)$/i", $imagePath)) {
 			return;
 		}
 
@@ -716,9 +716,9 @@
 			$path = $this_result["path"];
 			$type = $this_result["type"];
 
-			if($type == "file") {
+			if ($type == "file") {
 				$gps = get_image_gps($path);
-				if($gps) {
+				if ($gps) {
 					$results["files"][$i]["latitude"] = $gps["latitude"];
 					$results["files"][$i]["longitude"] = $gps["longitude"];
 				}
@@ -750,14 +750,14 @@
 
 		$isVideo = preg_match("/\.(mov|mp4)$/i", $imagePath);
 
-		if(is_dir("/docker_tmp/")) {
+		if (is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
 		}
 
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
 			$file_ending = "jpg";
 
-			if($isVideo) {
+			if ($isVideo) {
 				$file_ending = "gif";
 			}
 
@@ -767,7 +767,7 @@
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
-				if($isVideo) {
+				if ($isVideo) {
 					header('Content-Type: image/gif');
 				} else {
 					header('Content-Type: image/jpeg');
@@ -775,7 +775,7 @@
 				readfile($cachedThumbnailPath);
 				exit;
 			} else {
-				if($isVideo) {
+				if ($isVideo) {
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
