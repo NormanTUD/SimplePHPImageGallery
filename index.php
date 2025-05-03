@@ -62,7 +62,7 @@
 	}
 
 	if (isset($_GET["gallery"])) {
-		displayGallery($_GET["gallery"]);
+		display_gallery($_GET["gallery"]);
 		exit(0);
 	}
 ?>

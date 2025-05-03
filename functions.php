@@ -293,7 +293,7 @@ function is_valid_image_or_video_file($filepath) {
 	return isset($type) && in_array($type, $GLOBALS["allowed_content_types"]);
 }
 
-function displayGallery($fp) {
+function display_gallery($fp) {
 	if (preg_match("/\.\./", $fp)) {
 		print("Invalid folder");
 		return [];
