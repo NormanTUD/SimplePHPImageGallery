@@ -916,7 +916,7 @@
 		<title>Galerie</title>
 <?php
 		$jquery_file = 'jquery-3.7.1.min.js';
-		if(!file_exists($jquery_file)) {
+		if (!file_exists($jquery_file)) {
 			$jquery_file = "https://code.jquery.com/jquery-3.7.1.js";
 		}
 ?>
@@ -1267,7 +1267,7 @@
 <?php
 		$filename = 'links.txt';
 
-		if(file_exists($filename)) {
+		if (file_exists($filename)) {
 			$file = fopen($filename, 'r');
 
 			if ($file) {
