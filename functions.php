@@ -584,3 +584,28 @@ function getResizedImageStyle($imagePath, $thumbnailMaxWidth = 150, $thumbnailMa
 	return "width: {$thumbWidth}px; height: {$thumbHeight}px;";
 }
 
+
+function search_and_print_results ($searchTerm) {
+	$results = array();
+	$results["files"] = searchFiles('.', $searchTerm);
+
+	$i = 0;
+	foreach ($results["files"] as $this_result) {
+		$path = $this_result["path"];
+		$type = $this_result["type"];
+
+		if ($type == "file") {
+			$gps = get_image_gps($path);
+			if ($gps) {
+				$results["files"][$i]["latitude"] = $gps["latitude"];
+				$results["files"][$i]["longitude"] = $gps["longitude"];
+			}
+			$results["files"][$i]["hash"] = md5($path);
+		}
+
+		$i++;
+	}
+
+	header('Content-type: application/json; charset=utf-8');
+	echo json_encode($results);
+}
