@@ -6,7 +6,7 @@
 
 	if (shell_exec('which ffmpeg')) {
 		$validTypes = array_merge($validTypes, ['mp4', 'mov']);
-		$GLOBALS["allowed_content_types"] = array_merge($GLOBALS["allowed_content_types"], ["video/quicktime", "video/mp4"]);
+		$GLOBALS["allowed_content_types"] = array_merge($GLOBALS["allowed_content_types"], ["video/mp4", "video/quicktime"]);
 	}
 
 	set_time_limit(60);
