@@ -461,13 +461,14 @@
 			}
 		}
 
-		usort($thumbnails, function ($a, $b) {
-			return strcmp($a['name'], $b['name']);
-		});
+		function sortByName(array &$array): void {
+			usort($array, function ($a, $b) {
+				return strcmp($a['name'], $b['name']);
+			});
+		}
 
-		usort($images, function ($a, $b) {
-			return strcmp($a['name'], $b['name']);
-		});
+		sortByName($thumbnails);
+		sortByName($images);
 
 		function create_thumbnail_html($item, $is_folder = false) {
 			$path = $item["path"];
