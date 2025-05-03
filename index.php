@@ -379,10 +379,9 @@
 			${$coord . '_direction'} = $exif['GPS'][$direction[$coord]];
 		}
 
-
 		$res = array(
-			"latitude" => convertLatLonToDecimal($latitude['degrees'], $latitude['minutes'], $latitude['seconds'], $latitude_direction),
-			"longitude" => convertLatLonToDecimal($longitude['degrees'], $longitude['minutes'], $longitude['seconds'], $longitude_direction)
+			"latitude" => convertLatLonToDecimal($latitude['degrees'] ?? $latitude[0], $latitude['minutes'] ?? $latitude[1], $latitude['seconds'] ?? $latitude[2], $latitude_direction),
+			"longitude" => convertLatLonToDecimal($longitude['degrees'] ?? $longitude[0], $longitude['minutes'] ?? $longitude[1], $longitude['seconds'] ?? $longitude[2], $longitude_direction)
 		);
 
 		if(is_nan($res["latitude"]) || is_nan($res["longitude"])) {
