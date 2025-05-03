@@ -139,7 +139,6 @@
 				}
 			}
 
-
 			if (isset($_GET['img'])) {
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
 				foreach ($images as $img) {
@@ -511,7 +510,6 @@
 			return $html_parts;
 		}
 
-
 		$html_parts = [];
 
 		foreach ($thumbnails as $thumbnail) {
@@ -525,7 +523,6 @@
 				$html_parts = array_merge($html_parts, create_thumbnail_html($image, false));
 			}
 		}
-
 
 		foreach ($html_parts as $html_part) {
 			echo $html_part;
@@ -858,7 +855,6 @@
 				header('Content-Type: image/jpeg');
 				echo $data;
 
-
 				imagedestroy($image);
 				imagedestroy($thumbnail);
 			}
@@ -939,7 +935,6 @@
 				align-items: center;
 				padding: 10px;
 			}
-
 
 			.loading-bar-container {
 				position: fixed;
@@ -1521,7 +1516,6 @@
 				});
 			}
 
-
 			function getToggleSwitchValue() {
 				var toggleSwitch = document.getElementById('toggleSwitch');
 				if (toggleSwitch) {
@@ -1637,7 +1631,6 @@
 
 				document.body.appendChild(overlay);
 			}
-
 
 			function hide_image_info() {
 				const overlay = document.querySelector('div[style*="position: fixed"]');
@@ -2001,7 +1994,6 @@
 						"' onclick='showImage(\"" +
 						decodeURIComponent(url.replace(/index.php\?preview=/, "")).replace(/\+/g, ' ') +
 						"\");' />";
-
 
 					eval(`markers['${hash}'].on('click', function(e) {
 						var popup = L.popup().setContent(\`${text}\`);
@@ -2383,7 +2375,6 @@
 				hidePageLoadingIndicator();
 			}
 
-
 			function updateUnselectButton() {
 				var unselectBtn = document.getElementById('unselectBtn');
 				if (selectedImages.length > 0 || selectedFolders.length > 0) {
@@ -2392,7 +2383,6 @@
 					unselectBtn.style.display = 'none';
 				}
 			}
-
 
 			function updateDownloadButton() {
 				var downloadBtn = document.getElementById('downloadBtn');
