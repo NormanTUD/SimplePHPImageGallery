@@ -895,9 +895,7 @@
 		<meta charset="UTF-8">
 		<title>Galerie</title>
 		<script src="jquery-3.7.1.min.js"></script>
-
 		<link rel="stylesheet" href="style.css" />
-
 		<script src="leaflet.js"></script>
 		<script src="swiper-bundle.min.js"></script>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
