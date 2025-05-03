@@ -38,7 +38,6 @@
 
 	if (isset($_GET['zip']) && $_GET['zip'] == 1) {
 		$exit_code = create_zip();
-
 		exit($exit_code);
 	}
 
