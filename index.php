@@ -1283,6 +1283,9 @@
 			var touchStartX = 0;
 			var touchEndX = 0;
 
+			var json_cache = {};
+			var fill_cache_images = [];
+
 			document.addEventListener('touchstart', function(event) {
 				touchStartX = event.touches[0].clientX;
 				touchStartY = event.touches[0].clientY;
@@ -1350,15 +1353,11 @@
 				}
 			});
 
-			var json_cache = {};
-
 			showPageLoadingIndicator();
 
 			createBreadcrumb('<?php echo $folderPath; ?>');
 
 			$(".no_preview_available").parent().hide();
-
-			var fill_cache_images = [];
 
 			$(document).ready(async function() {
 				$("#delete_search").hide();
