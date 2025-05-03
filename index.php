@@ -1860,11 +1860,9 @@
 			}
 
 			function add_listeners() {
-				$(".thumbnail_folder").mousedown(onFolderMouseDown);
-				$(".thumbnail_folder").mouseup(onFolderMouseUp);
+				$(".thumbnail_folder").mousedown(onFolderMouseDown).mouseup(onFolderMouseUp);
 
-				$(".thumbnail").mousedown(onImageMouseDown);
-				$(".thumbnail").mouseup(onImageMouseUp);
+				$(".thumbnail").mousedown(onImageMouseDown).mouseup(onImageMouseUp);
 			}
 
 			async function load_folder (folder) {
@@ -2100,8 +2098,6 @@
 						filtered_img_elements.push(e);
 					}
 				});
-
-				//log("filtered_img_elements:", filtered_img_elements);
 
 				filtered_img_elements.forEach(function (e, i) {
 					//log(e);
