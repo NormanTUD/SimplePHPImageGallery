@@ -305,7 +305,6 @@
 		return $results;
 	}
 
-
 	function getCoord( $expr ) {
 		$expr_p = explode( '/', $expr );
 
