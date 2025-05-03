@@ -32,7 +32,6 @@
 
 	if (isset($_GET["file_info"])) {
 		print_file_metadata();
-
 		exit(0);
 	}
 
