@@ -929,8 +929,8 @@
 			}
 
 			#toggleSwitch {
-				width: 40px; /* Passen Sie die Breite des Buttons auf mobilen Geräten an */
-				height: 20px; /* Höhe des Buttons */
+				width: 40px;
+				height: 20px;
 				}
 
 			#swipe_toggle {
@@ -958,7 +958,6 @@
 				animation: progress 1s ease-in-out;
 			}
 
-			/* CSS animation keyframes */
 			@keyframes progress {
 				0% {
 					width: 0;
@@ -968,7 +967,6 @@
 				}
 			}
 
-			/* Optional: Adding undulating effect using a gradient */
 			.loading-bar.undulating {
 				background-image: linear-gradient(135deg, #3498db 25%, #1abc9c 50%, #3498db 75%);
 				background-size: 200% 100%;
@@ -989,11 +987,11 @@
 				left: 5px;
 				font-size: 24px;
 				color: green;
-				display: none; /* initially hidden */
+				display: none;
 			}
 
 			.unselect-btn {
-				display: none; /* Initially hidden, only show when something is selected */
+				display: none;
 				margin-top: 20px;
 				padding: 10px 20px;
 				background-color: red;
@@ -1008,7 +1006,7 @@
 			}
 
 			.download-btn {
-				display: none; /* Initially hidden, only show when something is selected */
+				display: none;
 				margin-top: 20px;
 				padding: 10px 20px;
 				background-color: #4CAF50;
@@ -1108,13 +1106,13 @@
 
 			@keyframes aurora {
 				0% {
-					background-color: #4e54c8; /* Dunkelblau */
+					background-color: #4e54c8;
 				}
 				50% {
-					background-color: #8f94fb; /* Hellblau */
+					background-color: #8f94fb;
 				}
 				100% {
-					background-color: #4e54c8; /* Dunkelblau */
+					background-color: #4e54c8;
 				}
 			}
 
@@ -1128,7 +1126,7 @@
 			}
 
 			.loading-thumbnail:hover {
-				transform: scale(1.1); /* Example of hover effect */
+				transform: scale(1.1);
 			}
 
 			#searchInput {
@@ -1248,11 +1246,11 @@
 			}
 
 			#searchInput {
-				padding-left: 45px; /* Ensures space for the icon */
-				background-image: url('search.svg'); /* Replace with your actual path to the search.svg */
-				background-size: 32px 32px; /* Set the icon size */
-				background-position: 10px center; /* Position the icon inside the input */
-				background-repeat: no-repeat; /* Prevent background image repetition */
+				padding-left: 45px;
+				background-image: url('search.svg');
+				background-size: 32px 32px;
+				background-position: 10px center;
+				background-repeat: no-repeat;
 			}
 		</style>
 
