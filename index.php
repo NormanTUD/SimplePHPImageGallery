@@ -1369,7 +1369,6 @@
 			});
 		</script>
 
-		<!-- Ergebnisse der Suche hier einfügen -->
 		<div id="searchResults"></div>
 
 		<div id="gallery"></div>
