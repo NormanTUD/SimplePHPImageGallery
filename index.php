@@ -852,10 +852,13 @@
 					imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
 				}
 
-				imagejpeg($thumbnail, $cachedThumbnailPath);
-
-				header('Content-Type: image/jpeg');
+				ob_start();
 				imagejpeg($thumbnail);
+				$data = ob_get_clean();
+				file_put_contents($cachedThumbnailPath, $data);
+				header('Content-Type: image/jpeg');
+				echo $data;
+
 
 				imagedestroy($image);
 				imagedestroy($thumbnail);
