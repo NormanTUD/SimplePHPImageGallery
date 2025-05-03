@@ -22,3 +22,4 @@ thumbnails_cache
 **/*.MOV
 videos
 2025-05-02/
+.nfs*
