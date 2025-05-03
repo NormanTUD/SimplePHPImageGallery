@@ -749,6 +749,8 @@
 		$thumbnailMaxHeight = 150;
 		$cacheFolder = './thumbnails_cache/';
 
+		$isVideo = preg_match("/\.(mov|mp4)$/i", $imagePath);
+
 		if(is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
 		}
@@ -756,7 +758,7 @@
 		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
 			$file_ending = "jpg";
 
-			if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+			if($isVideo) {
 				$file_ending = "gif";
 			}
 
@@ -766,7 +768,7 @@
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
-				if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+				if($isVideo) {
 					header('Content-Type: image/gif');
 				} else {
 					header('Content-Type: image/jpeg');
@@ -774,7 +776,7 @@
 				readfile($cachedThumbnailPath);
 				exit;
 			} else {
-				if(preg_match("/\.(mov|mp4)$/i", $imagePath)) {
+				if($isVideo) {
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
