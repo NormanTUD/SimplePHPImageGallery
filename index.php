@@ -396,23 +396,17 @@
 		return $res;
 	}
 
-	function is_valid_image_or_video_file ($filepath) {
-		if(!is_file($filepath)) {
+	function is_valid_image_or_video_file($filepath) {
+		if (!is_file($filepath) || !is_readable($filepath)) {
 			return false;
 		}
 
-		if(!is_readable($filepath)) {
-			return false;
+		if (!isset($GLOBALS["finfo"])) {
+			$GLOBALS['finfo'] = finfo_open(FILEINFO_MIME_TYPE);
 		}
 
-		$finfo = finfo_open(FILEINFO_MIME_TYPE);
-		$type = finfo_file($finfo, $filepath);
-
-		if (isset($type) && in_array($type, $GLOBALS["allowed_content_types"])) {
-			return true;
-		} else {
-			return false;
-		}
+		$type = finfo_file($GLOBALS['finfo'], $filepath);
+		return isset($type) && in_array($type, $GLOBALS["allowed_content_types"]);
 	}
 
 	function displayGallery($fp) {
