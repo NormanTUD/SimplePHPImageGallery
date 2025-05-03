@@ -647,3 +647,126 @@ function list_all () {
 	header('Content-type: application/json; charset=utf-8');
 	echo json_encode($allImageFiles);
 }
+
+function create_preview($imagePath) {
+	$thumbnailMaxWidth = 150;
+	$thumbnailMaxHeight = 150;
+	$cacheFolder = './thumbnails_cache/';
+
+	$isVideo = preg_match("/\.(mov|mp4)$/i", $imagePath);
+
+	if (is_dir("/docker_tmp/")) {
+		$cacheFolder = "/docker_tmp/";
+	}
+
+	if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
+		$file_ending = "jpg";
+
+		if ($isVideo) {
+			$file_ending = "gif";
+		}
+
+		$md5 = get_hash_from_file($imagePath);
+
+		$thumbnailFileName = $md5 . '.' . $file_ending;
+
+		$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
+		if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
+			if ($isVideo) {
+				header('Content-Type: image/gif');
+			} else {
+				header('Content-Type: image/jpeg');
+			}
+			readfile($cachedThumbnailPath);
+			exit;
+		} else {
+			if ($isVideo) {
+				$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
+				$duration = floatval(shell_exec($ffprobe));
+
+				$gifDuration = 10;
+				$startTime = 0;
+
+				$frameRate = 10;
+				$frameCount = $gifDuration * $frameRate;
+
+				$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
+
+				fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
+
+				shell_exec($ffmpeg);
+
+				if (file_exists($cachedThumbnailPath)) {
+					header('Content-Type: image/gif');
+					readfile($cachedThumbnailPath);
+					exit;
+				} else {
+					echo "Fehler beim Erstellen des Video-GIFs.";
+					exit;
+				}
+			} else {
+				list($width, $height, $type) = getimagesize($imagePath);
+
+				switch ($type) {
+					case IMAGETYPE_JPEG:
+						$image = imagecreatefromjpeg($imagePath);
+						break;
+					case IMAGETYPE_PNG:
+						$image = imagecreatefrompng($imagePath);
+						break;
+					case IMAGETYPE_GIF:
+						$image = imagecreatefromgif($imagePath);
+						break;
+					default:
+						echo 'Unsupported image type.';
+						exit;
+				}
+
+				$exif = @exif_read_data($imagePath);
+				if (!empty($exif['Orientation'])) {
+					switch ($exif['Orientation']) {
+					case 3:
+						$image = imagerotate($image, 180, 0);
+						break;
+					case 6:
+						$image = imagerotate($image, -90, 0);
+						list($width, $height) = [$height, $width];
+						break;
+					case 8:
+						$image = imagerotate($image, 90, 0);
+						list($width, $height) = [$height, $width];
+						break;
+					}
+				}
+
+				$aspectRatio = $width / $height;
+				$thumbnailWidth = $thumbnailMaxWidth;
+				$thumbnailHeight = $thumbnailMaxHeight;
+				if ($width > $height) {
+					$thumbnailHeight = $thumbnailWidth / $aspectRatio;
+				} else {
+					$thumbnailWidth = $thumbnailHeight * $aspectRatio;
+				}
+
+				$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
+
+				$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
+				imagefill($thumbnail, 0, 0, $backgroundColor);
+
+				imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
+			}
+
+			ob_start();
+			imagejpeg($thumbnail);
+			$data = ob_get_clean();
+			file_put_contents($cachedThumbnailPath, $data);
+			header('Content-Type: image/jpeg');
+			echo $data;
+
+			imagedestroy($image);
+			imagedestroy($thumbnail);
+		}
+	} else {
+		echo 'File not found.';
+	}
+}
