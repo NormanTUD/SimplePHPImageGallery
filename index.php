@@ -88,7 +88,7 @@
 					$exif_html .= '<tr><td style="padding:2px 5px;"><b>' . htmlspecialchars($k) . '</b></td><td style="padding:2px 5px;">' . htmlspecialchars((string)$v) . '</td></tr>';
 				}
 				$exif_html .= '</table>';
-				$metadata['exif'] = $exif_html; // <-- als fertige HTML-Tabelle
+				$metadata['exif'] = $exif_html;
 			}
 		}
 
