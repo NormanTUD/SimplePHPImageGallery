@@ -469,65 +469,63 @@
 			return strcmp($a['name'], $b['name']);
 		});
 
-		$html_parts = [];
+		function create_thumbnail_html($item, $is_folder = false) {
+			$path = $item["path"];
+			$thumb = $is_folder ? $item["thumbnail"] : $item["path"];
+			$file_hash = get_hash_from_file($thumb);
+			$cached_preview = "thumbnails_cache/$file_hash.jpg";
+			$wh_string = "";
 
-		foreach ($thumbnails as $thumbnail) {
-			if(preg_match($GLOBALS["valid_file_ending_regex"], $thumbnail["thumbnail"])) {
-				$wh_string = "";
-
-				$file_hash = get_hash_from_file($thumbnail["thumbnail"]);
-				$cached_preview = "thumbnails_cache/$file_hash.jpg";
-
-				if (file_exists($cached_preview)) {
-					list($width, $height) = getImageSizeWithRotation($cached_preview);
-
-					if($width && $height) {
-						$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
-					}
-				} else {
-					$wh_string = getResizedImageStyle($thumbnail["thumbnail"]);
+			if (file_exists($cached_preview)) {
+				list($width, $height) = getImageSizeWithRotation($cached_preview);
+				if ($width && $height) {
+					$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
 				}
+			} else {
+				$wh_string = getResizedImageStyle($thumb);
+			}
 
-				$html_parts[] = '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
-				$html_parts[] = '<img '.$wh_string.' title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
-				$html_parts[] = '<h3>' . $thumbnail['name'] . '</h3>';
+			$html_parts = [];
+
+			if ($is_folder) {
+				$html_parts[] = '<a data-href="'.urlencode($path).'" class="img_element" data-onclick="load_folder(\'' . $path . '\')"><div class="thumbnail_folder">';
+				$html_parts[] = '<img '.$wh_string.' title="'.$item["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumb) . '">';
+				$html_parts[] = '<h3>' . $item['name'] . '</h3>';
 				$html_parts[] = '<span class="checkmark">✅</span>';
 				$html_parts[] = "</div></a>\n";
-			}
-		}
-
-		foreach ($images as $image) {
-			if(is_file($image["path"]) && is_valid_image_or_video_file($image["path"]) && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
+			} else {
 				$gps_data_string = "";
-
-				if(!preg_match("/\.m(?:ov|p4)$/i", $image["path"])) {
-					$gps = get_image_gps($image["path"]);
-					if($gps) {
+				if (!preg_match("/\.m(?:ov|p4)$/i", $path)) {
+					$gps = get_image_gps($path);
+					if ($gps) {
 						$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
 					}
 				}
 
-				$file_hash = get_hash_from_file($image["path"]);
-				$cached_preview = "thumbnails_cache/$file_hash.jpg";
-
-				$wh_string = "";
-
-				if (file_exists($cached_preview)) {
-					list($width, $height) = getImageSizeWithRotation($cached_preview);
-
-					if($width && $height) {
-						$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
-					}
-				} else {
-					$wh_string = getResizedImageStyle($image["path"]);
-				}
-
-				$html_parts[] = '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($image['path']) . '\')">';
-				$html_parts[] = '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				$html_parts[] = '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($path) . '\')">';
+				$html_parts[] = '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($path) . '">';
 				$html_parts[] = '<span class="checkmark">✅</span>';
 				$html_parts[] = "</div>\n";
 			}
+
+			return $html_parts;
 		}
+
+
+		$html_parts = [];
+
+		foreach ($thumbnails as $thumbnail) {
+			if (preg_match($GLOBALS["valid_file_ending_regex"], $thumbnail["thumbnail"])) {
+				$html_parts = array_merge($html_parts, create_thumbnail_html($thumbnail, true));
+			}
+		}
+
+		foreach ($images as $image) {
+			if (is_file($image["path"]) && is_valid_image_or_video_file($image["path"]) && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
+				$html_parts = array_merge($html_parts, create_thumbnail_html($image, false));
+			}
+		}
+
 
 		foreach ($html_parts as $html_part) {
 			echo $html_part;
