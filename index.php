@@ -247,74 +247,64 @@
 	}
 
 	function searchFiles($fp, $searchTerm) {
-		$results = [];
-
-		if (!is_dir($fp)) {
-			return [];
-		}
+		if (!is_dir($fp)) return [];
 
 		$files = @scandir($fp);
+		if (!is_array($files)) return [];
 
-		if (is_bool($files)) {
-			return [];
-		}
+		$results = [];
 
-		$searchTerm = sortAndCleanString($searchTerm);
-
-		$searchTermLower = strtolower($searchTerm);
+		$searchTermLower = strtolower(sortAndCleanString($searchTerm));
 		$normalized = normalize_special_characters($searchTerm);
 
 		foreach ($files as $file) {
-			if ($file === '.' || $file === '..' || $file === '.git' || $file === "thumbnails_cache") {
-				continue;
-			}
+			if (in_array($file, ['.', '..', '.git', 'thumbnails_cache'])) continue;
 
 			$filePath = $fp . '/' . $file;
-
-			$file_without_ending = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
+			$fileNameBase = preg_replace("/\.(jpe?g|png|gif)$/i", "", $file);
+			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 			if (is_dir($filePath)) {
-				if (file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)) {
+				if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized)) {
 					$randomImage = getRandomImageFromSubfolders($filePath);
-					$thumbnailPath = $randomImage ? $randomImage['path'] : '';
-
 					$results[] = [
 						'path' => $filePath,
 						'type' => 'folder',
-						'thumbnail' => $thumbnailPath
+						'thumbnail' => $randomImage['path'] ?? ''
 					];
 				}
+				$results = array_merge($results, searchFiles($filePath, $searchTerm));
+				continue;
+			}
 
-				$subResults = searchFiles($filePath, $searchTerm);
-				$results = array_merge($results, $subResults);
-			} else {
-				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-				if ($fileExtension === 'txt') {
-					$textContent = sortAndCleanString(strtolower(file_get_contents($filePath)));
-					if (file_or_folder_matches($textContent, $searchTermLower, $normalized)) {
-						$imageFilePath = searchImageFileByTXT($filePath);
-
-						if ($imageFilePath) {
-							$results[] = [
-								'path' => $imageFilePath,
-								'type' => 'file'
-							];
-						}
-					}
-				} elseif (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-					if (file_or_folder_matches($file_without_ending, $searchTermLower, $normalized)) {
+			if ($fileExtension === 'txt') {
+				$content = strtolower(file_get_contents($filePath));
+				$cleanContent = sortAndCleanString($content);
+				if (file_or_folder_matches($cleanContent, $searchTermLower, $normalized)) {
+					$imageFilePath = searchImageFileByTXT($filePath);
+					if ($imageFilePath) {
 						$results[] = [
-							'path' => $filePath,
+							'path' => $imageFilePath,
 							'type' => 'file'
 						];
 					}
+				}
+				continue;
+			}
+
+			if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+				if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized)) {
+					$results[] = [
+						'path' => $filePath,
+						'type' => 'file'
+					];
 				}
 			}
 		}
 
 		return $results;
 	}
+
 
 	function getCoord( $expr ) {
 		$expr_p = explode( '/', $expr );
