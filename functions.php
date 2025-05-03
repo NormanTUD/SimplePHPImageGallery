@@ -640,3 +640,10 @@ function print_geolist ($geolist) {
 	header('Content-type: application/json; charset=utf-8');
 	print json_encode($s);
 }
+
+function list_all () {
+	$allImageFiles = listAllUncachedImageFiles('.');
+
+	header('Content-type: application/json; charset=utf-8');
+	echo json_encode($allImageFiles);
+}

@@ -110,11 +110,7 @@
 	}
 
 	if (isset($_GET['list_all'])) {
-		$allImageFiles = listAllUncachedImageFiles('.');
-
-		header('Content-type: application/json; charset=utf-8');
-		echo json_encode($allImageFiles);
-
+		list_all();
 		exit(0);
 	}
 
