@@ -470,6 +470,7 @@
 		usort($thumbnails, function ($a, $b) {
 			return strcmp($a['name'], $b['name']);
 		});
+
 		usort($images, function ($a, $b) {
 			return strcmp($a['name'], $b['name']);
 		});
