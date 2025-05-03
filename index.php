@@ -37,71 +37,9 @@
 	}
 
 	if (isset($_GET['zip']) && $_GET['zip'] == 1) {
-		$zipname = 'gallery.zip';
-		$zip = new ZipArchive;
-		$zipFile = tempnam(sys_get_temp_dir(), 'zip');
+		$exit_code = create_zip();
 
-		if ($zip->open($zipFile, ZipArchive::CREATE) === true) {
-			if (isset($_GET['folder'])) {
-				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']];
-				foreach ($folders as $folder) {
-					if (isValidPath($folder) && is_dir($folder)) {
-						$realFolderPath = realpath($folder);
-
-						$files = new RecursiveIteratorIterator(
-							new RecursiveDirectoryIterator($realFolderPath, RecursiveDirectoryIterator::SKIP_DOTS),
-							RecursiveIteratorIterator::SELF_FIRST
-						);
-
-						foreach ($files as $file) {
-							if (!$file->isDir()) {
-								$filePath = $file->getRealPath();
-
-								if (preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
-									$cwd = getcwd();
-
-									$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
-									$relativePath = str_replace($realFolderPath . DIRECTORY_SEPARATOR, '', $relativePath);
-
-									$zip->addFile($filePath, $relativePath);
-								}
-							}
-						}
-					} else {
-						echo 'Invalid folder: ' . htmlspecialchars($folder);
-						exit(0);
-					}
-				}
-			}
-
-			if (isset($_GET['img'])) {
-				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
-				foreach ($images as $img) {
-					if (isValidPath($img) && file_exists($img)) {
-						if (preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
-							$zip->addFile($img, basename($img));
-						}
-					} else {
-						echo 'Invalid image: ' . htmlspecialchars($img);
-						exit(0);
-					}
-				}
-			}
-
-			$zip->close();
-
-			header('Content-Type: application/zip');
-			header('Content-Disposition: attachment; filename="' . $zipname . '"');
-			header('Content-Length: ' . filesize($zipFile));
-
-			readfile($zipFile);
-			unlink($zipFile);
-
-			exit(0);
-		} else {
-			echo 'Failed to create zip file.';
-			exit(1);
-		}
+		exit($exit_code);
 	}
 
 	if (isset($_GET['search'])) {
