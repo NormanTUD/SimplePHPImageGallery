@@ -521,24 +521,17 @@
 	}
 
 	function getImageSizeWithRotation($path) {
-		if (!file_exists($path)) {
-			return false;
-		}
+		if (!file_exists($path)) return false;
 
 		$size = getimagesize($path);
-		if ($size === false) {
-			return false;
-		}
+		if ($size === false) return false;
 
-		$width = $size[0];
-		$height = $size[1];
+		list($width, $height) = $size;
 
 		if (function_exists('exif_read_data') && in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II])) {
 			$exif = @exif_read_data($path);
-			if (!empty($exif['Orientation'])) {
-				if (in_array($exif['Orientation'], [5, 6, 7, 8])) {
-					list($width, $height) = [$height, $width];
-				}
+			if (!empty($exif['Orientation']) && in_array($exif['Orientation'], [5, 6, 7, 8])) {
+				list($width, $height) = [$height, $width];
 			}
 		}
 
