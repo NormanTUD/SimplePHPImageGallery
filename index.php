@@ -469,6 +469,8 @@
 			return strcmp($a['name'], $b['name']);
 		});
 
+		$html_parts = [];
+
 		foreach ($thumbnails as $thumbnail) {
 			if(preg_match($GLOBALS["valid_file_ending_regex"], $thumbnail["thumbnail"])) {
 				$wh_string = "";
@@ -486,11 +488,11 @@
 					$wh_string = getResizedImageStyle($thumbnail["thumbnail"]);
 				}
 
-				echo '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
-				echo '<img '.$wh_string.' title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
-				echo '<h3>' . $thumbnail['name'] . '</h3>';
-				echo '<span class="checkmark">✅</span>';
-				echo "</div></a>\n";
+				$html_parts[] = '<a data-href="'.urlencode($thumbnail["path"]).'" class="img_element" data-onclick="load_folder(\'' . $thumbnail['path'] . '\')"><div class="thumbnail_folder">';
+				$html_parts[] = '<img '.$wh_string.' title="'.$thumbnail["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumbnail['thumbnail']) . '">';
+				$html_parts[] = '<h3>' . $thumbnail['name'] . '</h3>';
+				$html_parts[] = '<span class="checkmark">✅</span>';
+				$html_parts[] = "</div></a>\n";
 			}
 		}
 
@@ -520,11 +522,15 @@
 					$wh_string = getResizedImageStyle($image["path"]);
 				}
 
-				echo '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($image['path']) . '\')">';
-				echo '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
-				echo '<span class="checkmark">✅</span>';
-				echo "</div>\n";
+				$html_parts[] = '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($image['path']) . '\')">';
+				$html_parts[] = '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($image['path']) . '">';
+				$html_parts[] = '<span class="checkmark">✅</span>';
+				$html_parts[] = "</div>\n";
 			}
+		}
+
+		foreach ($html_parts as $html_part) {
+			echo $html_part;
 		}
 	}
 
