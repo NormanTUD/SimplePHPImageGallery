@@ -459,44 +459,46 @@
 
 		function create_thumbnail_html($item, $is_folder = false) {
 			$path = $item["path"];
-			$thumb = $is_folder ? $item["thumbnail"] : $item["path"];
+			$thumb = $is_folder ? $item["thumbnail"] : $path;
 			$file_hash = get_hash_from_file($thumb);
 			$cached_preview = "thumbnails_cache/$file_hash.jpg";
-			$wh_string = "";
 
 			if (file_exists($cached_preview)) {
 				list($width, $height) = getImageSizeWithRotation($cached_preview);
-				if ($width && $height) {
-					$wh_string = " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" ";
-				}
+				$wh_string = ($width && $height) ? " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" " : "";
 			} else {
 				$wh_string = getResizedImageStyle($thumb);
 			}
 
-			$html_parts = [];
+			$extra_attributes = $is_folder
+				? 'title="' . $item["counted_thumbs"] . ' images" data-line="XXX"'
+				: 'data-line="YYY" data-hash="' . $file_hash . '"';
 
-			if ($is_folder) {
-				$html_parts[] = '<a data-href="'.urlencode($path).'" class="img_element" data-onclick="load_folder(\'' . $path . '\')"><div class="thumbnail_folder">';
-				$html_parts[] = '<img '.$wh_string.' title="'.$item["counted_thumbs"].' images" data-line="XXX" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumb) . '">';
-				$html_parts[] = '<h3>' . $item['name'] . '</h3>';
-				$html_parts[] = '<span class="checkmark">✅</span>';
-				$html_parts[] = "</div></a>\n";
-			} else {
-				$gps_data_string = "";
-				if (!preg_match("/\.m(?:ov|p4)$/i", $path)) {
-					$gps = get_image_gps($path);
-					if ($gps) {
-						$gps_data_string = " data-latitude='".$gps["latitude"]."' data-longitude='".$gps["longitude"]."' ";
-					}
+			if (!$is_folder && !preg_match("/\.m(?:ov|p4)$/i", $path)) {
+				$gps = get_image_gps($path);
+				if ($gps) {
+					$extra_attributes .= " data-latitude='{$gps["latitude"]}' data-longitude='{$gps["longitude"]}'";
 				}
-
-				$html_parts[] = '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($path) . '\')">';
-				$html_parts[] = '<img '.$wh_string.' data-line="YYY" data-hash="'.$file_hash.'" '.$gps_data_string.' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($path) . '">';
-				$html_parts[] = '<span class="checkmark">✅</span>';
-				$html_parts[] = "</div>\n";
 			}
 
-			return $html_parts;
+			$img_tag = '<img ' . $wh_string . ' ' . $extra_attributes . ' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumb) . '">';
+
+			if ($is_folder) {
+				return [
+					'<a data-href="' . urlencode($path) . '" class="img_element" data-onclick="load_folder(\'' . $path . '\')"><div class="thumbnail_folder">',
+					$img_tag,
+					'<h3>' . $item['name'] . '</h3>',
+					'<span class="checkmark">✅</span>',
+					"</div></a>\n"
+				];
+			} else {
+				return [
+					'<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($path) . '\')">',
+					$img_tag,
+					'<span class="checkmark">✅</span>',
+					"</div>\n"
+				];
+			}
 		}
 
 		$html_parts = [];
