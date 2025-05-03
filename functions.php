@@ -609,3 +609,34 @@ function search_and_print_results ($searchTerm) {
 	header('Content-type: application/json; charset=utf-8');
 	echo json_encode($results);
 }
+
+function print_geolist ($geolist) {
+	$files = [];
+
+	if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist)) {
+		$files = getImagesInDirectory($geolist);
+	} else {
+		die("Wrongly formed geolist: ".$geolist);
+	}
+
+	$s = array();
+
+	foreach ($files as $file) {
+		$hash = md5($file);
+
+		$gps = get_image_gps($file);
+
+		if ($gps) {
+			$s[] = array(
+				'url' => $file,
+				"latitude" => $gps["latitude"],
+				"longitude" => $gps["longitude"],
+				"hash" => $hash
+			);
+		}
+
+	}
+
+	header('Content-type: application/json; charset=utf-8');
+	print json_encode($s);
+}
