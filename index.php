@@ -65,12 +65,18 @@
 		display_gallery($_GET["gallery"]);
 		exit(0);
 	}
+
+	$servername = "Galerie";
+	if(isset($_SERVER["CONTEXT_PREFIX"])) {
+		$servername = $_SERVER["CONTEXT_PREFIX"];
+		$servername = ucfirst(preg_replace("/\/*/", "", $servername));
+	}
 ?>
 <!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>Galerie</title>
+		<title><?php print $servername; ?></title>
 		<script src="jquery-3.7.1.min.js"></script>
 		<link rel="stylesheet" href="style.css" />
 		<script src="leaflet.js"></script>
