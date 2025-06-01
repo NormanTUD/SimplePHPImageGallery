@@ -755,9 +755,10 @@ async function start_search() {
 				}
 			});
 		} else {
-			$("#delete_search").hide();
-			$("#searchResults").hide();
+			$("#searchInput").trigger('blur');
+			$("#delete_search,#searchResults").hide();
 			$("#gallery").show();
+
 			await draw_map_from_current_images();
 
 			unselectSelection();

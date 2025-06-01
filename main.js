@@ -1,3 +1,5 @@
+"use strict";
+
 var select_image_timer = 0;
 var select_folder_timer = 0;
 
