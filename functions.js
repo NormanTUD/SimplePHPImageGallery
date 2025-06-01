@@ -716,11 +716,13 @@ async function showProgressBar(_sleep = 1) {
 async function start_search() {
 	var searchTerm = $('#searchInput').val();
 
-	if(searchTerm == lastSearch) {
+	var is_fuzzy = $("#fuzzy_search").is(":checked");
+
+	if(`${searchTerm}___${is_fuzzy}` == lastSearch) {
 		return;
 	}
 
-	lastSearch = searchTerm;
+	lastSearch = `${searchTerm}___${is_fuzzy}`;
 
 	function abortPreviousRequest() {
 		if (searchTimer) {
@@ -741,10 +743,14 @@ async function start_search() {
 			$("#delete_search").show();
 			$("#searchResults").show();
 			$("#gallery").hide();
+
 			$.ajax({
-			url: 'index.php',
+				url: 'index.php',
 				type: 'GET',
-				data: { search: searchTerm },
+				data: {
+					search: searchTerm,
+					allowFuzzy: is_fuzzy
+				},
 				success: async function (response) {
 					await displaySearchResults(searchTerm, response["files"]);
 					customizeCursorForLinks();

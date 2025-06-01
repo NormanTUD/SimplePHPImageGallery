@@ -41,7 +41,8 @@
 	}
 
 	if (isset($_GET['search'])) {
-		search_and_print_results($_GET['search']);
+		$enable_fuzzy = isset($_GET["allowFuzzy"]) && $_GET["allowFuzzy"] == "true";
+		search_and_print_results($_GET['search'], $enable_fuzzy);
 		exit(0);
 	}
 
@@ -86,6 +87,7 @@
 	</head>
 	<body>
 		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
+		<input type="checkbox" name="fuzzy_search" onclick="start_search()" id="fuzzy_search" checked>Fuzzy-Search?</input>
 		<button style="display: none" id="delete_search" onclick='delete_search()'>&#x2715;</button>
 		<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
 		<button class="unselect-btn" id="unselectBtn" onclick="unselectSelection()">Unselect</button>

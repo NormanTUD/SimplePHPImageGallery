@@ -50,7 +50,6 @@ function print_file_metadata() {
 
 		$exif_data = exif_read_data($file_info, 'IFD0');
 		if ($exif_data) {
-			// exif als HTML-Tabelle codieren
 			$exif_html = '<table style="border-collapse:collapse;">';
 			foreach ($exif_data as $k => $v) {
 				if (is_array($v)) {
@@ -136,24 +135,50 @@ function sortAndCleanString($inputString) {
 	return $sortedString;
 }
 
-function file_or_folder_matches($file_or_folder, $searchTermLower, $normalized) {
+function file_or_folder_matches($file_or_folder, $searchTermLower, $normalized, $allowFuzzy, $maxDistance = 3) {
 	$searchWords = preg_split('/\s+/', $searchTermLower, -1, PREG_SPLIT_NO_EMPTY);
-
 	$normalizedName = normalize_special_characters($file_or_folder);
+
+	$originalWords = preg_split('/\s+/', strtolower($file_or_folder), -1, PREG_SPLIT_NO_EMPTY);
+	$normalizedWords = preg_split('/\s+/', strtolower($normalizedName), -1, PREG_SPLIT_NO_EMPTY);
 
 	foreach ($searchWords as $word) {
 		$foundInOriginal = stripos($file_or_folder, $word) !== false;
 		$foundInNormalized = stripos($normalizedName, $word) !== false;
 
 		if (!($foundInOriginal || $foundInNormalized)) {
-			return false;
+			if ($allowFuzzy) {
+				$matchFound = false;
+
+				foreach ($originalWords as $ow) {
+					if (levenshtein($word, $ow) <= $maxDistance) {
+						$matchFound = true;
+						break;
+					}
+				}
+
+				if (!$matchFound) {
+					foreach ($normalizedWords as $nw) {
+						if (levenshtein($word, $nw) <= $maxDistance) {
+							$matchFound = true;
+							break;
+						}
+					}
+				}
+
+				if (!$matchFound) {
+					return false;
+				}
+			} else {
+				return false;
+			}
 		}
 	}
 
 	return true;
 }
 
-function searchFiles($fp, $searchTerm) {
+function searchFiles($fp, $searchTerm, $allowFuzzy) {
 	if (!is_dir($fp)) return [];
 
 	$files = @scandir($fp);
@@ -172,7 +197,7 @@ function searchFiles($fp, $searchTerm) {
 		$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
 		if (is_dir($filePath)) {
-			if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized)) {
+			if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized, $allowFuzzy)) {
 				$randomImage = getRandomImageFromSubfolders($filePath);
 				$results[] = [
 					'path' => $filePath,
@@ -180,14 +205,14 @@ function searchFiles($fp, $searchTerm) {
 					'thumbnail' => $randomImage['path'] ?? ''
 				];
 			}
-			$results = array_merge($results, searchFiles($filePath, $searchTerm));
+			$results = array_merge($results, searchFiles($filePath, $searchTerm, $allowFuzzy));
 			continue;
 		}
 
 		if ($fileExtension === 'txt') {
 			$content = strtolower(file_get_contents($filePath));
 			$cleanContent = sortAndCleanString($content);
-			if (file_or_folder_matches($cleanContent, $searchTermLower, $normalized)) {
+			if (file_or_folder_matches($cleanContent, $searchTermLower, $normalized, $allowFuzzy)) {
 				$imageFilePath = searchImageFileByTXT($filePath);
 				if ($imageFilePath) {
 					$results[] = [
@@ -200,7 +225,7 @@ function searchFiles($fp, $searchTerm) {
 		}
 
 		if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-			if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized)) {
+			if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized, $allowFuzzy)) {
 				$results[] = [
 					'path' => $filePath,
 					'type' => 'file'
@@ -595,9 +620,9 @@ function getResizedImageStyle($imagePath, $thumbnailMaxWidth = 150, $thumbnailMa
 }
 
 
-function search_and_print_results ($searchTerm) {
+function search_and_print_results ($searchTerm, $allowFuzzy) {
 	$results = array();
-	$results["files"] = searchFiles('.', $searchTerm);
+	$results["files"] = searchFiles('.', $searchTerm, $allowFuzzy);
 
 	$i = 0;
 	foreach ($results["files"] as $this_result) {
