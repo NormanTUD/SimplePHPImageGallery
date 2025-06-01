@@ -1,9 +1,9 @@
 function updateDownloadButton() {
 	var downloadBtn = document.getElementById('downloadBtn');
 	if (selectedImages.length > 0 || selectedFolders.length > 0) {
-		downloadBtn.style.display = 'inline-block';
+		downloadBtn.style.visibility = 'inherit';
 	} else {
-		downloadBtn.style.display = 'none';
+		downloadBtn.style.visibility = 'hidden';
 	}
 }
 
@@ -161,11 +161,11 @@ function onFolderMouseUp(e){
 
 		if (selectedFolders.includes(item)) {
 			selectedFolders = selectedFolders.filter(i => i !== item);
-			checkmark.style.display = 'none';
+			checkmark.style.visibility = 'hidden';
 		} else {
 			log(item);
 			selectedFolders.push(item);
-			checkmark.style.display = 'block';
+			checkmark.style.visibility = 'unset';
 		}
 
 		updateDownloadButton();
@@ -197,10 +197,10 @@ function onImageMouseUp(e){
 
 		if (selectedImages.includes(item)) {
 			selectedImages = selectedImages.filter(i => i !== item);
-			checkmark.style.display = 'none';
+			checkmark.style.visibility = 'hidden';
 		} else {
 			selectedImages.push(item);
-			checkmark.style.display = 'block';
+			checkmark.style.visibility = 'unset';
 		}
 
 		updateDownloadButton();
@@ -219,9 +219,9 @@ function onImageMouseUp(e){
 function updateUnselectButton() {
 	var unselectBtn = document.getElementById('unselectBtn');
 	if (selectedImages.length > 0 || selectedFolders.length > 0) {
-		unselectBtn.style.display = 'inline-block';
+		unselectBtn.style.visibility = 'inherit';
 	} else {
-		unselectBtn.style.display = 'none';
+		unselectBtn.style.visibility = 'hidden';
 	}
 }
 

@@ -61,11 +61,12 @@
 	left: 5px;
 	font-size: 24px;
 	color: green;
-	display: none;
+	display: block;
+	visibility: hidden;
 }
 
 .unselect-btn {
-	display: none;
+	visibility: hidden;
 	margin-top: 20px;
 	padding: 10px 20px;
 	background-color: red;
@@ -80,7 +81,7 @@
 }
 
 .download-btn {
-	display: none;
+	visibility: hidden;
 	margin-top: 20px;
 	padding: 10px 20px;
 	background-color: #4CAF50;
