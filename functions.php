@@ -136,11 +136,14 @@ function sortAndCleanString($inputString) {
 	return $sortedString;
 }
 
-function file_or_folder_matches ($file_or_folder, $searchTermLower, $normalized) {
-	return
-		stripos($file_or_folder, $searchTermLower) !== false ||
-		stripos(normalize_special_characters($file_or_folder), $normalized) !== false
-	;
+function file_or_folder_matches($file_or_folder, $searchTermLower, $normalized) {
+	$matchesDirect = stripos($file_or_folder, $searchTermLower) !== false;
+
+	$normalizedName = normalize_special_characters($file_or_folder);
+
+	$matchesNormalized = stripos($normalizedName, $normalized) !== false;
+
+	return $matchesDirect || $matchesNormalized;
 }
 
 function searchFiles($fp, $searchTerm) {
