@@ -339,9 +339,19 @@ body {
 .download-btn:hover:not(:disabled),
 .breadcrumb_nav:hover,
 #delete_search:hover {
-	box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 	background-color: #e74c3c; /* bei unselect-btn */
 	background-color: #45a049; /* bei download-btn, falls du es anpassen willst */
 	color: white;
 	cursor: pointer;
+}
+
+.thumbnail,
+.thumbnail_folder {
+	border-radius: 8px;
+	transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.thumbnail:hover,
+.thumbnail_folder:hover {
+	transform: scale(1.05);
 }
