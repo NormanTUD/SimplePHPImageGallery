@@ -329,6 +329,9 @@ function is_valid_image_or_video_file($filepath) {
 }
 
 function display_gallery($fp) {
+	$timing = [];
+	$timing['start'] = microtime(true);
+
 	if (preg_match("/\.\./", $fp)) {
 		print("Invalid folder");
 		return [];
@@ -339,13 +342,16 @@ function display_gallery($fp) {
 		return [];
 	}
 
-	$files = scandir($fp);
+	$timing['validated_input'] = microtime(true);
 
+	$files = scandir($fp);
 	$thumbnails = [];
 	$images = [];
 
+	$timing['scanned_directory'] = microtime(true);
+
 	foreach ($files as $file) {
-		if ($file === '.' || $file === '..'  || preg_match("/^\./", $file) || $file === "thumbnails_cache") {
+		if ($file === '.' || $file === '..' || preg_match("/^\./", $file) || $file === "thumbnails_cache") {
 			continue;
 		}
 
@@ -380,6 +386,8 @@ function display_gallery($fp) {
 		}
 	}
 
+	$timing['processed_files'] = microtime(true);
+
 	function sortByName(array &$array): void {
 		usort($array, function ($a, $b) {
 			return strcmp($a['name'], $b['name']);
@@ -389,6 +397,8 @@ function display_gallery($fp) {
 	sortByName($thumbnails);
 	sortByName($images);
 
+	$timing['sorted_items'] = microtime(true);
+
 	$html_parts = [];
 
 	foreach ($thumbnails as $thumbnail) {
@@ -397,14 +407,37 @@ function display_gallery($fp) {
 		}
 	}
 
+	$timing['created_folder_thumbnails'] = microtime(true);
+
 	foreach ($images as $image) {
-		if (is_file($image["path"]) && is_valid_image_or_video_file($image["path"]) && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
+		$is_valid_file = is_valid_image_or_video_file($image["path"]);
+		if (is_file($image["path"]) && $is_valid_file && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
 			$html_parts = array_merge($html_parts, create_thumbnail_html($image, false));
 		}
 	}
 
+	$timing['created_file_thumbnails'] = microtime(true);
+
 	foreach ($html_parts as $html_part) {
 		echo $html_part;
+	}
+
+	$timing['output'] = microtime(true);
+
+	if (isset($_GET["debug"])) {
+		echo "<table border='1' style='margin-top:2em'><tr><th>Section</th><th>Duration (ms)</th></tr>";
+
+		$keys = array_keys($timing);
+		for ($i = 1; $i < count($keys); $i++) {
+			$section = $keys[$i];
+			$prev = $keys[$i - 1];
+			$duration = round(($timing[$section] - $timing[$prev]) * 1000, 2);
+			echo "<tr><td>" . htmlspecialchars($section) . "</td><td>$duration</td></tr>";
+		}
+
+		$total = round(($timing['output'] - $timing['start']) * 1000, 2);
+		echo "<tr><th>Total</th><th>$total</th></tr>";
+		echo "</table>";
 	}
 }
 
