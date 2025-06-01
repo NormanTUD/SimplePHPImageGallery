@@ -137,13 +137,20 @@ function sortAndCleanString($inputString) {
 }
 
 function file_or_folder_matches($file_or_folder, $searchTermLower, $normalized) {
-	$matchesDirect = stripos($file_or_folder, $searchTermLower) !== false;
+	$searchWords = preg_split('/\s+/', $searchTermLower, -1, PREG_SPLIT_NO_EMPTY);
 
 	$normalizedName = normalize_special_characters($file_or_folder);
 
-	$matchesNormalized = stripos($normalizedName, $normalized) !== false;
+	foreach ($searchWords as $word) {
+		$foundInOriginal = stripos($file_or_folder, $word) !== false;
+		$foundInNormalized = stripos($normalizedName, $word) !== false;
 
-	return $matchesDirect || $matchesNormalized;
+		if (!($foundInOriginal || $foundInNormalized)) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 function searchFiles($fp, $searchTerm) {
