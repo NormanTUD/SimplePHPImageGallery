@@ -392,3 +392,7 @@ body {
 		repeating-linear-gradient(90deg, rgba(0,0,0,0.01), rgba(0,0,0,0.01) 1px, transparent 2px, transparent 5px);
 	background-size: 40px 40px, 10px 10px, 10px 10px;
 }
+
+#map_container {
+	margin-top: 50px;
+}
