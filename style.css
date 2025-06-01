@@ -306,15 +306,6 @@ body {
 	font-size: calc(12px + 1.5vw);;
 }
 
-.box-shadow {
-	box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-	transition: 0.3s;
-}
-
-.box-shadow:hover {
-	box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
-}
-
 .leaflet-popup-content {
 	width: fit-content !important;
 	height: fit-content !important;
@@ -391,7 +382,6 @@ body {
 .download-btn:hover {
 	transform: scale(1.05);
 	transition: transform 0.3s ease;
-	box-shadow: 0 6px 18px rgba(0,0,0,0.15);
 }
 
 body {
