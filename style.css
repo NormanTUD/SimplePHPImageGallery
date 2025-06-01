@@ -355,3 +355,11 @@ body {
 .thumbnail_folder:hover {
 	transform: scale(1.05);
 }
+
+#searchInput:focus {
+	outline: none;
+	box-shadow: 0 0 6px 2px #3498db;
+	border-radius: 5px;
+	border: 1px solid #3498db;
+	background-color: #f0f8ff;
+}
