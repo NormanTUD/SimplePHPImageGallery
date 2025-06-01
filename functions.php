@@ -320,11 +320,30 @@ function is_valid_image_or_video_file($filepath) {
 		return false;
 	}
 
-	if (!isset($GLOBALS["finfo"])) {
-		$GLOBALS['finfo'] = finfo_open(FILEINFO_MIME_TYPE);
+	static $ext_map = [
+		'jpg'  => 'image/jpeg',
+		'jpeg' => 'image/jpeg',
+		'png'  => 'image/png',
+		'gif'  => 'image/gif',
+		'webp' => 'image/webp',
+		'mp4'  => 'video/mp4',
+		'webm' => 'video/webm',
+		'mov'  => 'video/quicktime',
+		'mkv'  => 'video/x-matroska',
+		'avi'  => 'video/x-msvideo'
+	];
+
+	$ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+	if (isset($ext_map[$ext])) {
+		$type = $ext_map[$ext];
+	} else {
+		// Langsamer, aber genauer Fallback
+		if (!isset($GLOBALS["finfo"])) {
+			$GLOBALS['finfo'] = finfo_open(FILEINFO_MIME_TYPE);
+		}
+		$type = finfo_file($GLOBALS['finfo'], $filepath);
 	}
 
-	$type = finfo_file($GLOBALS['finfo'], $filepath);
 	return isset($type) && in_array($type, $GLOBALS["allowed_content_types"]);
 }
 
