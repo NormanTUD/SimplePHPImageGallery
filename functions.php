@@ -797,94 +797,92 @@
 				readfile($cachedThumbnailPath);
 				exit;
 			} else {
-				if(file_exists($file) && is_readable($file) && filesize($file)) {
-					if ($isVideo) {
-						$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
-						$duration = floatval(shell_exec($ffprobe));
+				if ($isVideo) {
+					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
+					$duration = floatval(shell_exec($ffprobe));
 
-						$gifDuration = 10;
-						$startTime = 0;
+					$gifDuration = 10;
+					$startTime = 0;
 
-						$frameRate = 10;
-						$frameCount = $gifDuration * $frameRate;
+					$frameRate = 10;
+					$frameCount = $gifDuration * $frameRate;
 
-						$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
+					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
 
-						fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
+					fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
 
-						shell_exec($ffmpeg);
+					shell_exec($ffmpeg);
 
-						if (file_exists($cachedThumbnailPath)) {
-							header('Content-Type: image/gif');
-							readfile($cachedThumbnailPath);
-							exit;
-						} else {
-							echo "Fehler beim Erstellen des Video-GIFs.";
-							exit;
-						}
+					if (file_exists($cachedThumbnailPath)) {
+						header('Content-Type: image/gif');
+						readfile($cachedThumbnailPath);
+						exit;
 					} else {
-						list($width, $height, $type) = getimagesize($imagePath);
+						echo "Fehler beim Erstellen des Video-GIFs.";
+						exit;
+					}
+				} else {
+					list($width, $height, $type) = getimagesize($imagePath);
 
-						switch ($type) {
-							case IMAGETYPE_JPEG:
-								$image = imagecreatefromjpeg($imagePath);
-								break;
-							case IMAGETYPE_PNG:
-								$image = imagecreatefrompng($imagePath);
-								break;
-							case IMAGETYPE_GIF:
-								$image = imagecreatefromgif($imagePath);
-								break;
-							default:
-								echo 'Unsupported image type.';
-								exit;
-						}
-
-						$exif = @exif_read_data($imagePath);
-						if (!empty($exif['Orientation'])) {
-							switch ($exif['Orientation']) {
-							case 3:
-								$image = imagerotate($image, 180, 0);
-								break;
-							case 6:
-								$image = imagerotate($image, -90, 0);
-								list($width, $height) = [$height, $width];
-								break;
-							case 8:
-								$image = imagerotate($image, 90, 0);
-								list($width, $height) = [$height, $width];
-								break;
-							}
-						}
-
-						$aspectRatio = $width / $height;
-						$thumbnailWidth = $thumbnailMaxWidth;
-						$thumbnailHeight = $thumbnailMaxHeight;
-						if ($width > $height) {
-							$thumbnailHeight = $thumbnailWidth / $aspectRatio;
-						} else {
-							$thumbnailWidth = $thumbnailHeight * $aspectRatio;
-						}
-
-						$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
-
-						$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
-						imagefill($thumbnail, 0, 0, $backgroundColor);
-
-						imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
+					switch ($type) {
+						case IMAGETYPE_JPEG:
+							$image = imagecreatefromjpeg($imagePath);
+							break;
+						case IMAGETYPE_PNG:
+							$image = imagecreatefrompng($imagePath);
+							break;
+						case IMAGETYPE_GIF:
+							$image = imagecreatefromgif($imagePath);
+							break;
+						default:
+							echo 'Unsupported image type.';
+							exit;
 					}
 
+					$exif = @exif_read_data($imagePath);
+					if (!empty($exif['Orientation'])) {
+						switch ($exif['Orientation']) {
+						case 3:
+							$image = imagerotate($image, 180, 0);
+							break;
+						case 6:
+							$image = imagerotate($image, -90, 0);
+							list($width, $height) = [$height, $width];
+							break;
+						case 8:
+							$image = imagerotate($image, 90, 0);
+							list($width, $height) = [$height, $width];
+							break;
+						}
+					}
 
-					ob_start();
-					imagejpeg($thumbnail);
-					$data = ob_get_clean();
-					file_put_contents($cachedThumbnailPath, $data);
-					header('Content-Type: image/jpeg');
-					echo $data;
+					$aspectRatio = $width / $height;
+					$thumbnailWidth = $thumbnailMaxWidth;
+					$thumbnailHeight = $thumbnailMaxHeight;
+					if ($width > $height) {
+						$thumbnailHeight = $thumbnailWidth / $aspectRatio;
+					} else {
+						$thumbnailWidth = $thumbnailHeight * $aspectRatio;
+					}
 
-					imagedestroy($image);
-					imagedestroy($thumbnail);
+					$thumbnail = imagecreatetruecolor(intval($thumbnailWidth), intval($thumbnailHeight));
+
+					$backgroundColor = imagecolorallocate($thumbnail, 255, 255, 255);
+					imagefill($thumbnail, 0, 0, $backgroundColor);
+
+					imagecopyresampled($thumbnail, $image, 0, 0, 0, 0, intval($thumbnailWidth), intval($thumbnailHeight), intval($width), intval($height));
 				}
+
+
+				ob_start();
+				imagejpeg($thumbnail);
+				$data = ob_get_clean();
+				file_put_contents($cachedThumbnailPath, $data);
+				header('Content-Type: image/jpeg');
+				echo $data;
+
+				imagedestroy($image);
+				imagedestroy($thumbnail);
 			}
 		} else {
 			echo 'File not found.';
