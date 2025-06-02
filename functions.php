@@ -1,4 +1,6 @@
 <?php
+$GLOBALS['timing'] = [];
+
 function dier ($msg) {
 	print("<pre>");
 	print(var_dump($msg));
@@ -320,7 +322,7 @@ function is_valid_image_or_video_file($filepath) {
 		return false;
 	}
 
-	static $ext_map = [
+	$ext_map = [
 		'jpg'  => 'image/jpeg',
 		'jpeg' => 'image/jpeg',
 		'png'  => 'image/png',
@@ -336,20 +338,21 @@ function is_valid_image_or_video_file($filepath) {
 	$ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
 	if (isset($ext_map[$ext])) {
 		$type = $ext_map[$ext];
+		$GLOBALS['timing']['finfo_fast'] = microtime(true);
 	} else {
 		// Langsamer, aber genauer Fallback
 		if (!isset($GLOBALS["finfo"])) {
 			$GLOBALS['finfo'] = finfo_open(FILEINFO_MIME_TYPE);
 		}
 		$type = finfo_file($GLOBALS['finfo'], $filepath);
+		$GLOBALS['timing']['finfo'] = microtime(true);
 	}
 
 	return isset($type) && in_array($type, $GLOBALS["allowed_content_types"]);
 }
 
 function display_gallery($fp) {
-	$timing = [];
-	$timing['start'] = microtime(true);
+	$GLOBALS['timing']['start'] = microtime(true);
 
 	if (preg_match("/\.\./", $fp)) {
 		print("Invalid folder");
@@ -361,13 +364,13 @@ function display_gallery($fp) {
 		return [];
 	}
 
-	$timing['validated_input'] = microtime(true);
+	$GLOBALS['timing']['validated_input'] = microtime(true);
 
 	$files = scandir($fp);
 	$thumbnails = [];
 	$images = [];
 
-	$timing['scanned_directory'] = microtime(true);
+	$GLOBALS['timing']['scanned_directory'] = microtime(true);
 
 	foreach ($files as $file) {
 		if ($file === '.' || $file === '..' || preg_match("/^\./", $file) || $file === "thumbnails_cache") {
@@ -405,7 +408,7 @@ function display_gallery($fp) {
 		}
 	}
 
-	$timing['processed_files'] = microtime(true);
+	$GLOBALS['timing']['processed_files'] = microtime(true);
 
 	function sortByName(array &$array): void {
 		usort($array, function ($a, $b) {
@@ -416,7 +419,7 @@ function display_gallery($fp) {
 	sortByName($thumbnails);
 	sortByName($images);
 
-	$timing['sorted_items'] = microtime(true);
+	$GLOBALS['timing']['sorted_items'] = microtime(true);
 
 	$html_parts = [];
 
@@ -426,7 +429,7 @@ function display_gallery($fp) {
 		}
 	}
 
-	$timing['created_folder_thumbnails'] = microtime(true);
+	$GLOBALS['timing']['created_folder_thumbnails'] = microtime(true);
 
 	foreach ($images as $image) {
 		$is_valid_file = is_valid_image_or_video_file($image["path"]);
@@ -435,26 +438,26 @@ function display_gallery($fp) {
 		}
 	}
 
-	$timing['created_file_thumbnails'] = microtime(true);
+	$GLOBALS['timing']['created_file_thumbnails'] = microtime(true);
 
 	foreach ($html_parts as $html_part) {
 		echo $html_part;
 	}
 
-	$timing['output'] = microtime(true);
+	$GLOBALS['timing']['output'] = microtime(true);
 
 	if (isset($_GET["debug"])) {
 		echo "<table border='1' style='margin-top:2em'><tr><th>Section</th><th>Duration (ms)</th></tr>";
 
-		$keys = array_keys($timing);
+		$keys = array_keys($GLOBALS['timing']);
 		for ($i = 1; $i < count($keys); $i++) {
 			$section = $keys[$i];
 			$prev = $keys[$i - 1];
-			$duration = round(($timing[$section] - $timing[$prev]) * 1000, 2);
+			$duration = round(($GLOBALS['timing'][$section] - $GLOBALS['timing'][$prev]) * 1000, 2);
 			echo "<tr><td>" . htmlspecialchars($section) . "</td><td>$duration</td></tr>";
 		}
 
-		$total = round(($timing['output'] - $timing['start']) * 1000, 2);
+		$total = round(($GLOBALS['timing']['output'] - $GLOBALS['timing']['start']) * 1000, 2);
 		echo "<tr><th>Total</th><th>$total</th></tr>";
 		echo "</table>";
 	}
