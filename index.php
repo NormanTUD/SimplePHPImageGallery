@@ -33,7 +33,7 @@
 	$GLOBALS["allowed_content_types"] = ["image/png", "image/jpeg", "image/gif"];
 	$validTypes = ['jpg', 'jpeg', 'png', 'gif'];
 
-	if (shell_exec('which ffmpeg')) {
+	if (is_executable('/usr/bin/ffmpeg')) {
 		$validTypes = array_merge($validTypes, ['mp4', 'mov']);
 		$GLOBALS["allowed_content_types"] = array_merge($GLOBALS["allowed_content_types"], ["video/mp4", "video/quicktime"]);
 	}
