@@ -523,17 +523,43 @@ function create_thumbnail_html($item, $is_folder = false) {
 function getImageSizeWithRotation($path) {
 	if (!file_exists($path)) return false;
 
+	// Cache-Pfad vorbereiten
+	$hash = sha1(realpath($path));
+	$cacheDir = __DIR__ . '/thumbnails_cache';
+	$cacheFile = "$cacheDir/size_with_rotation_$hash.json";
+
+	// Falls Cache existiert, direkt lesen
+	if (file_exists($cacheFile)) {
+		$data = @file_get_contents($cacheFile);
+		if ($data !== false) {
+			$decoded = json_decode($data, true);
+			if (is_array($decoded) && isset($decoded[0]) && isset($decoded[1])) {
+				return $decoded;
+			}
+		}
+	}
+
+	// Bildgröße ermitteln
 	$size = getimagesize($path);
 	if ($size === false) return false;
 
 	list($width, $height) = $size;
 
+	// Rotation via EXIF prüfen
 	if (function_exists('exif_read_data') && in_array($size[2], [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II])) {
 		$exif = @exif_read_data($path);
 		if (!empty($exif['Orientation']) && in_array($exif['Orientation'], [5, 6, 7, 8])) {
 			list($width, $height) = [$height, $width];
 		}
 	}
+
+	// Cache-Verzeichnis anlegen falls nötig
+	if (!is_dir($cacheDir)) {
+		mkdir($cacheDir, 0777, true);
+	}
+
+	// Ergebnis cachen
+	file_put_contents($cacheFile, json_encode([$width, $height]));
 
 	return [$width, $height];
 }
