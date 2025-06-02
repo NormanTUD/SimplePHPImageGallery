@@ -68,12 +68,12 @@
 	function getImagesInDirectory($directory) {
 		$images = [];
 
-		assert(is_dir($directory), "Das Verzeichnis existiert nicht oder ist nicht lesbar: $directory");
+		assert(is_dir($directory), "The directory does not exist or is not readable: $directory");
 
 		try {
 			$files = scandir($directory);
 		} catch (Exception $e) {
-			warn("Fehler beim Lesen des Verzeichnisses $directory: " . $e->getMessage());
+			warn("Error while reading the folder $directory: " . $e->getMessage());
 			return $images;
 		}
 
