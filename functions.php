@@ -708,20 +708,31 @@
 		echo json_encode($results);
 	}
 
-	function print_geolist ($geolist) {
+	function print_geolist($geolist) {
 		$files = [];
 
 		if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist)) {
 			$files = getImagesInDirectory($geolist);
 		} else {
-			die("Wrongly formed geolist: ".$geolist);
+			die("Wrongly formed geolist: " . $geolist);
+		}
+
+		// Cache-Pfad basierend auf einem Hash der Dateiliste
+		$filelist_str = implode('|', $files); // mit Trennzeichen, damit Reihenfolge nicht kollidiert
+		$filelist_hash = sha1($filelist_str); // stabiler Hash (SHA-1 oder auch md5 möglich)
+		$cache_file = "thumbnails_cache/geolist_$filelist_hash.json";
+
+		// Wenn Cache existiert, direkt ausgeben
+		if (file_exists($cache_file)) {
+			header('Content-type: application/json; charset=utf-8');
+			readfile($cache_file);
+			return;
 		}
 
 		$s = array();
 
 		foreach ($files as $file) {
 			$hash = md5($file);
-
 			$gps = get_image_gps($file);
 
 			if ($gps) {
@@ -732,11 +743,17 @@
 					"hash" => $hash
 				);
 			}
-
 		}
 
+		// JSON erzeugen und speichern
+		$json = json_encode($s, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+		if (!is_dir("thumbnails_cache")) {
+			mkdir("thumbnails_cache", 0777, true);
+		}
+		file_put_contents($cache_file, $json);
+
 		header('Content-type: application/json; charset=utf-8');
-		print json_encode($s);
+		print $json;
 	}
 
 	function list_all () {
