@@ -391,7 +391,7 @@
 			} else {
 				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-				if (in_array($fileExtension, $GLOBALS["FILETYPES"]) && filesize($file)) {
+				if (in_array($fileExtension, $GLOBALS["FILETYPES"]) && file_exists($file) && filesize($file)) {
 					$images[] = [
 						'name' => $file,
 						'path' => $filePath
