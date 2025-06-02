@@ -1,4 +1,33 @@
 <?php
+	$dir = __DIR__ . '/thumbnails_cache';
+
+	if (!is_dir($dir)) {
+		die("mkdir thumbnails_cache");
+	}
+
+	$euid = posix_geteuid();
+	$apacheUserInfo = posix_getpwuid($euid);
+	$apacheUser = $apacheUserInfo['name'];
+
+	$stat = stat($dir);
+	$ownerUid = $stat['uid'];
+	$mode = $stat['mode'];
+
+	if ($ownerUid !== $euid) {
+		$ownerName = posix_getpwuid($ownerUid)['name'];
+		die("need <pre>chown $apacheUser thumbnails_cache  # (currently owned by $ownerName)");
+	}
+
+	$ownerPerms = ($mode & 0b111000000) >> 6;
+	$canRead = ($ownerPerms & 0b100) > 0;
+	$canWrite = ($ownerPerms & 0b010) > 0;
+
+	if (!$canRead || !$canWrite) {
+		$permOctal = substr(sprintf('%o', $mode), -4);
+		die("need <pre>chmod u+rw thumbnails_cache  # (currently $permOctal)");
+	}
+
+
 	$GLOBALS["stderr"] = fopen('php://stderr', 'w');
 
 	$GLOBALS["allowed_content_types"] = ["image/png", "image/jpeg", "image/gif"];
