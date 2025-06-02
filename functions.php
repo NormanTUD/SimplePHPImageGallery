@@ -391,11 +391,13 @@
 			} else {
 				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-				if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
-					$images[] = [
-						'name' => $file,
-						'path' => $filePath
-					];
+				if(file_exists($file) && is_readable($file) && filesize($file)) {
+					if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+						$images[] = [
+							'name' => $file,
+							'path' => $filePath
+						];
+					}
 				}
 			}
 		}
