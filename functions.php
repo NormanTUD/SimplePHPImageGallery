@@ -318,9 +318,13 @@ function get_image_gps($img) {
 }
 
 function is_valid_image_or_video_file($filepath) {
+	$GLOBALS['timing']['is_valid_image_or_video_file_beginning'] = microtime(true);
 	if (!is_file($filepath) || !is_readable($filepath)) {
+		$GLOBALS['timing']['is_file_and_is_readable_check'] = microtime(true);
 		return false;
 	}
+
+	$GLOBALS['timing']['get_ext_before_struct'] = microtime(true);
 
 	$ext_map = [
 		'jpg'  => 'image/jpeg',
@@ -335,7 +339,14 @@ function is_valid_image_or_video_file($filepath) {
 		'avi'  => 'video/x-msvideo'
 	];
 
-	$ext = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+	$GLOBALS['timing']['get_ext_after_struct'] = microtime(true);
+
+	$dot = strrpos($filepath, '.');
+	$GLOBALS['timing']['get_ext_after_strrpos'] = microtime(true);
+
+	$ext = $dot === false ? '' : strtolower(substr($filepath, $dot + 1));
+	$GLOBALS['timing']['get_ext_after_substr'] = microtime(true);
+
 	if (isset($ext_map[$ext])) {
 		$type = $ext_map[$ext];
 		$GLOBALS['timing']['finfo_fast'] = microtime(true);
@@ -437,6 +448,8 @@ function display_gallery($fp) {
 			$html_parts = array_merge($html_parts, create_thumbnail_html($image, false));
 		}
 	}
+
+	$GLOBALS['timing']['after_loop'] = microtime(true);
 
 	$GLOBALS['timing']['created_file_thumbnails'] = microtime(true);
 
