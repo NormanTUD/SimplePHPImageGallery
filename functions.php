@@ -480,10 +480,21 @@ function create_thumbnail_html($item, $is_folder = false) {
 	$path = $item["path"];
 	$thumb = $is_folder ? $item["thumbnail"] : $path;
 	$file_hash = get_hash_from_file($thumb);
-	$cached_preview = "thumbnails_cache/$file_hash.jpg";
+	$cacheDir = __DIR__ . '/thumbnails_cache';
+	$cache_key = $is_folder ? 'folder:' . $path : $path;
+	$html_cache_file = $cacheDir . '/html_' . sha1($cache_key) . '.html';
 
-	if (file_exists($cached_preview)) {
-		list($width, $height) = getImageSizeWithRotation($cached_preview);
+	// Falls HTML-Cache existiert, direkt laden
+	if (file_exists($html_cache_file)) {
+		$cached = @file_get_contents($html_cache_file);
+		if ($cached !== false) {
+			return [$cached];  // einzeilig oder mehrzeilig, kompatibel
+		}
+	}
+
+	// Sonst HTML dynamisch generieren
+	if (file_exists("thumbnails_cache/$file_hash.jpg")) {
+		list($width, $height) = getImageSizeWithRotation("thumbnails_cache/$file_hash.jpg");
 		$wh_string = ($width && $height) ? " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" " : "";
 	} else {
 		$wh_string = getResizedImageStyle($thumb);
@@ -502,22 +513,27 @@ function create_thumbnail_html($item, $is_folder = false) {
 
 	$img_tag = '<img ' . $wh_string . ' ' . $extra_attributes . ' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumb) . '">';
 
-	if ($is_folder) {
-		return [
-			'<a data-href="' . urlencode($path) . '" class="img_element" data-onclick="load_folder(\'' . $path . '\')"><div class="thumbnail_folder">',
-			$img_tag,
-			'<h3>' . $item['name'] . '</h3>',
-			'<span class="checkmark">✅</span>',
-			"</div></a>\n"
-		];
-	} else {
-		return [
-			'<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($path) . '\')">',
-			$img_tag,
-			'<span class="checkmark">✅</span>',
-			"</div>\n"
-		];
+	if (!is_dir($cacheDir)) {
+		mkdir($cacheDir, 0777, true);
 	}
+
+	if ($is_folder) {
+		$html = '<a data-href="' . urlencode($path) . '" class="img_element" data-onclick="load_folder(\'' . $path . '\')"><div class="thumbnail_folder">'
+			. $img_tag
+			. '<h3>' . $item['name'] . '</h3>'
+			. '<span class="checkmark">✅</span>'
+			. "</div></a>\n";
+	} else {
+		$html = '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($path) . '\')">'
+			. $img_tag
+			. '<span class="checkmark">✅</span>'
+			. "</div>\n";
+	}
+
+	// Cache schreiben
+	file_put_contents($html_cache_file, $html);
+
+	return [$html];
 }
 
 function getImageSizeWithRotation($path) {
