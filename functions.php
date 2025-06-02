@@ -391,7 +391,7 @@
 			} else {
 				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-				if (in_array($fileExtension, $GLOBALS["FILETYPES"]) && file_exists($file) && filesize($file)) {
+				if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
 					$images[] = [
 						'name' => $file,
 						'path' => $filePath
@@ -928,7 +928,7 @@
 			if (isset($_GET['img'])) {
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
 				foreach ($images as $img) {
-					if (isValidPath($img) && file_exists($img) && filesize($img)) {
+					if (isValidPath($img) && file_exists($img)) {
 						if (preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
 							$zip->addFile($img, basename($img));
 						}
