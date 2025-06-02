@@ -391,7 +391,7 @@
 			} else {
 				$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-				if(file_exists($file) && is_readable($file) && filesize($file)) {
+				if(file_exists("$fp/$file") && is_readable("$fp/$file") && filesize("$fp/$file")) {
 					if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
 						$images[] = [
 							'name' => $file,
