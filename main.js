@@ -104,6 +104,9 @@ $(document).ready(async function() {
 	addLinkHighlightEffect();
 	await delete_search();
 
-	await load_folder(getCurrentFolderParameter());
+	load_folder(getCurrentFolderParameter(), false);
+
+	draw_map_from_current_images();
+
 	hidePageLoadingIndicator();
 });

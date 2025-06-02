@@ -608,7 +608,7 @@ function add_listeners() {
 	$(".thumbnail").mousedown(onImageMouseDown).mouseup(onImageMouseUp);
 }
 
-async function load_folder (folder) {
+async function load_folder (folder, load_map = true) {
 	updateUrlParameter(folder);
 
 	showPageLoadingIndicator()
@@ -620,14 +620,16 @@ async function load_folder (folder) {
 	$("#searchResults").empty().hide();
 	$("#gallery").html(content).show();
 
-	var _promise = draw_map_from_current_images();
+	var _promise = null;
 
+	if (load_map) {
+		_promise = draw_map_from_current_images();
+	}
 	var _replace_images_promise = loadAndReplaceImages();
-
 	createBreadcrumb(folder);
-
-	await _promise;
-
+	if (load_map) {
+		await _promise;
+	}
 	await _replace_images_promise;
 
 	hidePageLoadingIndicator();
