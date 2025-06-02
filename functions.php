@@ -438,7 +438,7 @@
 		$html_cache_file = $cacheDir . '/html_' . sha1($cache_key) . '.html';
 
 		// Falls HTML-Cache existiert, direkt laden
-		if (file_exists($html_cache_file)) {
+		if (file_exists($html_cache_file) && !$is_folder) {
 			$cached = @file_get_contents($html_cache_file);
 			if ($cached !== false) {
 				return [$cached];  // einzeilig oder mehrzeilig, kompatibel
