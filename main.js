@@ -65,7 +65,7 @@ document.addEventListener('keypress', function(event) {
 	var charCode = event.which || event.keyCode;
 	var charStr = String.fromCharCode(charCode);
 
-	if (/[a-zA-Z0-9]/.test(charStr)) {
+	if (/[a-zA-Z0-9äÄöÖÜüß]/.test(charStr)) {
 		var searchInput = document.getElementById('searchInput');
 		if (document.activeElement !== searchInput) {
 			searchInput.value = '';
