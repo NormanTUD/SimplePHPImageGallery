@@ -178,8 +178,6 @@ function onFolderMouseUp(e){
 	}
 
 	select_folder_timer = 0;
-
-	hidePageLoadingIndicator();
 }
 
 function onImageMouseUp(e){
@@ -212,8 +210,6 @@ function onImageMouseUp(e){
 	}
 
 	select_image_timer = 0;
-
-	hidePageLoadingIndicator();
 }
 
 function updateUnselectButton() {
@@ -519,29 +515,6 @@ function createBreadcrumb(currentFolderPath) {
 	customizeCursorForLinks();
 }
 
-function hidePageLoadingIndicator() {
-	const loadingIndicator = document.querySelector('.loading-indicator');
-	if (loadingIndicator) {
-		loadingIndicator.remove();
-	}
-}
-
-async function showPageLoadingIndicator(_sleep=0) {
-	if($(".loading-indicator").length) {
-		return;
-	}
-
-	const loadingIndicator = document.createElement('div');
-	loadingIndicator.classList.add('loading-indicator');
-	document.body.appendChild(loadingIndicator);
-
-	if(_sleep) {
-		await sleep(_sleep * 1000);
-
-		hidePageLoadingIndicator();
-	}
-}
-
 function url_content (strUrl) {
 	var strReturn = "";
 
@@ -601,8 +574,6 @@ function add_listeners() {
 async function load_folder (folder, load_map = true) {
 	updateUrlParameter(folder);
 
-	showPageLoadingIndicator()
-
 	var content = url_content("index.php?gallery=" + folder);
 
 	$("#searchInput").val("");
@@ -621,8 +592,6 @@ async function load_folder (folder, load_map = true) {
 		await _promise;
 	}
 	await _replace_images_promise;
-
-	hidePageLoadingIndicator();
 
 	add_listeners();
 }
@@ -696,8 +665,6 @@ async function start_search() {
 	async function performSearch() {
 		abortPreviousRequest();
 
-		showPageLoadingIndicator();
-
 		if (!/^\s*$/.test(searchTerm)) {
 			unselectSelection();
 			$("#delete_search").show();
@@ -714,7 +681,6 @@ async function start_search() {
 				success: async function (response) {
 					await displaySearchResults(searchTerm, response["files"]);
 					customizeCursorForLinks();
-					hidePageLoadingIndicator();
 				},
 				error: function (xhr, status, error) {
 					console.error(error);

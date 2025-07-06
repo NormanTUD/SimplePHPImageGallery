@@ -79,8 +79,6 @@ document.addEventListener('keypress', function(event) {
 	}
 });
 
-showPageLoadingIndicator();
-
 createBreadcrumb(current_folder_path);
 
 $(".no_preview_available").parent().hide();
@@ -143,6 +141,4 @@ $(document).ready(async function() {
 	load_folder(getCurrentFolderParameter(), false);
 
 	draw_map_from_current_images();
-
-	hidePageLoadingIndicator();
 });
