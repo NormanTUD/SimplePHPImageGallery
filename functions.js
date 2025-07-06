@@ -320,8 +320,9 @@ function _draw_map(data) {
 
 	data.forEach(item => {
 		minLat = Math.min(minLat, item.latitude);
-		maxLat = Math.max(maxLat, item.latitude);
 		minLon = Math.min(minLon, item.longitude);
+
+		maxLat = Math.max(maxLat, item.latitude);
 		maxLon = Math.max(maxLon, item.longitude);
 	});
 
