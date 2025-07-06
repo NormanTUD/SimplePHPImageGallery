@@ -358,13 +358,11 @@ function _draw_map(data) {
 			decodeURIComponent(url.replace(/index.php\?preview=/, "")).replace(/\+/g, ' ') +
 			"\");' />";
 
-		eval(`markers['${hash}'].on('click', function(e) {
-			var popup = L.popup().setContent(\`${text}\`);
-
+		markers[hash].on('click', function(e) {
+			const popup = L.popup().setContent(text);
 			this.bindPopup(popup).openPopup();
-
-			markers['${hash}'].unbindPopup();
-		});`);
+			this.unbindPopup();
+		});
 
 		markers[hash].addTo(map);
 
