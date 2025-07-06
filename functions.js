@@ -352,10 +352,13 @@ function _draw_map(data) {
 
 		markers[hash] = L.marker([element['latitude'], element['longitude']]);
 
+		let cleanUrl = decodeURIComponent(url.replace(/index.php\?preview=/, ""));
+
+
 		var text = "<img id='preview_" + hash + "' data-line='__A__' src='index.php?preview=" +
-			decodeURIComponent(url.replace(/index.php\?preview=/, "")) +
+			cleanUrl +
 			"' onclick='showImage(\"" +
-			decodeURIComponent(url.replace(/index.php\?preview=/, "")).replace(/\+/g, ' ') +
+			cleanUrl.replace(/\+/g, ' ') +
 			"\");' />";
 
 		markers[hash].on('click', function(e) {
