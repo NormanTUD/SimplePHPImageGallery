@@ -25,3 +25,7 @@ videos
 .nfs*
 2025-06-14/
 2025-06-24/
+auto_label.py
+autolabel_labels.pkl
+autolabel_model.pt
+word_finder.py
