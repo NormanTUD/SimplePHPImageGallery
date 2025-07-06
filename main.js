@@ -20,9 +20,6 @@ var lastSearch = "";
 
 document.onkeydown = checkKey;
 
-var touchStartX = 0;
-var touchEndX = 0;
-
 var json_cache = {};
 var fill_cache_images = [];
 
@@ -88,17 +85,43 @@ createBreadcrumb(current_folder_path);
 
 $(".no_preview_available").parent().hide();
 
+let touchStartX = 0, touchStartY = 0;
+let touchEndX = 0, touchEndY = 0;
+
 $(document).ready(async function() {
-	document.addEventListener('touchstart', function(event) {
+	function isZooming(event) {
+		return event.touches && event.touches.length > 1;
+	}
+
+	function handleSwipe() {
+		const deltaX = touchEndX - touchStartX;
+		const deltaY = touchEndY - touchStartY;
+
+		const absDeltaX = Math.abs(deltaX);
+		const absDeltaY = Math.abs(deltaY);
+		const swipeThreshold = 50;
+
+		if (absDeltaX > swipeThreshold && absDeltaX > absDeltaY) {
+			if (deltaX > 0) {
+				prev_image();
+			} else {
+				next_image();
+			}
+		}
+	}
+
+	document.addEventListener('touchstart', function (event) {
+		if (isZooming(event)) return;
 		touchStartX = event.touches[0].clientX;
 		touchStartY = event.touches[0].clientY;
-	}, false);
+	}, { passive: true });
 
-	document.addEventListener('touchend', function(event) {
+	document.addEventListener('touchend', function (event) {
+		if (isZooming(event)) return;
 		touchEndX = event.changedTouches[0].clientX;
 		touchEndY = event.changedTouches[0].clientY;
-		handleSwipe(event);
-	}, false);
+		handleSwipe();
+	}, { passive: false });
 
 	$("#delete_search").hide();
 	addLinkHighlightEffect();

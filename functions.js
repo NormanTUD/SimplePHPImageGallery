@@ -627,38 +627,6 @@ async function load_folder (folder, load_map = true) {
 	add_listeners();
 }
 
-function isZooming(event) {
-	return event.touches.length > 1;
-}
-
-function handleSwipe(event) {
-	if(!getToggleSwitchValue()) {
-		return;
-	}
-
-	var swipeThreshold = 50;
-
-	var deltaX = touchEndX - touchStartX;
-	var deltaY = touchEndY - touchStartY;
-	var absDeltaX = Math.abs(deltaX);
-	var absDeltaY = Math.abs(deltaY);
-
-	var deltaXLargerThanThreshold = absDeltaX >= swipeThreshold;
-	var deltaXLargerThanDeltaY = absDeltaX > absDeltaY;
-
-	if (deltaXLargerThanThreshold && deltaXLargerThanDeltaY) {
-		if (deltaX > 0) {
-			prev_image();
-		} else {
-			next_image();
-		}
-	}
-
-	if (isZooming(event)) {
-		event.preventDefault();
-	}
-}
-
 function checkKey(e) {
 	e = e || window.event;
 
