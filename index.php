@@ -112,8 +112,8 @@
 		<script src="swiper-bundle.min.js"></script>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
 		<link rel="stylesheet" href="swiper-bundle.min.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
-<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+		<link rel="stylesheet" href="MarkerCluster.Default.css" />
+		<script src="leaflet.markercluster.js"></script>
 		<script src="functions.js"></script>
 	</head>
 	<body>
