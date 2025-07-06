@@ -305,76 +305,6 @@ async function get_json_cached (url) {
 	return d;
 }
 
-function _draw_map(data) {
-	if(Object.keys(data).length == 0) {
-		$("#map_container").hide();
-		return;
-	}
-
-	$("#map_container").show();
-
-	let minLat = data[0].latitude;
-	let maxLat = data[0].latitude;
-	let minLon = data[0].longitude;
-	let maxLon = data[0].longitude;
-
-	data.forEach(item => {
-		minLat = Math.min(minLat, item.latitude);
-		minLon = Math.min(minLon, item.longitude);
-
-		maxLat = Math.max(maxLat, item.latitude);
-		maxLon = Math.max(maxLon, item.longitude);
-	});
-
-	if(map) {
-		map.remove();
-		map = null;
-		$("#map").html("");
-	}
-
-	map = L.map('map').fitBounds([[minLat, minLon], [maxLat, maxLon]]);
-
-	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-	}).addTo(map);
-
-	var markers = {};
-
-	var keys = Object.keys(data);
-
-	var i = 0
-
-	while (i < keys.length) {
-		var element = data[keys[i]];
-
-		var hash = element["hash"];
-		var url = element["url"];
-
-		markers[hash] = L.marker([element['latitude'], element['longitude']]);
-
-		let cleanUrl = decodeURIComponent(url.replace(/index.php\?preview=/, ""));
-
-
-		var text = "<img id='preview_" + hash + "' data-line='__A__' src='index.php?preview=" +
-			cleanUrl +
-			"' onclick='showImage(\"" +
-			cleanUrl.replace(/\+/g, ' ') +
-			"\");' />";
-
-		markers[hash].on('click', function(e) {
-			const popup = L.popup().setContent(text);
-			this.bindPopup(popup).openPopup();
-			this.unbindPopup();
-		});
-
-		markers[hash].addTo(map);
-
-		i++;
-	}
-
-	return markers;
-}
-
 function sleep(ms) {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -481,21 +411,79 @@ async function get_map_data () {
 }
 
 async function draw_map_from_current_images () {
-	var data = await get_map_data();
+	let data = await get_map_data();
 
-	//log("$filtered_folders:", $filtered_folders);
-	//log("data:", data);
-
-	try {
-		var markers = _draw_map(data);
-
-		return {
-			"data": data,
-			"markers": markers
-		};
-	} catch (e) {
-		console.error("Error drawing map: ", e)
+	if (!data || data.length === 0) {
+		$("#map_container").hide();
+		return;
 	}
+
+	$("#map_container").show();
+
+	let minLat = data[0].latitude;
+	let maxLat = data[0].latitude;
+	let minLon = data[0].longitude;
+	let maxLon = data[0].longitude;
+
+	data.forEach(item => {
+		minLat = Math.min(minLat, item.latitude);
+		maxLat = Math.max(maxLat, item.latitude);
+		minLon = Math.min(minLon, item.longitude);
+		maxLon = Math.max(maxLon, item.longitude);
+	});
+
+	if (window.map) {
+		map.remove();
+		map = null;
+		$("#map").html("");
+	}
+
+	// Init map and bounds
+	map = L.map('map').fitBounds([[minLat, minLon], [maxLat, maxLon]]);
+
+	// OSM Layer
+	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+	}).addTo(map);
+
+	// Cluster group
+	let markerCluster = L.markerClusterGroup({
+		spiderfyOnMaxZoom: true,
+		showCoverageOnHover: false,
+		zoomToBoundsOnClick: true,
+		maxClusterRadius: 40
+	});
+
+	let markers = {};
+
+	data.forEach(element => {
+		let hash = element.hash;
+		let lat = element.latitude;
+		let lon = element.longitude;
+
+		let url = decodeURIComponent(element.url.replace(/^index\.php\?preview=/, ""));
+		let fullUrl = `index.php?preview=${url}`;
+		let cleanUrl = url.replace(/\+/g, ' ');
+
+		let html = `
+	    <img id="preview_${hash}" 
+		 data-line="__A__" 
+		 src="${fullUrl}" 
+		 onclick="showImage('${cleanUrl}');" />
+	`;
+
+		let marker = L.marker([lat, lon]);
+		marker.bindPopup(html);
+		markerCluster.addLayer(marker);
+		markers[hash] = marker;
+	});
+
+	map.addLayer(markerCluster);
+
+	return {
+		data: data,
+		markers: markers
+	};
 }
 
 function createBreadcrumb(currentFolderPath) {
