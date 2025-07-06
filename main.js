@@ -26,17 +26,6 @@ var touchEndX = 0;
 var json_cache = {};
 var fill_cache_images = [];
 
-document.addEventListener('touchstart', function(event) {
-	touchStartX = event.touches[0].clientX;
-	touchStartY = event.touches[0].clientY;
-}, false);
-
-document.addEventListener('touchend', function(event) {
-	touchEndX = event.changedTouches[0].clientX;
-	touchEndY = event.changedTouches[0].clientY;
-	handleSwipe(event);
-}, false);
-
 document.addEventListener('keydown', function(event) {
 	if($(fullscreen).is(":visible")) {
 		return;
@@ -100,6 +89,17 @@ createBreadcrumb(current_folder_path);
 $(".no_preview_available").parent().hide();
 
 $(document).ready(async function() {
+	document.addEventListener('touchstart', function(event) {
+		touchStartX = event.touches[0].clientX;
+		touchStartY = event.touches[0].clientY;
+	}, false);
+
+	document.addEventListener('touchend', function(event) {
+		touchEndX = event.changedTouches[0].clientX;
+		touchEndY = event.changedTouches[0].clientY;
+		handleSwipe(event);
+	}, false);
+
 	$("#delete_search").hide();
 	addLinkHighlightEffect();
 	await delete_search();
