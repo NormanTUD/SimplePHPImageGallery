@@ -867,16 +867,6 @@ function showImage(imagePath) {
 	});
 }
 
-function getToggleSwitchValue() {
-	var toggleSwitch = document.getElementById('toggleSwitch');
-	if (toggleSwitch) {
-		return toggleSwitch.checked;
-	} else {
-		console.warn("Toggle switch element not found!");
-		return null;
-	}
-}
-
 function get_fullscreen_img_name () {
 	var src = decodeURIComponent($(".fullscreen").find("img").attr("src"));
 

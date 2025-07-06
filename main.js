@@ -93,7 +93,20 @@ $(document).ready(async function() {
 		return event.touches && event.touches.length > 1;
 	}
 
+	function getToggleSwitchValue() {
+		var toggleSwitch = document.getElementById('toggleSwitch');
+		if (toggleSwitch) {
+			return toggleSwitch.checked;
+		} else {
+			console.warn("Toggle switch element not found!");
+			return null;
+		}
+	}
+
 	function handleSwipe() {
+		if (!getToggleSwitchValue()) {
+			return
+		}
 		const deltaX = touchEndX - touchStartX;
 		const deltaY = touchEndY - touchStartY;
 
