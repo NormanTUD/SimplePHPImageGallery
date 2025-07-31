@@ -150,7 +150,7 @@ function onFolderMouseUp(e){
 	removeProgressBar();
 
 	var d = new Date();
-	var long_click = (d.getTime() - select_folder_timer) > 1000;
+	var long_click = false; // (d.getTime() - select_folder_timer) > 1000;
 	if (long_click || enabled_selection_mode){
 		e.preventDefault();
 		var container = e.target.closest('.thumbnail, .thumbnail_folder');
