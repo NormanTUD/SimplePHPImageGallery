@@ -1,3 +1,5 @@
+let debounce_timer = null;
+
 function updateDownloadButton() {
 	var downloadBtn = document.getElementById('downloadBtn');
 	if (selectedImages.length > 0 || selectedFolders.length > 0) {
@@ -642,7 +644,20 @@ async function showProgressBar(_sleep = 1) {
 	}
 }
 
-async function start_search() {
+function start_search() {
+	clearTimeout(debounce_timer);
+	debounce_timer = setTimeout(run_start_search, 250);
+}
+
+function run_start_search() {
+	try {
+		_start_search();
+	} catch (err) {
+		console.error("search failed:", err);
+	}
+}
+
+async function _start_search() {
 	var searchTerm = $('#searchInput').val();
 
 	var is_fuzzy = $("#fuzzy_search").is(":checked");
