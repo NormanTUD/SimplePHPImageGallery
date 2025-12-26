@@ -32,3 +32,5 @@ autolabel_model.pt
 historische_luftbilder/
 thumbnails_cache/
 word_finder.py
+.env
+docker-compose.custom.yml
