@@ -1,4 +1,5 @@
 let debounce_timer = null;
+let searchIndex = null;
 
 function updateDownloadButton() {
 	var downloadBtn = document.getElementById('downloadBtn');
@@ -644,9 +645,37 @@ async function showProgressBar(_sleep = 1) {
 	}
 }
 
-function start_search() {
-	clearTimeout(debounce_timer);
-	debounce_timer = setTimeout(run_start_search, 250);
+async function ensureIndexLoaded() {
+	if (searchIndex !== null) return;
+
+	console.log("Lade Such-Index...");
+	const response = await fetch('get_search_index.php');
+	searchIndex = await response.json();
+	console.log("Index geladen: " + searchIndex.length + " Einträge");
+}
+
+async function start_search() {
+	const query = document.getElementById('searchInput').value.toLowerCase();
+	const isFuzzy = document.getElementById('fuzzy_search').checked;
+	const resultsContainer = document.getElementById('search_results'); // Dein Container
+
+	if (query.length < 2) {
+		// Suche erst ab 2 Zeichen oder leeren
+		return;
+	}
+
+	// Sicherstellen, dass der Index geladen ist
+	await ensureIndexLoaded();
+
+	// Filter-Logik direkt im Browser (extrem schnell)
+	const filtered = searchIndex.filter(item => {
+		const inName = item.t.toLowerCase().includes(query);
+		const inContent = item.c.toLowerCase().includes(query);
+		return inName || inContent;
+	});
+
+	// Ergebnisse anzeigen
+	display_results(filtered);
 }
 
 function run_start_search() {
