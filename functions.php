@@ -466,7 +466,7 @@
 			}
 		}
 
-		$img_tag = '<img ' . $wh_string . ' ' . $extra_attributes . ' draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumb) . '">';
+		$img_tag = '<img ' . $wh_string . ' ' . $extra_attributes . ' loading="lazy" draggable="false" src="loading.gif" alt="Loading..." class="loading-thumbnail" data-original-url="index.php?preview=' . urlencode($thumb) . '">';
 
 		if (!is_dir($cacheDir)) {
 			mkdir($cacheDir, 0777, true);
