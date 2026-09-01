@@ -325,85 +325,105 @@ function is_hidden_or_has_hidden_parent(element) {
 
 async function get_map_data () {
 	var data = [];
+	var seen = {};
 
-	var $folders = $(".loading-thumbnail-search,.thumbnail_folder");
-
-	var folders_gone_through = 0;
-	var $filtered_folders = [];
-
-	$folders.each(async function (i, e) {
-		if(!is_hidden_or_has_hidden_parent(e)) {
-			var link_element = $(e).parent()[0];
-
-			if($(link_element).parent().hasClass("thumbnail_folder")) {
-				link_element = $(link_element).parent()[0];
-			}
-
-			if($(link_element).hasClass("img_element")) {
-				$filtered_folders.push(link_element);
-			}
-		}
-	});
-
-	$filtered_folders.forEach(async function (e, i) {
-		var folder = decodeURIComponent($(e).data("href"));
-
-		var url = `index.php?geolist=${folder}`;
-		try {
-			var folder_data = await get_json_cached(url);
-
-			var _keys = Object.keys(folder_data);
-			if(_keys.length) {
-				for (var i = 0; i < _keys.length; i++) {
-					var this_data = folder_data[_keys[i]];
-
-					data.push(this_data);
-				}
-			}
-
-			folders_gone_through++;
-		} catch (e) {
+	function push_unique (item) {
+		if (!item) {
 			return;
 		}
+		var key = item.hash || item.url;
+		if (!key) {
+			data.push(item);
+			return;
+		}
+		if (seen[key]) {
+			return;
+		}
+		seen[key] = true;
+		data.push(item);
+	}
+
+	async function fetch_geolist (folder) {
+		if (!folder) {
+			return;
+		}
+		var url = `index.php?geolist=${encodeURIComponent(folder)}`;
+		try {
+			var folder_data = await get_json_cached(url);
+			if (folder_data) {
+				var _keys = Object.keys(folder_data);
+				for (var i = 0; i < _keys.length; i++) {
+					push_unique(folder_data[_keys[i]]);
+				}
+			}
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	// Collect every folder we need to scan: the current folder (recursively
+	// covers ALL its subfolders via the PHP backend) plus any visible folder
+	// thumbnails (e.g. in search results).
+	var folders_to_fetch = [];
+
+	var current_folder = getCurrentFolderParameter();
+	if (current_folder && folders_to_fetch.indexOf(current_folder) === -1) {
+		folders_to_fetch.push(current_folder);
+	}
+
+	var $folders = $(".loading-thumbnail-search,.thumbnail_folder");
+	$folders.each(function (i, e) {
+		if (is_hidden_or_has_hidden_parent(e)) {
+			return;
+		}
+		var link_element = $(e).parent()[0];
+		if ($(link_element).parent().hasClass("thumbnail_folder")) {
+			link_element = $(link_element).parent()[0];
+		}
+		if ($(link_element).hasClass("img_element")) {
+			var folder = decodeURIComponent($(link_element).data("href") || "");
+			if (folder && folders_to_fetch.indexOf(folder) === -1) {
+				folders_to_fetch.push(folder);
+			}
+		}
 	});
 
+	var fetched = 0;
+	folders_to_fetch.forEach(async function (folder) {
+		await fetch_geolist(folder);
+		fetched++;
+	});
+
+	// Also pick up geo coords from images directly visible in the current view
+	// (they are rendered with data-latitude / data-longitude attributes).
 	var img_elements = $("img");
 
 	if ($("#searchResults").html().length && $("#searchResults").is(":visible")) {
 		img_elements = $("#searchResults").find("img");
 	}
 
-	var filtered_img_elements = [];
-
 	img_elements.each(function (i, e) {
-		if(!is_hidden_or_has_hidden_parent(e)) {
-			filtered_img_elements.push(e);
+		if (is_hidden_or_has_hidden_parent(e)) {
+			return;
 		}
-	});
-
-	filtered_img_elements.forEach(function (e, i) {
-		//log(e);
 		var src = $(e).data("original-url");
 		var hash = $(e).data("hash");
 		var lat = $(e).data("latitude");
 		var lon = $(e).data("longitude");
 
-		if(src && hash && lat && lon) {
-			var this_data = {
+		if (src && hash && lat && lon) {
+			push_unique({
 				"hash": hash,
 				"url": src,
 				"latitude": lat,
 				"longitude": lon
-			};
-
-			data.push(this_data);
+			});
 		}
 	});
 
-	while ($filtered_folders.length > folders_gone_through) {
+	while (fetched < folders_to_fetch.length) {
 		await sleep(100);
 	}
-	//log("filtered_folders: ", $filtered_folders);
 
 	return data;
 }
