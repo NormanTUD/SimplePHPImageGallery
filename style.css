@@ -628,6 +628,80 @@ a:focus-visible {
 	border-radius: 10px;
 }
 
+.map-popup-media {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: min(240px, 60vw);
+	min-height: 170px;
+	overflow: hidden;
+	background:
+		linear-gradient(110deg, var(--surface-2) 8%, color-mix(in srgb, var(--surface-2) 55%, var(--surface-solid)) 18%, var(--surface-2) 33%);
+	background-size: 220% 100%;
+	border-radius: 12px;
+	cursor: pointer;
+	animation: shimmer 1.5s linear infinite;
+}
+
+.map-popup-media img {
+	position: relative;
+	z-index: 1;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: 220px;
+	object-fit: contain;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.map-popup-media.is-loaded {
+	animation: none;
+	background: var(--surface-2);
+}
+
+.map-popup-media.is-loaded img {
+	opacity: 1;
+}
+
+.map-popup-spinner {
+	position: absolute;
+	z-index: 2;
+	width: 32px;
+	height: 32px;
+	border: 3px solid color-mix(in srgb, var(--text) 16%, transparent);
+	border-top-color: var(--accent-3);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+.map-popup-media.is-loaded .map-popup-spinner {
+	display: none;
+}
+
+.map-popup-media.has-error::after {
+	content: "Preview unavailable";
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	padding: 14px;
+	color: var(--muted);
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-align: center;
+	background: var(--surface-2);
+}
+
+.map-popup-media.has-error {
+	animation: none;
+	cursor: default;
+}
+
+@keyframes spin {
+	to { transform: rotate(360deg); }
+}
+
 .fullscreen {
 	position: fixed;
 	inset: 0;

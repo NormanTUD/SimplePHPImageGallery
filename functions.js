@@ -1357,16 +1357,46 @@ async function draw_map_from_current_images () {
 
 		let cleanUrl = String(element.url || "").replace(/^index\.php\?preview=/, "");
 
+		let popupMedia = document.createElement("div");
+		popupMedia.className = "map-popup-media";
+		popupMedia.setAttribute("role", "button");
+		popupMedia.setAttribute("tabindex", "0");
+		popupMedia.setAttribute("aria-label", "Open " + (cleanUrl.split("/").pop() || "photo"));
+
+		let spinner = document.createElement("span");
+		spinner.className = "map-popup-spinner";
+		spinner.setAttribute("aria-hidden", "true");
+
 		let popupImage = document.createElement("img");
-		popupImage.src = `index.php?preview=${encodeURIComponent(cleanUrl)}`;
+		popupImage.loading = "lazy";
 		popupImage.alt = cleanUrl.split("/").pop() || "";
 		popupImage.setAttribute("draggable", "false");
-		popupImage.addEventListener("click", function () {
-			showImage(cleanUrl);
+
+		popupImage.addEventListener("load", function () {
+			popupMedia.classList.add("is-loaded");
+		});
+		popupImage.addEventListener("error", function () {
+			popupMedia.classList.add("has-error");
+			popupImage.remove();
+			spinner.remove();
 		});
 
+		popupMedia.addEventListener("click", function () {
+			showImage(cleanUrl);
+		});
+		popupMedia.addEventListener("keydown", function (event) {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				showImage(cleanUrl);
+			}
+		});
+
+		popupMedia.appendChild(spinner);
+		popupMedia.appendChild(popupImage);
+		popupImage.src = `index.php?preview=${encodeURIComponent(cleanUrl)}`;
+
 		let marker = L.marker([lat, lon]);
-		marker.bindPopup(popupImage);
+		marker.bindPopup(popupMedia, { minWidth: 220, maxWidth: 280 });
 		markerCluster.addLayer(marker);
 		markers[hash] = marker;
 	});

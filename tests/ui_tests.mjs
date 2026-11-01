@@ -212,8 +212,13 @@ test('map only shows photos from the current folder and its subfolders', async (
   assert.equal(await markers.count(), 1, 'Subfolder map should only show its own GPS photo');
 
   await markers.first().click();
+  const popupMedia = page.locator('.map-popup-media');
+  await popupMedia.waitFor({ state: 'visible', timeout: 10000 });
+  const popupBox = await popupMedia.boundingBox();
+  assert.ok(popupBox && popupBox.width >= 200 && popupBox.height >= 150, 'Map popup preview is too small');
+
+  await page.locator('.map-popup-media.is-loaded').waitFor({ state: 'visible', timeout: 15000 });
   const popupImage = page.locator('.leaflet-popup-content img');
-  await popupImage.waitFor({ state: 'visible', timeout: 10000 });
   assert.match(await popupImage.getAttribute('src'), /dresden\.jpg/, 'Wrong photo is shown on the subfolder map');
 });
 
@@ -417,6 +422,10 @@ test('search filters, highlights and remembers terms', async (page) => {
   await search(page, 'sonne', '#searchResults .thumbnail');
   assert.equal(await page.locator('#searchResults mark').count() > 0, true, 'Search matches were not highlighted');
 
+  await page.waitForFunction(
+    () => Array.from(document.querySelectorAll('#searchHistory option')).some((option) => option.value === 'sonne'),
+    { timeout: 5000 }
+  );
   const history = await page.locator('#searchHistory option').evaluateAll((options) => options.map((option) => option.value));
   assert.equal(history.includes('sonne'), true, 'Recent search was not stored');
 });
