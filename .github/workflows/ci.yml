@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test everything
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: gd, exif, zip, curl, mbstring
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run gallery test suite
+        run: bash tests/run.sh
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: tests/artifacts
+          if-no-files-found: ignore
+
+      - name: Create and push CI tag
+        if: success() && github.event_name == 'push'
+        env:
+          RUNNER_NAME: ${{ runner.name }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          RAW_TAG="ci-${RUN_NUMBER}-${RUN_ID}-${RUN_ATTEMPT}-${RUNNER_NAME}"
+          TAG="$(printf '%s' "$RAW_TAG" | tr -cs 'A-Za-z0-9._-' '-')"
+          TAG="${TAG%-}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "$TAG" -m "CI passed for ${COMMIT_SHA} on runner ${RUNNER_NAME} (run ${RUN_ID}, attempt ${RUN_ATTEMPT})"
+          git push origin "$TAG"
+
+          echo "Created tag: $TAG"

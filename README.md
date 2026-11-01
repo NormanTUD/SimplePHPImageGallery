@@ -29,3 +29,21 @@ sudo chown www-data:www-data ./thumbnails_cache/
 # Keywords for images
 
 For each image file, e.g. `IMG_6563.JPG` you can add a  `.txt`-file of basically the same name (`IMG_6563.txt`), that can contain keywords for that image. When searching, the `.txt` files are searched as well and displayed as results.
+
+# Tests and CI
+
+The repository ships with an isolated integration and browser test suite:
+
+```console
+npm ci
+npx playwright install --with-deps chromium
+bash tests/run.sh
+```
+
+The suite generates example images, folders, TXT keywords and GPS data in a temporary
+document root, starts PHP's built-in server and checks the gallery, search, previews,
+metadata, map data, ZIP downloads, responsive layout and lazy loading.
+
+CI runs on every pushed commit and pull request. After a successful push build, the
+workflow creates and pushes a tag named after the run and the GitHub Actions runner,
+for example `ci-42-123456789-1-my-runner`.

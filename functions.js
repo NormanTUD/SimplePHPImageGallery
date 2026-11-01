@@ -506,20 +506,14 @@ async function get_map_data () {
 	// In gallery view the current folder already covers all subfolders
 	// recursively. Only search results can point to folders outside of it.
 	if (search_is_visible) {
-		var $folders = $(".loading-thumbnail-search,.thumbnail_folder");
+		var $folders = $(".thumbnail_folder");
 		$folders.each(function (i, e) {
 			if (is_hidden_or_has_hidden_parent(e)) {
 				return;
 			}
-			var link_element = $(e).parent()[0];
-			if ($(link_element).parent().hasClass("thumbnail_folder")) {
-				link_element = $(link_element).parent()[0];
-			}
-			if ($(link_element).hasClass("img_element")) {
-				var folder = get_media_path(link_element, true);
-				if (folder && folders_to_fetch.indexOf(folder) === -1) {
-					folders_to_fetch.push(folder);
-				}
+			var folder = get_media_path(e, true);
+			if (folder && folders_to_fetch.indexOf(folder) === -1) {
+				folders_to_fetch.push(folder);
 			}
 		});
 	}
@@ -1054,6 +1048,42 @@ function isSwipeDevice() {
 	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 }
 
+function add_fullscreen_controls(container) {
+	var closeButton = document.createElement("button");
+	closeButton.className = "fullscreen-close";
+	closeButton.type = "button";
+	closeButton.setAttribute("aria-label", "Close image");
+	closeButton.innerHTML = "&#x2715;";
+	closeButton.addEventListener("click", function (event) {
+		event.stopPropagation();
+		container.remove();
+	});
+
+	var previousButton = document.createElement("button");
+	previousButton.className = "fullscreen-nav prev";
+	previousButton.type = "button";
+	previousButton.setAttribute("aria-label", "Previous image");
+	previousButton.innerHTML = "&#x2039;";
+	previousButton.addEventListener("click", function (event) {
+		event.stopPropagation();
+		prev_image();
+	});
+
+	var nextButton = document.createElement("button");
+	nextButton.className = "fullscreen-nav next";
+	nextButton.type = "button";
+	nextButton.setAttribute("aria-label", "Next image");
+	nextButton.innerHTML = "&#x203a;";
+	nextButton.addEventListener("click", function (event) {
+		event.stopPropagation();
+		next_image();
+	});
+
+	container.appendChild(closeButton);
+	container.appendChild(previousButton);
+	container.appendChild(nextButton);
+}
+
 function showImage(imagePath) {
 	$(fullscreen).remove();
 
@@ -1079,6 +1109,8 @@ function showImage(imagePath) {
 		`;
 		fullscreen.appendChild(toggleSwitch);
 	}
+
+	add_fullscreen_controls(fullscreen);
 
 	var decodedPath = decodeURIComponent(imagePath);
 

@@ -11,6 +11,22 @@ var enabled_selection_mode = false;
 var map = null;
 var fullscreen;
 
+const mobile_layout_query = window.matchMedia('(max-width: 760px), (pointer: coarse)');
+
+function update_layout_mode() {
+	document.documentElement.dataset.layout = mobile_layout_query.matches ? 'mobile' : 'desktop';
+}
+
+update_layout_mode();
+if (mobile_layout_query.addEventListener) {
+	mobile_layout_query.addEventListener('change', update_layout_mode);
+} else if (mobile_layout_query.addListener) {
+	mobile_layout_query.addListener(update_layout_mode);
+}
+window.addEventListener('orientationchange', function () {
+	setTimeout(update_layout_mode, 120);
+}, { passive: true });
+
 const log = console.log;
 const debug = console.debug;
 const l = log;

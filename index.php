@@ -105,6 +105,9 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+		<meta name="theme-color" content="#f4efe7" media="(prefers-color-scheme: light)">
+		<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">
 		<title><?php print $servername; ?></title>
 		<script defer src="jquery-3.7.1.min.js"></script>
 		<link rel="stylesheet" href="style.css" />
@@ -115,27 +118,37 @@
 		<script defer src="functions.js"></script>
 	</head>
 	<body>
-		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
-		<input type="checkbox" name="fuzzy_search" onclick="start_search()" id="fuzzy_search">Fuzzy-Search?</input>
-		<button style="display: none" id="delete_search" onclick='delete_search()'>&#x2715;</button>
-		<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
-		<button class="unselect-btn" id="unselectBtn" onclick="unselectSelection()">Unselect</button>
-<?php
-		show_links_if_available();
-?>
-		<div id="breadcrumb"></div>
+		<div class="app-shell">
+			<header class="app-header">
+				<div class="topbar">
+					<div class="search-field">
+						<input onkeyup="start_search()" onchange="start_search()" type="text" id="searchInput" placeholder="Search images, folders, tags…" aria-label="Search images, folders and tags" autocomplete="off" spellcheck="false">
+					</div>
+					<label class="fuzzy-toggle" for="fuzzy_search">
+						<input type="checkbox" name="fuzzy_search" onclick="start_search()" id="fuzzy_search">
+						<span>Fuzzy</span>
+					</label>
+					<button class="icon-btn" id="delete_search" onclick="delete_search()" aria-label="Clear search" style="display: none">&#x2715;</button>
+					<div class="action-buttons">
+						<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
+						<button class="unselect-btn" id="unselectBtn" onclick="unselectSelection()">Unselect</button>
+					</div>
+				</div>
+				<div class="site-links"><?php show_links_if_available(); ?></div>
+				<div id="breadcrumb"></div>
+			</header>
+			<main class="app-content">
+				<div id="searchResults"></div>
+				<div id="gallery"></div>
+				<div id="map_container" class="map-card" style="display: none">
+					<div id="map"></div>
+				</div>
+			</main>
+		</div>
 		<script>
-			var current_folder_path = '<?php echo $folderPath; ?>'
+			var current_folder_path = <?php echo json_encode($folderPath, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
 		</script>
 
 		<script defer src="main.js"></script>
-
-		<div id="searchResults"></div>
-
-		<div id="gallery"></div>
-
-		<div id="map_container" style="display: none">
-			<div id="map" style="height: 400px; width: 100%;"></div>
-		</div>
 	</body>
 </html>

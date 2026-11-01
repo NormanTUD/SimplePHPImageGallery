@@ -23,6 +23,8 @@
 	}
 
 	function print_file_metadata() {
+		header('Content-Type: application/json; charset=utf-8');
+
 		$file_info = $_GET['file_info'] ?? '';
 
 		if (strpos($file_info, '..') !== false || realpath($file_info) === false) {
@@ -385,6 +387,12 @@
 		if (!is_dir($fp)) {
 			print("Folder not found");
 			return [];
+		}
+
+		// Avoid paths like ".//folder" from a root path of "./".
+		$fp = rtrim($fp, '/');
+		if ($fp === '') {
+			$fp = '.';
 		}
 
 		$files = scandir($fp);
@@ -760,10 +768,11 @@
 	function print_geolist($geolist) {
 		$files = [];
 
-		if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist)) {
+		if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist) && is_dir($geolist)) {
 			$files = getImagesInDirectory($geolist);
 		} else {
-			die("Wrongly formed geolist: " . $geolist);
+			http_response_code(400);
+			die("Wrongly formed geolist: " . htmlspecialchars($geolist));
 		}
 
 		// Cache-Pfad basierend auf einem Hash der Dateiliste
@@ -944,6 +953,8 @@
 		$zipname = 'gallery.zip';
 		$zip = new ZipArchive;
 		$zipFile = tempnam(sys_get_temp_dir(), 'zip');
+		// tempnam() creates an empty file; ZipArchive expects to create it itself.
+		@unlink($zipFile);
 		$exit_code = 0;
 
 		if ($zip->open($zipFile, ZipArchive::CREATE) === true) {
