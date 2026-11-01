@@ -1,6 +1,7 @@
 <?php
 // get_search_index.php
 header('Content-Type: application/json');
+header('X-Content-Type-Options: nosniff');
 
 // Erlaube PHP mehr Zeit und Speicher für den ersten Index-Lauf
 ini_set('memory_limit', '512M');
@@ -27,6 +28,11 @@ $iterator = new RecursiveIteratorIterator(
 $valid_extensions = ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'webm'];
 
 foreach ($iterator as $file) {
+    $path_parts = explode(DIRECTORY_SEPARATOR, $file->getPathname());
+    if (in_array('.git', $path_parts, true) || in_array('thumbnails_cache', $path_parts, true)) {
+        continue;
+    }
+
     if ($file->isFile()) {
         $ext = strtolower($file->getExtension());
         

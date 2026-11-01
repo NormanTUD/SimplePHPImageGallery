@@ -176,6 +176,15 @@ test('special characters in search results can be opened', async (page) => {
   await closeFullscreen(page);
 });
 
+test('start page draws the map even with folder=.', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${baseUrl}/?folder=.`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#gallery .thumbnail_folder').first().waitFor({ state: 'visible', timeout: 15000 });
+
+  await page.locator('#map_container').waitFor({ state: 'visible', timeout: 20000 });
+  await page.locator('#map.leaflet-container').waitFor({ state: 'visible', timeout: 10000 });
+});
+
 test('GPS folder draws the map', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openFolder(page, './gps', '#gallery .thumbnail');
@@ -237,6 +246,18 @@ test('lightbox shows counter, caption, details and download link', async (page) 
 
   await page.keyboard.press('Escape');
   await page.locator('.fullscreen').waitFor({ state: 'detached', timeout: 5000 });
+});
+
+test('metadata dialog does not execute HTML from filenames', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './xss <img src=x onerror=alert(1)>', '#gallery .thumbnail');
+
+  await page.locator('#gallery .thumbnail').first().click();
+  await page.locator('.fullscreen').waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('.fullscreen-info').click();
+  await page.locator('.image-info-table').waitFor({ state: 'visible', timeout: 10000 });
+
+  assert.equal(await page.locator('.image-info-table img').count(), 0, 'Filename was interpreted as HTML');
 });
 
 test('shortcuts dialog opens and closes', async (page) => {

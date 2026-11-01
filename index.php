@@ -40,6 +40,11 @@
 
 	set_time_limit(60);
 
+	header('X-Content-Type-Options: nosniff');
+	header('Referrer-Policy: no-referrer');
+	header('X-Frame-Options: SAMEORIGIN');
+	header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+
 	$GLOBALS["FILETYPES"] = $validTypes;
 	$GLOBALS["valid_file_ending_regex"] = "/\.(" . implode("|", $validTypes) . ")$/i";
 
@@ -108,7 +113,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 		<meta name="theme-color" content="#f4efe7" media="(prefers-color-scheme: light)">
 		<meta name="theme-color" content="#111318" media="(prefers-color-scheme: dark)">
-		<title><?php print $servername; ?></title>
+		<title><?php echo htmlspecialchars($servername); ?></title>
 		<script defer src="jquery-3.7.1.min.js"></script>
 		<link rel="stylesheet" href="style.css" />
 		<script defer src="leaflet.js"></script>
@@ -160,7 +165,7 @@
 		</div>
 		<button class="back-to-top" id="backToTop" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Back to top">&#x2191;</button>
 		<script>
-			var current_folder_path = <?php echo json_encode($folderPath, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+			var current_folder_path = <?php echo json_encode($folderPath, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 		</script>
 
 		<script defer src="main.js"></script>

@@ -8,6 +8,25 @@
 	if (!defined("THUMBNAIL_CACHE_VERSION")) {
 		define("THUMBNAIL_CACHE_VERSION", "640");
 	}
+
+	function gallery_base_path() {
+		return realpath('.');
+	}
+
+	function is_path_within_gallery($path) {
+		if (!is_string($path) || $path === '' || strpos($path, "\0") !== false) {
+			return false;
+		}
+
+		$base = gallery_base_path();
+		$real = realpath($path);
+
+		if ($base === false || $real === false) {
+			return false;
+		}
+
+		return $real === $base || strpos($real, $base . DIRECTORY_SEPARATOR) === 0;
+	}
 	function dier ($msg) {
 		print("<pre>");
 		print(var_dump($msg));
@@ -36,7 +55,7 @@
 
 		$file_info = $_GET['file_info'] ?? '';
 
-		if (strpos($file_info, '..') !== false || realpath($file_info) === false) {
+		if (strpos($file_info, '..') !== false || !is_path_within_gallery($file_info)) {
 			echo json_encode(["error" => "Invalid file path"]);
 			return;
 		}
@@ -390,7 +409,7 @@
 	}
 
 	function display_gallery($fp) {
-		if (preg_match("/\.\./", $fp)) {
+		if (preg_match("/\.\./", $fp) || !is_path_within_gallery($fp)) {
 			print("Invalid folder");
 			return [];
 		}
@@ -529,7 +548,7 @@
 		if ($is_folder) {
 			$html = '<a data-href="' . urlencode($path) . '" data-path="' . $path_attr . '" class="img_element"><div class="thumbnail_folder">'
 				. $img_tag
-				. '<h3>' . $item['name'] . '</h3>'
+				. '<h3>' . htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') . '</h3>'
 				. '<span class="checkmark">✅</span>'
 				. "</div></a>\n";
 		} else {
@@ -776,6 +795,10 @@
 	function print_geolist($geolist) {
 		$files = [];
 
+		if ($geolist === ".") {
+			$geolist = "./";
+		}
+
 		if ($geolist && !preg_match("/\.\./", $geolist) && preg_match("/^\.\//", $geolist) && is_dir($geolist)) {
 			$files = getImagesInDirectory($geolist);
 		} else {
@@ -839,7 +862,7 @@
 			$cacheFolder = "/docker_tmp/";
 		}
 
-		if (!preg_match("/\.\./", $imagePath) && file_exists($imagePath)) {
+		if (!preg_match("/\.\./", $imagePath) && is_path_within_gallery($imagePath) && is_file($imagePath)) {
 			$file_ending = "jpg";
 
 			if ($isVideo) {
@@ -863,7 +886,7 @@
 				exit;
 			} else {
 				if ($isVideo) {
-					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
+					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 " . escapeshellarg($imagePath);
 					$duration = floatval(shell_exec($ffprobe));
 
 					$gifDuration = 6;
@@ -872,7 +895,12 @@
 					$frameRate = 8;
 					$frameCount = $gifDuration * $frameRate;
 
-					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
+					$video_filter = "fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease";
+					$ffmpeg = "ffmpeg -y -i " . escapeshellarg($imagePath)
+						. " -vf " . escapeshellarg($video_filter)
+						. " -t " . (int) $gifDuration
+						. " -ss " . (int) $startTime
+						. " " . escapeshellarg($cachedThumbnailPath);
 
 					fwrite($GLOBALS["stderr"], "ffmpeg command:\n$ffmpeg");
 
@@ -968,7 +996,7 @@
 			if (isset($_GET['folder'])) {
 				$folders = is_array($_GET['folder']) ? $_GET['folder'] : [$_GET['folder']];
 				foreach ($folders as $folder) {
-					if (isValidPath($folder) && is_dir($folder)) {
+					if (isValidPath($folder) && is_path_within_gallery($folder) && is_dir($folder)) {
 						$realFolderPath = realpath($folder);
 
 						$files = new RecursiveIteratorIterator(
@@ -980,7 +1008,7 @@
 							if (!$file->isDir()) {
 								$filePath = $file->getRealPath();
 
-								if (preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
+								if (is_path_within_gallery($filePath) && preg_match($GLOBALS["valid_file_ending_regex"], $filePath)) {
 									$cwd = getcwd();
 
 									$relativePath = str_replace($cwd . DIRECTORY_SEPARATOR, '', $filePath);
@@ -1000,7 +1028,7 @@
 			if (isset($_GET['img'])) {
 				$images = is_array($_GET['img']) ? $_GET['img'] : [$_GET['img']];
 				foreach ($images as $img) {
-					if (isValidPath($img) && file_exists($img)) {
+					if (isValidPath($img) && is_path_within_gallery($img) && is_file($img)) {
 						if (preg_match($GLOBALS["valid_file_ending_regex"], $img)) {
 							$zip->addFile($img, basename($img));
 						}
@@ -1040,7 +1068,7 @@
 					$link = trim($parts[0]);
 					$text = trim($parts[1]);
 
-					echo '<a target="_blank" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
+					echo '<a target="_blank" rel="noopener noreferrer" href="' . htmlspecialchars($link) . '">' . htmlspecialchars($text) . '</a><br>';
 				}
 
 				fclose($file);

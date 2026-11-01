@@ -533,6 +533,7 @@ async function get_map_data () {
 	}
 
 	async function fetch_geolist (folder) {
+		folder = normalize_folder_path(folder);
 		if (!folder) {
 			return;
 		}
@@ -668,19 +669,18 @@ async function draw_map_from_current_images () {
 		let lat = element.latitude;
 		let lon = element.longitude;
 
-		let url = decodeURIComponent(element.url.replace(/^index\.php\?preview=/, ""));
-		let fullUrl = `index.php?preview=${url}`;
-		let cleanUrl = url.replace(/\+/g, ' ');
+		let cleanUrl = String(element.url || "").replace(/^index\.php\?preview=/, "");
 
-		let html = `
-	    <img id="preview_${hash}" 
-		 data-line="__A__" 
-		 src="${fullUrl}" 
-		 onclick="showImage('${cleanUrl}');" />
-	`;
+		let popupImage = document.createElement("img");
+		popupImage.src = `index.php?preview=${encodeURIComponent(cleanUrl)}`;
+		popupImage.alt = cleanUrl.split("/").pop() || "";
+		popupImage.setAttribute("draggable", "false");
+		popupImage.addEventListener("click", function () {
+			showImage(cleanUrl);
+		});
 
 		let marker = L.marker([lat, lon]);
-		marker.bindPopup(html);
+		marker.bindPopup(popupImage);
 		markerCluster.addLayer(marker);
 		markers[hash] = marker;
 	});
@@ -711,11 +711,13 @@ function createBreadcrumb(currentFolderPath) {
 			var link = document.createElement('a');
 			link.classList.add("breadcrumb_nav");
 			link.classList.add("box-shadow");
-			link.textContent = decodeURI(folderName);
+			link.textContent = folderName;
 
-			eval(`$(link).on("click", async function () {
-				await load_folder("${fullPath}")
-			});`);
+			(function (path) {
+				link.addEventListener("click", function () {
+					load_folder(path);
+				});
+			})(fullPath);
 
 			breadcrumb.appendChild(link);
 
@@ -769,7 +771,7 @@ function getCurrentFolderParameter() {
 			return "./";
 		}
 
-		return decodeURIComponent(match[1]);
+		return normalize_folder_path(decode_php_url_component(match[1])) || "./";
 	} catch (error) {
 		console.warn('An error occurred while getting current folder parameter:', error);
 		return "./";
@@ -886,6 +888,11 @@ function add_listeners() {
 
 async function load_folder (folder, load_map = true) {
 	if (typeof folder !== "string" || folder === "") {
+		return;
+	}
+
+	folder = normalize_folder_path(folder);
+	if (!folder) {
 		return;
 	}
 
@@ -1430,7 +1437,11 @@ function show_image_info() {
 				label.textContent = key;
 
 				const value = document.createElement("td");
-				value.innerHTML = data[key];
+				if (key === "exif") {
+					value.innerHTML = data[key];
+				} else {
+					value.textContent = data[key];
+				}
 
 				row.appendChild(label);
 				row.appendChild(value);

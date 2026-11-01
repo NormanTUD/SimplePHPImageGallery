@@ -329,6 +329,10 @@ test('geolist exposes GPS images for the map', function (): void {
 	assert_true($entry !== null, 'GPS image missing from geolist');
 	assert_true(abs($entry['latitude'] - 51.0504) < 0.01, 'Geolist latitude looks wrong');
 	assert_true(abs($entry['longitude'] - 13.7373) < 0.01, 'Geolist longitude looks wrong');
+
+	$dot_response = http_request('/index.php?' . http_build_query(['geolist' => '.']));
+	assert_http_status($dot_response, 200);
+	assert_header_contains($dot_response, 'content-type', 'application/json');
 });
 
 test('single image ZIP download is valid', function (): void {
@@ -387,6 +391,37 @@ test('image.php serves image bytes with caching headers', function (): void {
 	assert_header_contains($response, 'content-type', 'image/jpeg');
 	assert_header_contains($response, 'cache-control', 'public');
 	assert_same(file_get_contents(fixture_path('urlaub/strand/sonne.jpg')), $response['body'], 'image.php returned wrong bytes');
+});
+
+test('absolute paths cannot read server files', function (): void {
+	$image_response = http_request('/image.php?' . http_build_query(['path' => '/etc/passwd']));
+	assert_http_status($image_response, 404);
+	assert_not_contains('root:', $image_response['body'], 'image.php leaked /etc/passwd');
+
+	$preview_response = http_request('/index.php?' . http_build_query(['preview' => '/etc/passwd']));
+	assert_contains('File not found.', $preview_response['body'], 'Preview accepted an absolute path');
+
+	$metadata_response = http_json('/index.php?' . http_build_query(['file_info' => '/etc/passwd']));
+	assert_true(isset($metadata_response['error']), 'file_info accepted an absolute path');
+
+	$gallery_response = http_request('/index.php?' . http_build_query(['gallery' => '/etc']));
+	assert_contains('Invalid folder', $gallery_response['body'], 'Gallery accepted an absolute directory');
+});
+
+test('security headers are present', function (): void {
+	$response = http_request('/index.php');
+	assert_http_status($response, 200);
+	assert_header_contains($response, 'x-content-type-options', 'nosniff');
+	assert_header_contains($response, 'referrer-policy', 'no-referrer');
+	assert_header_contains($response, 'x-frame-options', 'SAMEORIGIN');
+	assert_header_contains($response, 'content-security-policy', "default-src 'self'");
+});
+
+test('folder names are HTML escaped', function (): void {
+	$response = http_request('/index.php?' . http_build_query(['gallery' => './']));
+	assert_http_status($response, 200);
+	assert_contains('&lt;img src=x onerror=alert(1)&gt;', $response['body'], 'Escaped folder name missing');
+	assert_not_contains('<img src=x onerror=alert(1)>', $response['body'], 'Folder name was rendered as raw HTML');
 });
 
 test('path traversal is rejected for previews and galleries', function (): void {
