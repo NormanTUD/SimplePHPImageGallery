@@ -168,6 +168,13 @@ test('folder gallery lists subfolders with metadata and valid image markup', fun
 	assert_not_contains('<img width:', $response['body'], 'Invalid image style markup');
 });
 
+test('helper assets are not rendered as gallery items', function (): void {
+	$response = http_request('/index.php?' . http_build_query(['gallery' => './']));
+	assert_http_status($response, 200);
+	assert_not_contains('preview=.%2Floading.gif', $response['body'], 'loading.gif was rendered as an image');
+	assert_not_contains('data-path="index.php?preview=', $response['body'], 'Preview URL was rendered as a folder');
+});
+
 test('file gallery lists jpg, png and gif assets with safe data-path attributes', function (): void {
 	$response = http_request('/index.php?' . http_build_query(['gallery' => './urlaub/strand']));
 	assert_http_status($response, 200);
@@ -257,13 +264,26 @@ test('preview generates, caches and reuses a JPEG thumbnail', function (): void 
 	assert_header_contains($first, 'cache-control', 'immutable');
 	assert_same("\xFF\xD8", substr($first['body'], 0, 2), 'Preview is not a JPEG');
 
-	$cache_file = $docroot . '/thumbnails_cache/' . md5(preg_replace('/\/+/', '/', $relative)) . '.jpg';
+	$cache_file = $docroot . '/thumbnails_cache/' . md5(preg_replace('/\/+/', '/', $relative)) . '_640.jpg';
 	assert_true(is_file($cache_file), 'Preview cache file was not created');
+
+	$uncached = http_json('/index.php?list_all=1');
+	assert_false(in_array('./urlaub/strand/sonne.jpg', $uncached, true), 'Cached image is still reported as uncached');
 
 	$second = http_request($query);
 	assert_http_status($second, 200);
 	assert_header_contains($second, 'cache-control', 'immutable');
 	assert_same($first['body'], $second['body'], 'Cached preview differs from generated preview');
+});
+
+test('large images get high resolution thumbnails', function (): void {
+	$response = http_request('/index.php?' . http_build_query(['preview' => './hochaufloesend/gross.jpg']));
+	assert_http_status($response, 200);
+	assert_header_contains($response, 'content-type', 'image/jpeg');
+
+	$size = getimagesizefromstring($response['body']);
+	assert_true($size !== false, 'Thumbnail is not a readable image');
+	assert_same(640, max($size[0], $size[1]), 'Thumbnail was not rendered at the high resolution size');
 });
 
 test('PNG preview is converted to JPEG', function (): void {

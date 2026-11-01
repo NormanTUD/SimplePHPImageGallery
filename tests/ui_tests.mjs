@@ -47,6 +47,19 @@ test('desktop gallery folder navigation works with one click', async (page) => {
   assert.equal(await page.locator('#gallery .thumbnail_folder').count() >= 2, true, 'Subfolders were not rendered');
 });
 
+test('preview URLs are never treated as folders', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+
+  const rejected = await page.evaluate(() => {
+    const container = document.createElement('div');
+    container.className = 'thumbnail_folder';
+    container.setAttribute('data-path', 'index.php?preview=.%2F');
+    return window.get_media_path(container, true);
+  });
+  assert.equal(rejected, '', 'Preview URL was accepted as a folder path');
+});
+
 test('gallery image opens fullscreen and supports keyboard navigation', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
@@ -171,6 +184,82 @@ test('GPS folder draws the map', async (page) => {
   await page.locator('#map.leaflet-container').waitFor({ state: 'visible', timeout: 10000 });
 });
 
+test('select button enables selection, marks cards and clears them', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+
+  const selectButton = page.locator('#selectModeBtn');
+  await selectButton.click();
+  assert.equal(await selectButton.getAttribute('aria-pressed'), 'true', 'Select button did not enter selection mode');
+
+  const firstThumbnail = page.locator('#gallery .thumbnail').first();
+  await firstThumbnail.click();
+  assert.equal(await page.evaluate(() => window.selectedImages.length), 1, 'Select mode click did not select an image');
+  assert.equal(await firstThumbnail.evaluate((element) => element.classList.contains('is-selected')), true, 'Selected card is not highlighted');
+
+  await selectButton.click();
+  assert.equal(await page.evaluate(() => window.selectedImages.length), 0, 'Done did not clear the selection');
+  assert.equal(await selectButton.getAttribute('aria-pressed'), 'false', 'Select button did not leave selection mode');
+});
+
+test('gallery metadata and empty folder state are shown', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+
+  const metaText = await page.locator('#galleryMeta').textContent();
+  assert.match(metaText, /folders?/i, 'Gallery metadata does not mention folders');
+
+  await openFolder(page, './leer', '#emptyState');
+  await page.locator('#emptyState').waitFor({ state: 'visible', timeout: 15000 });
+  assert.match(await page.locator('#emptyState').textContent(), /Nothing here yet/i, 'Empty state message missing');
+  assert.equal(await page.locator('#gallery .thumbnail').count(), 0, 'Empty folder unexpectedly rendered thumbnails');
+});
+
+test('lightbox shows counter, caption, details and download link', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+
+  await page.locator('#gallery .thumbnail').first().click();
+  await page.locator('.fullscreen').waitFor({ state: 'visible', timeout: 5000 });
+
+  assert.match(await page.locator('.fullscreen-counter').textContent(), /^\d+ \/ 2$/, 'Lightbox counter is wrong');
+  assert.match(await page.locator('.fullscreen-caption').textContent(), /\.(jpg|png)$/i, 'Lightbox caption is missing the filename');
+  assert.equal(await page.locator('.fullscreen-download').getAttribute('download'), (await page.locator('.fullscreen-caption').textContent()));
+
+  await page.locator('.fullscreen-info').click();
+  await page.locator('.image-info-overlay').waitFor({ state: 'visible', timeout: 10000 });
+  await page.locator('.image-info-table').waitFor({ state: 'visible', timeout: 10000 });
+  assert.match(await page.locator('.image-info-body').textContent(), /image_width/i, 'Image details are missing dimensions');
+
+  await page.keyboard.press('Escape');
+  await page.locator('.image-info-overlay').waitFor({ state: 'detached', timeout: 5000 });
+  assert.equal(await page.locator('.fullscreen').count(), 1, 'Escape closed the lightbox instead of only the details');
+
+  await page.keyboard.press('Escape');
+  await page.locator('.fullscreen').waitFor({ state: 'detached', timeout: 5000 });
+});
+
+test('shortcuts dialog opens and closes', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+
+  await page.locator('#shortcutsBtn').click();
+  await page.locator('.shortcuts-overlay').waitFor({ state: 'visible', timeout: 5000 });
+  assert.match(await page.locator('.shortcuts-overlay').textContent(), /Shortcuts/i, 'Shortcuts dialog content missing');
+
+  await page.locator('.shortcuts-close').click();
+  await page.locator('.shortcuts-overlay').waitFor({ state: 'detached', timeout: 5000 });
+});
+
+test('image cards get readable filename labels', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+
+  const label = page.locator('#gallery .thumbnail .thumbnail-name').first();
+  await label.waitFor({ state: 'attached', timeout: 5000 });
+  assert.match(await label.textContent(), /\.(jpg|png)$/i, 'Filename label is missing');
+});
+
 test('thumbnails below the fold are lazy loaded', async (page) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openFolder(page, './viele', '#gallery .thumbnail');
@@ -192,6 +281,16 @@ test('thumbnails below the fold are lazy loaded', async (page) => {
     },
     { timeout: 20000 }
   );
+});
+
+test('back to top button appears and scrolls home', async (page) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openFolder(page, './viele', '#gallery .thumbnail');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.locator('#backToTop.is-visible').waitFor({ state: 'visible', timeout: 10000 });
+
+  await page.locator('#backToTop').click();
+  await page.waitForFunction(() => window.scrollY < 80, { timeout: 10000 });
 });
 
 test('mobile layout has no horizontal overflow and usable search', async (page) => {

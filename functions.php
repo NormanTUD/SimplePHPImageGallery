@@ -1,4 +1,13 @@
 <?php
+	if (!defined("THUMBNAIL_MAX_SIZE")) {
+		define("THUMBNAIL_MAX_SIZE", 640);
+	}
+	if (!defined("VIDEO_THUMBNAIL_MAX_SIZE")) {
+		define("VIDEO_THUMBNAIL_MAX_SIZE", 480);
+	}
+	if (!defined("THUMBNAIL_CACHE_VERSION")) {
+		define("THUMBNAIL_CACHE_VERSION", "640");
+	}
 	function dier ($msg) {
 		print("<pre>");
 		print(var_dump($msg));
@@ -50,17 +59,19 @@
 			$metadata['image_height'] = $image_info[1];
 			$metadata['image_type'] = image_type_to_mime_type($image_info[2]);
 
-			$exif_data = exif_read_data($file_info, 'IFD0');
-			if ($exif_data) {
-				$exif_html = '<table style="border-collapse:collapse;">';
-				foreach ($exif_data as $k => $v) {
-					if (is_array($v)) {
-						$v = implode(', ', $v);
+			if (in_array($image_info[2], [IMAGETYPE_JPEG, IMAGETYPE_TIFF_II, IMAGETYPE_TIFF_MM], true)) {
+				$exif_data = @exif_read_data($file_info, 'IFD0');
+				if ($exif_data) {
+					$exif_html = '<table style="border-collapse:collapse;">';
+					foreach ($exif_data as $k => $v) {
+						if (is_array($v)) {
+							$v = implode(', ', $v);
+						}
+						$exif_html .= '<tr><td style="padding:2px 5px;"><b>' . htmlspecialchars($k) . '</b></td><td style="padding:2px 5px;">' . htmlspecialchars((string)$v) . '</td></tr>';
 					}
-					$exif_html .= '<tr><td style="padding:2px 5px;"><b>' . htmlspecialchars($k) . '</b></td><td style="padding:2px 5px;">' . htmlspecialchars((string)$v) . '</td></tr>';
+					$exif_html .= '</table>';
+					$metadata['exif'] = $exif_html;
 				}
-				$exif_html .= '</table>';
-				$metadata['exif'] = $exif_html;
 			}
 		}
 
@@ -458,7 +469,8 @@
 
 		foreach ($images as $image) {
 			$is_valid_file = is_valid_image_or_video_file($image["path"]);
-			if (is_file($image["path"]) && $is_valid_file && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
+			$normalized_image_path = preg_replace("#/+#", "/", $image["path"]);
+			if (is_file($image["path"]) && $is_valid_file && $normalized_image_path !== "./loading.gif") {
 				foreach (create_thumbnail_html($image, false) as $html_part) {
 					$html_parts[] = $html_part;
 				}
@@ -488,8 +500,8 @@
 		}
 
 		// Sonst HTML dynamisch generieren
-		if (file_exists("thumbnails_cache/$file_hash.jpg")) {
-			list($width, $height) = getImageSizeWithRotation("thumbnails_cache/$file_hash.jpg");
+		if (file_exists("thumbnails_cache/{$file_hash}_" . THUMBNAIL_CACHE_VERSION . ".jpg")) {
+			list($width, $height) = getImageSizeWithRotation("thumbnails_cache/{$file_hash}_" . THUMBNAIL_CACHE_VERSION . ".jpg");
 			$wh_string = ($width && $height) ? " style=\"width:{$width}px; height:{$height}px; object-fit:contain;\" " : "";
 		} else {
 			$wh_string = getResizedImageStyle($thumb);
@@ -640,11 +652,7 @@
 	}
 
 	function is_cached_already ($path) {
-		$ending = "jpg";
-
-		if (!preg_match("/\.(mov|mp4)$/i", $path)) {
-			$ending = "gif";
-		}
+		$ending = preg_match("/\.(mov|mp4)$/i", $path) ? "gif" : "jpg";
 
 		$md5 = get_hash_from_file($path);
 
@@ -654,7 +662,7 @@
 			$cacheFolder = "/docker_tmp/";
 		}
 
-		$path = $cacheFolder . $md5 . "." . $ending;
+		$path = $cacheFolder . $md5 . "_" . THUMBNAIL_CACHE_VERSION . "." . $ending;
 
 		if (file_exists($path) && is_valid_image_or_video_file($path)) {
 			return true;
@@ -691,7 +699,7 @@
 		return $imageList;
 	}
 
-	function getResizedImageStyle($imagePath, $thumbnailMaxWidth = 150, $thumbnailMaxHeight = 150) {
+	function getResizedImageStyle($imagePath, $thumbnailMaxWidth = THUMBNAIL_MAX_SIZE, $thumbnailMaxHeight = THUMBNAIL_MAX_SIZE) {
 		if (preg_match("/\.m(ov|p4)$/i", $imagePath)) {
 			return;
 		}
@@ -822,11 +830,10 @@
 	}
 
 	function create_preview($imagePath) {
-		$thumbnailMaxWidth = 150;
-		$thumbnailMaxHeight = 150;
-		$cacheFolder = './thumbnails_cache/';
-
 		$isVideo = preg_match("/\.(mov|mp4)$/i", $imagePath);
+		$thumbnailMaxWidth = $isVideo ? VIDEO_THUMBNAIL_MAX_SIZE : THUMBNAIL_MAX_SIZE;
+		$thumbnailMaxHeight = $thumbnailMaxWidth;
+		$cacheFolder = './thumbnails_cache/';
 
 		if (is_dir("/docker_tmp/")) {
 			$cacheFolder = "/docker_tmp/";
@@ -841,7 +848,7 @@
 
 			$md5 = get_hash_from_file($imagePath);
 
-			$thumbnailFileName = $md5 . '.' . $file_ending;
+			$thumbnailFileName = $md5 . "_" . THUMBNAIL_CACHE_VERSION . "." . $file_ending;
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
@@ -859,10 +866,10 @@
 					$ffprobe = "ffprobe -v error -select_streams v:0 -show_entries format=duration -of csv=p=0 \"$imagePath\"";
 					$duration = floatval(shell_exec($ffprobe));
 
-					$gifDuration = 10;
+					$gifDuration = 6;
 					$startTime = 0;
 
-					$frameRate = 10;
+					$frameRate = 8;
 					$frameCount = $gifDuration * $frameRate;
 
 					$ffmpeg = "ffmpeg -y -i \"$imagePath\" -vf \"fps=$frameRate,scale=$thumbnailMaxWidth:$thumbnailMaxHeight:force_original_aspect_ratio=decrease\" -t $gifDuration -ss $startTime \"$cachedThumbnailPath\"";
@@ -933,7 +940,7 @@
 
 
 				ob_start();
-				imagejpeg($thumbnail);
+				imagejpeg($thumbnail, null, 88);
 				$data = ob_get_clean();
 				file_put_contents($cachedThumbnailPath, $data);
 				header('Cache-Control: public, max-age=31536000, immutable');

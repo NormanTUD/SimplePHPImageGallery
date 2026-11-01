@@ -24,28 +24,47 @@ function decode_php_url_component(value) {
 	}
 }
 
+function normalize_folder_path(value) {
+	if (!value) {
+		return "";
+	}
+
+	var path = String(value);
+	if (path === ".") {
+		return "./";
+	}
+	if (path.startsWith("./")) {
+		return path;
+	}
+	return "";
+}
+
 function get_media_path(container, is_folder) {
 	if (!container) {
 		return "";
 	}
 
 	var direct_path = container.getAttribute("data-path");
-	if (direct_path) {
+	if (direct_path && !is_folder) {
 		return direct_path;
 	}
 
 	if (is_folder) {
+		if (direct_path) {
+			return normalize_folder_path(direct_path);
+		}
+
 		var link = container.closest("a");
 		var href = link ? link.getAttribute("data-href") : null;
 		if (href) {
-			return decode_php_url_component(href);
+			return normalize_folder_path(decode_php_url_component(href));
 		}
 
 		var folder_onclick = link ? $(link).data("onclick") : null;
 		if (typeof folder_onclick === "string") {
 			var folder_match = folder_onclick.match(/'([^']*)'|"([^"]*)"/);
 			if (folder_match) {
-				return decode_php_url_component(folder_match[1] || folder_match[2]);
+				return normalize_folder_path(decode_php_url_component(folder_match[1] || folder_match[2]));
 			}
 		}
 
@@ -77,6 +96,28 @@ function set_checkmark_visibility(container, visible) {
 	}
 }
 
+function sync_selection_mode_ui() {
+	var selectButton = document.getElementById("selectModeBtn");
+	if (selectButton) {
+		selectButton.textContent = enabled_selection_mode ? "Done" : "Select";
+		selectButton.setAttribute("aria-pressed", enabled_selection_mode ? "true" : "false");
+	}
+
+	document.body.classList.toggle("selection-mode", enabled_selection_mode);
+}
+
+function toggle_selection_mode() {
+	if (enabled_selection_mode) {
+		unselectSelection();
+		return;
+	}
+
+	enabled_selection_mode = true;
+	sync_selection_mode_ui();
+	updateDownloadButton();
+	updateUnselectButton();
+}
+
 function toggle_media_selection(container, is_folder) {
 	var item = get_media_path(container, is_folder);
 	if (!item) {
@@ -87,23 +128,28 @@ function toggle_media_selection(container, is_folder) {
 		if (selectedFolders.includes(item)) {
 			selectedFolders = selectedFolders.filter(i => i !== item);
 			set_checkmark_visibility(container, false);
+			container.classList.remove("is-selected");
 		} else {
 			selectedFolders.push(item);
 			set_checkmark_visibility(container, true);
+			container.classList.add("is-selected");
 		}
 	} else {
 		if (selectedImages.includes(item)) {
 			selectedImages = selectedImages.filter(i => i !== item);
 			set_checkmark_visibility(container, false);
+			container.classList.remove("is-selected");
 		} else {
 			selectedImages.push(item);
 			set_checkmark_visibility(container, true);
+			container.classList.add("is-selected");
 		}
 	}
 
 	updateDownloadButton();
 	updateUnselectButton();
 	enabled_selection_mode = true;
+	sync_selection_mode_ui();
 }
 
 function updateDownloadButton() {
@@ -122,8 +168,10 @@ function unselectSelection() {
 
 	updateDownloadButton();
 	updateUnselectButton();
+	sync_selection_mode_ui();
 
 	$(".checkmark").css({ display: "block", visibility: "hidden" });
+	$(".is-selected").removeClass("is-selected");
 }
 
 function downloadSelected() {
@@ -333,9 +381,20 @@ function load_lazy_image(img) {
 		return;
 	}
 
+	var card = img.closest(".thumbnail, .thumbnail_folder");
+	if (card) {
+		card.classList.add("is-loaded");
+	}
+
 	img.setAttribute('data-lazy-loaded', '1');
 	img.addEventListener('load', function () {
-		img.classList.add("box-shadow");
+		img.classList.add("box-shadow", "is-loaded");
+	});
+	img.addEventListener('error', function () {
+		img.classList.add("box-shadow", "is-loaded");
+		if (!img.getAttribute("src")?.endsWith("error.svg")) {
+			img.src = "error.svg";
+		}
 	});
 	img.src = original_url;
 }
@@ -717,6 +776,58 @@ function getCurrentFolderParameter() {
 	}
 }
 
+function decorate_media_cards(root) {
+	if (!root) {
+		return;
+	}
+
+	$(root).find(".thumbnail").each(function () {
+		if (this.querySelector(".thumbnail-name")) {
+			return;
+		}
+
+		var path = get_media_path(this, false);
+		if (!path) {
+			return;
+		}
+
+		var name = path.split("/").pop();
+		this.setAttribute("title", name);
+
+		var label = document.createElement("span");
+		label.className = "thumbnail-name";
+		label.textContent = name;
+		this.appendChild(label);
+	});
+}
+
+function update_gallery_meta() {
+	var gallery = document.getElementById("gallery");
+	var meta = document.getElementById("galleryMeta");
+	var empty_state = document.getElementById("emptyState");
+
+	if (!gallery || !meta) {
+		return;
+	}
+
+	var folders = gallery.querySelectorAll(".thumbnail_folder").length;
+	var images = gallery.querySelectorAll(".thumbnail").length;
+	var parts = [];
+
+	if (folders > 0) {
+		parts.push(folders + " folder" + (folders === 1 ? "" : "s"));
+	}
+	if (images > 0) {
+		parts.push(images + " photo" + (images === 1 ? "" : "s"));
+	}
+
+	meta.textContent = parts.join(" · ");
+
+	if (empty_state) {
+		empty_state.hidden = folders + images > 0;
+	}
+}
+
 function add_listeners() {
 	if (media_event_delegation_installed) {
 		return;
@@ -799,6 +910,7 @@ async function load_folder (folder, load_map = true) {
 
 	unobserve_lazy_images($("#searchResults")[0]);
 	$("#searchResults").empty().hide();
+	$("#galleryMeta").show();
 
 	try {
 		var response = await fetch("index.php?gallery=" + encodeURIComponent(folder), { cache: "no-store" });
@@ -824,7 +936,9 @@ async function load_folder (folder, load_map = true) {
 	}
 
 	add_listeners();
+	decorate_media_cards($("#gallery")[0]);
 	lazy_load_images($("#gallery")[0]);
+	update_gallery_meta();
 	createBreadcrumb(folder);
 
 	if (load_map) {
@@ -846,8 +960,19 @@ function checkKey(e) {
 	} else if (e.keyCode == '39') {
 		next_image();
 	} else if (e.key === "Escape") {
+		if (document.querySelector(".image-info-overlay")) {
+			hide_image_info();
+			return;
+		}
+		if (document.querySelector(".shortcuts-overlay")) {
+			hide_shortcuts();
+			return;
+		}
 		$(fullscreen).remove();
+		current_fullscreen_image = "";
 		hide_image_info();
+	} else if (e.key === "?" && !["INPUT", "TEXTAREA"].includes(document.activeElement?.nodeName)) {
+		show_shortcuts();
 	}
 }
 
@@ -929,6 +1054,8 @@ async function _start_search() {
 			$("#delete_search").show();
 			$("#searchResults").show();
 			$("#gallery").hide();
+			$("#galleryMeta").hide();
+			$("#emptyState").prop("hidden", true);
 
 			$("#searchResults").html('<p class="search-status">Searching…</p>');
 
@@ -965,6 +1092,8 @@ async function _start_search() {
 			$("#searchInput").trigger('blur');
 			$("#delete_search,#searchResults").hide();
 			$("#gallery").show();
+			$("#galleryMeta").show();
+			update_gallery_meta();
 
 			draw_map_from_current_images().catch(function (error) {
 				console.warn("Failed to draw map:", error);
@@ -1022,10 +1151,11 @@ async function displaySearchResults(searchTerm, results) {
 			}
 		});
 	} else {
-		$searchResults.append('<p>No results found.</p>');
+		$searchResults.append(`<p class="no-results">No matches for <strong>${escape_html_attribute(searchTerm)}</strong>. Try enabling fuzzy search.</p>`);
 	}
 
 	add_listeners();
+	decorate_media_cards($searchResults[0]);
 	lazy_load_images($searchResults[0]);
 
 	draw_map_from_current_images().catch(function (error) {
@@ -1048,7 +1178,7 @@ function isSwipeDevice() {
 	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 }
 
-function add_fullscreen_controls(container) {
+function add_fullscreen_controls(container, imagePath) {
 	var closeButton = document.createElement("button");
 	closeButton.className = "fullscreen-close";
 	closeButton.type = "button";
@@ -1056,7 +1186,28 @@ function add_fullscreen_controls(container) {
 	closeButton.innerHTML = "&#x2715;";
 	closeButton.addEventListener("click", function (event) {
 		event.stopPropagation();
+		current_fullscreen_image = "";
 		container.remove();
+	});
+
+	var infoButton = document.createElement("button");
+	infoButton.className = "fullscreen-info";
+	infoButton.type = "button";
+	infoButton.setAttribute("aria-label", "Show image details");
+	infoButton.innerHTML = "i";
+	infoButton.addEventListener("click", function (event) {
+		event.stopPropagation();
+		show_image_info();
+	});
+
+	var downloadLink = document.createElement("a");
+	downloadLink.className = "fullscreen-download";
+	downloadLink.href = imagePath;
+	downloadLink.download = imagePath.split("/").pop();
+	downloadLink.setAttribute("aria-label", "Download this file");
+	downloadLink.innerHTML = "&#x2193;";
+	downloadLink.addEventListener("click", function (event) {
+		event.stopPropagation();
 	});
 
 	var previousButton = document.createElement("button");
@@ -1080,8 +1231,33 @@ function add_fullscreen_controls(container) {
 	});
 
 	container.appendChild(closeButton);
+	container.appendChild(infoButton);
+	container.appendChild(downloadLink);
 	container.appendChild(previousButton);
 	container.appendChild(nextButton);
+}
+
+function add_fullscreen_meta(container, imagePath) {
+	var thumbnails = $(".thumbnail").toArray();
+	var currentIndex = -1;
+
+	thumbnails.forEach(function (thumbnail, index) {
+		if (get_media_path(thumbnail, false) === imagePath) {
+			currentIndex = index;
+		}
+	});
+
+	if (thumbnails.length > 0 && currentIndex >= 0) {
+		var counter = document.createElement("div");
+		counter.className = "fullscreen-counter";
+		counter.textContent = `${currentIndex + 1} / ${thumbnails.length}`;
+		container.appendChild(counter);
+	}
+
+	var caption = document.createElement("div");
+	caption.className = "fullscreen-caption";
+	caption.textContent = imagePath.split("/").pop() || "";
+	container.appendChild(caption);
 }
 
 function showImage(imagePath) {
@@ -1110,9 +1286,10 @@ function showImage(imagePath) {
 		fullscreen.appendChild(toggleSwitch);
 	}
 
-	add_fullscreen_controls(fullscreen);
-
 	var decodedPath = decodeURIComponent(imagePath);
+	current_fullscreen_image = decodedPath;
+	add_fullscreen_controls(fullscreen, decodedPath);
+	add_fullscreen_meta(fullscreen, decodedPath);
 
 	if (decodedPath.match(/\.(mp4|mov)$/i)) {
 		var video = document.createElement('video');
@@ -1144,17 +1321,26 @@ function showImage(imagePath) {
 	}
 
 	$(fullscreen).on("click", function (i) {
-		if (!["INPUT", "IMG", "LABEL", "VIDEO"].includes(i.target.nodeName) && i.target.id != "swipe_toggle") {
+		if (!["INPUT", "IMG", "LABEL", "VIDEO", "A", "BUTTON"].includes(i.target.nodeName) && i.target.id != "swipe_toggle") {
+			current_fullscreen_image = "";
 			$(fullscreen).remove();
 		}
 	});
 }
 
 function get_fullscreen_img_name () {
-	var src = decodeURIComponent($(".fullscreen").find("img").attr("src"));
+	if (current_fullscreen_image) {
+		return current_fullscreen_image;
+	}
+
+	var src = $(".fullscreen").find("img").attr("src");
 
 	if(src) {
-		return src.replace(/.*path=/, "");
+		try {
+			return decodeURIComponent(src).replace(/.*path=/, "");
+		} catch (e) {
+			return src.replace(/.*path=/, "");
+		}
 	} else {
 		console.warn("No index");
 		return "";
@@ -1170,94 +1356,158 @@ function prev_image () {
 }
 
 function show_image_info() {
-	const existing_overlay = document.querySelector('div[style*="position: fixed"]');
-	if (existing_overlay) return;
+	if (document.querySelector(".image-info-overlay")) {
+		return;
+	}
 
 	const imageElement = document.querySelector('.fullscreen img');
 	if (!imageElement) return;
 
 	const imageSrc = get_fullscreen_img_name();
+	if (!imageSrc) return;
 
 	const overlay = document.createElement('div');
-	overlay.style.position = 'fixed';
-	overlay.style.top = '0';
-	overlay.style.left = '0';
-	overlay.style.width = '100vw';
-	overlay.style.height = '100vh';
-	overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-	overlay.style.zIndex = '9999';
-	overlay.style.display = 'flex';
-	overlay.style.alignItems = 'center';
-	overlay.style.justifyContent = 'center';
-	overlay.style.backdropFilter = 'blur(10px)';
+	overlay.className = "image-info-overlay";
 
-	// Container für Scrollbarkeit
-	const scrollContainer = document.createElement('div');
-	scrollContainer.style.maxHeight = '80vh';
-	scrollContainer.style.overflowY = 'auto';
-	scrollContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-	scrollContainer.style.padding = '20px';
-	scrollContainer.style.borderRadius = '10px';
-	scrollContainer.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.3)';
-	scrollContainer.style.maxWidth = '90vw';
+	const card = document.createElement('div');
+	card.className = "image-info-card";
 
-	// ESC zum Schließen
-	overlay.addEventListener('click', e => {
-	if (e.target === overlay) overlay.remove();
-	});
+	const header = document.createElement('div');
+	header.className = "image-info-header";
 
-	document.addEventListener('keydown', function escListener(e) {
-		if (e.key === 'Escape') {
-			overlay.remove();
-			document.removeEventListener('keydown', escListener);
+	const title = document.createElement('h2');
+	title.textContent = "Image details";
+
+	const closeButton = document.createElement('button');
+	closeButton.className = "image-info-close";
+	closeButton.type = "button";
+	closeButton.setAttribute("aria-label", "Close image details");
+	closeButton.innerHTML = "&#x2715;";
+	closeButton.addEventListener("click", hide_image_info);
+
+	header.appendChild(title);
+	header.appendChild(closeButton);
+
+	const body = document.createElement('div');
+	body.className = "image-info-body";
+
+	const status = document.createElement('p');
+	status.className = "image-info-status";
+	status.textContent = "Loading details…";
+	body.appendChild(status);
+
+	card.appendChild(header);
+	card.appendChild(body);
+	overlay.appendChild(card);
+
+	overlay.addEventListener('click', function (event) {
+		if (event.target === overlay) {
+			hide_image_info();
 		}
 	});
+
+	document.body.appendChild(overlay);
 
 	fetch(`index.php?file_info=${encodeURIComponent(imageSrc)}`)
 		.then(response => response.json())
 		.then(data => {
-		if (data) {
-			const table = document.createElement('table');
-			table.style.width = '100%';
-			table.style.borderCollapse = 'collapse';
+			if (!data) {
+				return;
+			}
+
+			const preview = document.createElement("img");
+			preview.className = "image-info-preview";
+			preview.src = `index.php?preview=${encodeURIComponent(imageSrc)}`;
+			preview.alt = imageSrc.split("/").pop() || "";
+
+			const table = document.createElement("table");
+			table.className = "image-info-table";
 
 			Object.keys(data).forEach(key => {
-			const row = document.createElement('tr');
+				const row = document.createElement("tr");
 
-			const cell1 = document.createElement('td');
-			cell1.textContent = key;
-			cell1.style.padding = '5px';
-			cell1.style.fontWeight = 'bold';
-			cell1.style.verticalAlign = 'top';
+				const label = document.createElement("th");
+				label.textContent = key;
 
-			const cell2 = document.createElement('td');
-			cell2.innerHTML = data[key];
-			cell2.style.padding = '5px';
+				const value = document.createElement("td");
+				value.innerHTML = data[key];
 
-			row.appendChild(cell1);
-			row.appendChild(cell2);
-			table.appendChild(row);
+				row.appendChild(label);
+				row.appendChild(value);
+				table.appendChild(row);
 			});
 
-			scrollContainer.appendChild(table);
-
-			const img = document.createElement("img");
-			img.src = `index.php?preview=${encodeURIComponent(imageSrc)}`;
-
-			overlay.appendChild(img);
-
-			overlay.appendChild(scrollContainer);
-		}
+			body.replaceChildren(preview, table);
 		})
 		.catch(error => {
 			console.error('Error fetching image info:', error);
+			status.textContent = "Details could not be loaded.";
 		});
+}
+
+function hide_image_info() {
+	const overlay = document.querySelector(".image-info-overlay");
+	if (overlay) {
+		overlay.remove();
+	}
+}
+
+function show_shortcuts() {
+	if (document.querySelector(".shortcuts-overlay")) {
+		return;
+	}
+
+	const overlay = document.createElement("div");
+	overlay.className = "shortcuts-overlay";
+
+	const card = document.createElement("div");
+	card.className = "shortcuts-card";
+
+	const header = document.createElement("div");
+	header.className = "shortcuts-header";
+
+	const title = document.createElement("h2");
+	title.textContent = "Shortcuts & gestures";
+
+	const closeButton = document.createElement("button");
+	closeButton.className = "shortcuts-close";
+	closeButton.type = "button";
+	closeButton.setAttribute("aria-label", "Close shortcuts");
+	closeButton.innerHTML = "&#x2715;";
+	closeButton.addEventListener("click", hide_shortcuts);
+
+	header.appendChild(title);
+	header.appendChild(closeButton);
+
+	const content = document.createElement("div");
+	content.className = "shortcuts-body";
+	content.innerHTML = `
+		<div class="shortcut-row"><span>Search</span><kbd>/</kbd></div>
+		<div class="shortcut-row"><span>Close search / lightbox</span><kbd>Esc</kbd></div>
+		<div class="shortcut-row"><span>Previous image</span><kbd>&larr;</kbd></div>
+		<div class="shortcut-row"><span>Next image</span><kbd>&rarr;</kbd></div>
+		<div class="shortcut-row"><span>Show details</span><kbd>&uarr;</kbd></div>
+		<div class="shortcut-row"><span>Hide details</span><kbd>&darr;</kbd></div>
+		<div class="shortcut-row"><span>Select on touch</span><span class="shortcut-hint">Long press a card</span></div>
+		<div class="shortcut-row"><span>Select without waiting</span><span class="shortcut-hint">Use the Select button</span></div>
+		<div class="shortcut-row"><span>Swipe in lightbox</span><span class="shortcut-hint">Left / right</span></div>
+	`;
+
+	card.appendChild(header);
+	card.appendChild(content);
+	overlay.appendChild(card);
+
+	overlay.addEventListener("click", function (event) {
+		if (event.target === overlay) {
+			hide_shortcuts();
+		}
+	});
 
 	document.body.appendChild(overlay);
 }
 
-function hide_image_info() {
-	const overlay = document.querySelector('div[style*="position: fixed"]');
+function hide_shortcuts() {
+	const overlay = document.querySelector(".shortcuts-overlay");
 	if (overlay) {
 		overlay.remove();
 	}

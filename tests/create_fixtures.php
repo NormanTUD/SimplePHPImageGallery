@@ -95,6 +95,7 @@ try {
 	make_image($docroot . '/stadt/strasse.jpg', 240, 180, [80, 80, 80], 'Strasse');
 	make_image($docroot . '/stadt/platz.jpg', 240, 160, [160, 80, 80], 'Platz');
 	make_image($docroot . '/special folder/it\'s a test.jpg', 200, 150, [30, 130, 90], 'Special');
+	make_image($docroot . '/hochaufloesend/gross.jpg', 1200, 800, [70, 110, 190], 'Gross');
 
 	file_put_contents($docroot . '/urlaub/strand/sonne.txt', "urlaub sommer strand sonne");
 	file_put_contents($docroot . '/urlaub/berge/gipfel.txt', "urlaub berg gipfel wandern aussicht");

@@ -121,6 +121,10 @@
 		<div class="app-shell">
 			<header class="app-header">
 				<div class="topbar">
+					<a class="brand" href="?folder=./" aria-label="Go to gallery start">
+						<span class="brand-mark" aria-hidden="true"></span>
+						<span class="brand-name"><?php echo htmlspecialchars($servername); ?></span>
+					</a>
 					<div class="search-field">
 						<input onkeyup="start_search()" onchange="start_search()" type="text" id="searchInput" placeholder="Search images, folders, tags…" aria-label="Search images, folders and tags" autocomplete="off" spellcheck="false">
 					</div>
@@ -129,6 +133,8 @@
 						<span>Fuzzy</span>
 					</label>
 					<button class="icon-btn" id="delete_search" onclick="delete_search()" aria-label="Clear search" style="display: none">&#x2715;</button>
+					<button class="icon-btn shortcuts-btn" id="shortcutsBtn" onclick="show_shortcuts()" aria-label="Keyboard shortcuts and gestures" title="Keyboard shortcuts and gestures">?</button>
+					<button class="select-btn" id="selectModeBtn" onclick="toggle_selection_mode()" aria-label="Toggle selection mode">Select</button>
 					<div class="action-buttons">
 						<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
 						<button class="unselect-btn" id="unselectBtn" onclick="unselectSelection()">Unselect</button>
@@ -138,13 +144,21 @@
 				<div id="breadcrumb"></div>
 			</header>
 			<main class="app-content">
+				<div id="galleryMeta" class="gallery-meta" aria-live="polite"></div>
 				<div id="searchResults"></div>
 				<div id="gallery"></div>
+				<div id="emptyState" class="empty-state" hidden>
+					<div class="empty-state-mark" aria-hidden="true"></div>
+					<h2>Nothing here yet</h2>
+					<p>This folder has no photos or subfolders.</p>
+					<button class="empty-state-btn" type="button" onclick="load_folder('./')">Back to start</button>
+				</div>
 				<div id="map_container" class="map-card" style="display: none">
 					<div id="map"></div>
 				</div>
 			</main>
 		</div>
+		<button class="back-to-top" id="backToTop" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Back to top">&#x2191;</button>
 		<script>
 			var current_folder_path = <?php echo json_encode($folderPath, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
 		</script>

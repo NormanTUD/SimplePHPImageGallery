@@ -10,6 +10,7 @@ var enabled_selection_mode = false;
 
 var map = null;
 var fullscreen;
+var current_fullscreen_image = "";
 
 const mobile_layout_query = window.matchMedia('(max-width: 760px), (pointer: coarse)');
 
@@ -26,6 +27,18 @@ if (mobile_layout_query.addEventListener) {
 window.addEventListener('orientationchange', function () {
 	setTimeout(update_layout_mode, 120);
 }, { passive: true });
+
+const back_to_top_button = document.getElementById('backToTop');
+
+function update_back_to_top_visibility() {
+	if (!back_to_top_button) {
+		return;
+	}
+	back_to_top_button.classList.toggle('is-visible', window.scrollY > 650);
+}
+
+window.addEventListener('scroll', update_back_to_top_visibility, { passive: true });
+update_back_to_top_visibility();
 
 const log = console.log;
 const debug = console.debug;
