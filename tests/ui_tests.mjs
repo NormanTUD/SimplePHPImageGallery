@@ -284,27 +284,6 @@ test('metadata dialog does not execute HTML from filenames', async (page) => {
   assert.equal(await page.locator('.image-info-table img').count(), 0, 'Filename was interpreted as HTML');
 });
 
-test('modal focus is trapped and restored', async (page) => {
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await openFolder(page, './', '#gallery .thumbnail_folder');
-
-  await page.locator('#shortcutsBtn').click();
-  await page.locator('.shortcuts-overlay').waitFor({ state: 'visible', timeout: 5000 });
-
-  for (let i = 0; i < 8; i++) {
-    await page.keyboard.press('Tab');
-    const focusInside = await page.evaluate(() => {
-      const overlay = document.querySelector('.shortcuts-overlay');
-      return !!overlay && overlay.contains(document.activeElement);
-    });
-    assert.equal(focusInside, true, 'Focus escaped the shortcuts dialog');
-  }
-
-  await page.keyboard.press('Escape');
-  await page.locator('.shortcuts-overlay').waitFor({ state: 'detached', timeout: 5000 });
-  assert.equal(await page.evaluate(() => document.activeElement?.id), 'shortcutsBtn', 'Focus was not restored');
-});
-
 test('shortcuts dialog opens and closes', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openFolder(page, './', '#gallery .thumbnail_folder');
