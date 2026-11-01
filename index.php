@@ -106,15 +106,13 @@
 	<head>
 		<meta charset="UTF-8">
 		<title><?php print $servername; ?></title>
-		<script src="jquery-3.7.1.min.js"></script>
+		<script defer src="jquery-3.7.1.min.js"></script>
 		<link rel="stylesheet" href="style.css" />
-		<script src="leaflet.js"></script>
-		<script src="swiper-bundle.min.js"></script>
+		<script defer src="leaflet.js"></script>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
-		<link rel="stylesheet" href="swiper-bundle.min.css" />
 		<link rel="stylesheet" href="MarkerCluster.Default.css" />
-		<script src="leaflet.markercluster.js"></script>
-		<script src="functions.js"></script>
+		<script defer src="leaflet.markercluster.js"></script>
+		<script defer src="functions.js"></script>
 	</head>
 	<body>
 		<input onkeyup="start_search()" onchange='start_search()' type="text" id="searchInput" placeholder="Search...">
@@ -130,7 +128,7 @@
 			var current_folder_path = '<?php echo $folderPath; ?>'
 		</script>
 
-		<script src="main.js"></script>
+		<script defer src="main.js"></script>
 
 		<div id="searchResults"></div>
 

@@ -81,7 +81,9 @@
 			if ($file !== '.' && $file !== '..') {
 				$filePath = $directory . '/' . $file;
 				if (is_dir($filePath)) {
-					$images = array_merge($images, getImagesInDirectory($filePath));
+					foreach (getImagesInDirectory($filePath) as $nestedImage) {
+						$images[] = $nestedImage;
+					}
 				} else {
 					$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 					if (in_array($extension, $GLOBALS["FILETYPES"])) {
@@ -189,6 +191,24 @@
 		$searchTermLower = strtolower(sortAndCleanString($searchTerm));
 		$normalized = normalize_special_characters($searchTerm);
 
+		// Build a lookup of image/video files by their name without extension.
+		// This avoids scanning the same directory again for every .txt file.
+		$imageFileByBase = [];
+		foreach ($files as $candidate) {
+			if (in_array($candidate, ['.', '..', '.git', 'thumbnails_cache'])) continue;
+
+			$candidatePath = $fp . '/' . $candidate;
+			if (!is_file($candidatePath)) continue;
+
+			$candidateExtension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
+			if (in_array($candidateExtension, $GLOBALS["FILETYPES"])) {
+				$base = removeFileExtensionFromString($candidate);
+				if (!isset($imageFileByBase[$base])) {
+					$imageFileByBase[$base] = $candidatePath;
+				}
+			}
+		}
+
 		foreach ($files as $file) {
 			if (in_array($file, ['.', '..', '.git', 'thumbnails_cache'])) continue;
 
@@ -205,7 +225,9 @@
 						'thumbnail' => $randomImage['path'] ?? ''
 					];
 				}
-				$results = array_merge($results, searchFiles($filePath, $searchTerm, $allowFuzzy));
+				foreach (searchFiles($filePath, $searchTerm, $allowFuzzy) as $nestedResult) {
+					$results[] = $nestedResult;
+				}
 				continue;
 			}
 
@@ -213,7 +235,7 @@
 				$content = strtolower(file_get_contents($filePath));
 				$cleanContent = sortAndCleanString($content);
 				if (file_or_folder_matches($cleanContent, $searchTermLower, $normalized, $allowFuzzy)) {
-					$imageFilePath = searchImageFileByTXT($filePath);
+					$imageFilePath = $imageFileByBase[removeFileExtensionFromString($file)] ?? null;
 					if ($imageFilePath) {
 						$results[] = [
 							'path' => $imageFilePath,
@@ -272,17 +294,22 @@
 			return json_decode(file_get_contents($cache_file), true);
 		}
 
+		$save_null = function () use ($cache_file) {
+			@file_put_contents($cache_file, 'null');
+			return null;
+		};
+
 		$exif = @exif_read_data($img, 0, true);
 
 		if (empty($exif["GPS"])) {
-			return null;
+			return $save_null();
 		}
 
 		$latitude = array();
 		$longitude = array();
 
 		if (empty($exif['GPS']['GPSLatitude'])) {
-			return null;
+			return $save_null();
 		}
 
 		$coordinates = ['latitude' => 'GPSLatitude', 'longitude' => 'GPSLongitude'];
@@ -292,7 +319,7 @@
 			for ($i = 0; $i < 3; $i++) {
 				$value = getCoord($exif['GPS'][$coord_key][$i]);
 				if (is_null($value)) {
-					return null;
+					return $save_null();
 				}
 				$$coord[$i] = $value;
 			}
@@ -305,7 +332,7 @@
 		);
 
 		if (is_nan($res["latitude"]) || is_nan($res["longitude"])) {
-			return null;
+			return $save_null();
 		}
 
 		$json_data = json_encode($res);
@@ -415,14 +442,18 @@
 
 		foreach ($thumbnails as $thumbnail) {
 			if (preg_match($GLOBALS["valid_file_ending_regex"], $thumbnail["thumbnail"])) {
-				$html_parts = array_merge($html_parts, create_thumbnail_html($thumbnail, true));
+				foreach (create_thumbnail_html($thumbnail, true) as $html_part) {
+					$html_parts[] = $html_part;
+				}
 			}
 		}
 
 		foreach ($images as $image) {
 			$is_valid_file = is_valid_image_or_video_file($image["path"]);
 			if (is_file($image["path"]) && $is_valid_file && !preg_match("/^\.\/\/loading.gif$/", $image["path"])) {
-				$html_parts = array_merge($html_parts, create_thumbnail_html($image, false));
+				foreach (create_thumbnail_html($image, false) as $html_part) {
+					$html_parts[] = $html_part;
+				}
 			}
 		}
 
@@ -442,7 +473,8 @@
 		// Falls HTML-Cache existiert, direkt laden
 		if (file_exists($html_cache_file) && !$is_folder) {
 			$cached = @file_get_contents($html_cache_file);
-			if ($cached !== false) {
+			// Alte Caches ohne gültiges style-Attribut einmalig neu erzeugen.
+			if ($cached !== false && strpos($cached, '<img width:') === false) {
 				return [$cached];  // einzeilig oder mehrzeilig, kompatibel
 			}
 		}
@@ -472,14 +504,16 @@
 			mkdir($cacheDir, 0777, true);
 		}
 
+		$path_attr = htmlspecialchars($path, ENT_QUOTES, 'UTF-8');
+
 		if ($is_folder) {
-			$html = '<a data-href="' . urlencode($path) . '" class="img_element" data-onclick="load_folder(\'' . $path . '\')"><div class="thumbnail_folder">'
+			$html = '<a data-href="' . urlencode($path) . '" data-path="' . $path_attr . '" class="img_element"><div class="thumbnail_folder">'
 				. $img_tag
 				. '<h3>' . $item['name'] . '</h3>'
 				. '<span class="checkmark">✅</span>'
 				. "</div></a>\n";
 		} else {
-			$html = '<div class="thumbnail" data-onclick="showImage(\'' . rawurlencode($path) . '\')">'
+			$html = '<div class="thumbnail" data-path="' . $path_attr . '">'
 				. $img_tag
 				. '<span class="checkmark">✅</span>'
 				. "</div>\n";
@@ -635,8 +669,9 @@
 				$filePath = $directory . '/' . $file;
 
 				if (is_dir($filePath)) {
-					$subDirectoryImages = listAllUncachedImageFiles($filePath);
-					$imageList = array_merge($imageList, $subDirectoryImages);
+					foreach (listAllUncachedImageFiles($filePath) as $subDirectoryImage) {
+						$imageList[] = $subDirectoryImage;
+					}
 				} else {
 					if (is_valid_image_or_video_file($filePath) && !is_cached_already($filePath)) {
 						$imageList[] = $filePath;
@@ -681,13 +716,25 @@
 		$thumbWidth = intval($thumbWidth);
 		$thumbHeight = intval($thumbHeight);
 
-		return "width: {$thumbWidth}px; height: {$thumbHeight}px;";
+		return " style=\"width: {$thumbWidth}px; height: {$thumbHeight}px; object-fit: contain;\" ";
 	}
 
 
 	function search_and_print_results ($searchTerm, $allowFuzzy) {
 		$results = array();
 		$results["files"] = searchFiles('.', $searchTerm, $allowFuzzy);
+
+		$seen = [];
+		$unique_results = [];
+		foreach ($results["files"] as $result) {
+			$key = ($result["type"] ?? "") . ":" . ($result["path"] ?? "");
+			if (isset($seen[$key])) {
+				continue;
+			}
+			$seen[$key] = true;
+			$unique_results[] = $result;
+		}
+		$results["files"] = $unique_results;
 
 		$i = 0;
 		foreach ($results["files"] as $this_result) {
@@ -789,6 +836,8 @@
 
 			$cachedThumbnailPath = $cacheFolder . $thumbnailFileName;
 			if (file_exists($cachedThumbnailPath) && is_valid_image_or_video_file($cachedThumbnailPath)) {
+				header('Cache-Control: public, max-age=31536000, immutable');
+				header('X-Content-Type-Options: nosniff');
 				if ($isVideo) {
 					header('Content-Type: image/gif');
 				} else {
@@ -878,6 +927,8 @@
 				imagejpeg($thumbnail);
 				$data = ob_get_clean();
 				file_put_contents($cachedThumbnailPath, $data);
+				header('Cache-Control: public, max-age=31536000, immutable');
+				header('X-Content-Type-Options: nosniff');
 				header('Content-Type: image/jpeg');
 				echo $data;
 

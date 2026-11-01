@@ -40,6 +40,12 @@ document.addEventListener('keydown', function(event) {
 	} else if (charCode == 27) {
 		var searchInput = document.getElementById('searchInput');
 		searchInput.value = '';
+	} else if (event.key === '/') {
+		var searchInput = document.getElementById('searchInput');
+		if (document.activeElement !== searchInput) {
+			event.preventDefault();
+			searchInput.focus();
+		}
 	}
 });
 
@@ -134,11 +140,9 @@ $(document).ready(async function() {
 		handleSwipe();
 	}, { passive: false });
 
-	$("#delete_search").hide();
+	$("#delete_search, #searchResults").hide();
 	addLinkHighlightEffect();
-	await delete_search();
+	unselectSelection();
 
-	load_folder(getCurrentFolderParameter(), false);
-
-	draw_map_from_current_images();
+	await load_folder(getCurrentFolderParameter(), true);
 });
