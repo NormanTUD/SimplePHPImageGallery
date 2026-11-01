@@ -179,6 +179,8 @@ test('helper assets are not rendered as gallery items', function (): void {
 	$response = http_request('/index.php?' . http_build_query(['gallery' => './']));
 	assert_http_status($response, 200);
 	assert_not_contains('preview=.%2Floading.gif', $response['body'], 'loading.gif was rendered as an image');
+	assert_not_contains('data-path="./icon-192.png"', $response['body'], 'PWA icon was rendered as an image');
+	assert_not_contains('data-path="./icon-512.png"', $response['body'], 'PWA icon was rendered as an image');
 	assert_not_contains('data-path="index.php?preview=', $response['body'], 'Preview URL was rendered as a folder');
 });
 
@@ -218,6 +220,8 @@ test('list_all returns image files and excludes helper assets', function (): voi
 	$matches = array_values(array_filter($data, static fn(string $path): bool => str_ends_with($path, 'sonne.jpg')));
 	assert_true(count($matches) === 1, 'Expected exactly one sonne.jpg in list_all');
 	assert_false(in_array('./loading.gif', $data, true), 'loading.gif must not be listed');
+	assert_false(in_array('./icon-192.png', $data, true), '192px PWA icon must not be listed');
+	assert_false(in_array('./icon-512.png', $data, true), '512px PWA icon must not be listed');
 });
 
 test('filename search returns deduplicated results', function (): void {

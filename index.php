@@ -43,7 +43,7 @@
 	header('X-Content-Type-Options: nosniff');
 	header('Referrer-Policy: no-referrer');
 	header('X-Frame-Options: SAMEORIGIN');
-	header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+	header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.basemaps.cartocdn.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
 
 	$GLOBALS["FILETYPES"] = $validTypes;
 	$GLOBALS["valid_file_ending_regex"] = "/\.(" . implode("|", $validTypes) . ")$/i";
@@ -149,11 +149,12 @@
 					</select>
 					<button class="icon-btn" id="delete_search" onclick="delete_search()" aria-label="Clear search" style="display: none">&#x2715;</button>
 					<button class="icon-btn shortcuts-btn" id="shortcutsBtn" onclick="show_shortcuts()" aria-label="Keyboard shortcuts and gestures" title="Keyboard shortcuts and gestures">?</button>
-					<button class="select-btn" id="selectModeBtn" onclick="toggle_selection_mode()" aria-label="Toggle selection mode">Select</button>
-					<button class="select-btn view-btn" id="timelineBtn" onclick="toggle_timeline_view()" aria-pressed="false">Timeline</button>
-					<button class="select-btn view-btn" id="favoritesBtn" onclick="toggle_favorites_filter()" aria-pressed="false">Favorites <span id="favoritesCount">0</span></button>
-					<button class="select-btn view-btn" id="slideshowBtn" onclick="toggle_slideshow()" aria-pressed="false">Slideshow</button>
-					<button class="select-btn view-btn" id="installAppBtn" onclick="install_pwa()" hidden>Install app</button>
+					<button class="icon-btn mobile-more-btn" id="mobileMoreBtn" type="button" onclick="show_mobile_actions()" aria-label="More actions" aria-expanded="false">&#x22ef;</button>
+					<button class="select-btn select-mode-toggle" id="selectModeBtn" onclick="toggle_selection_mode()" aria-label="Toggle selection mode">Select</button>
+					<button class="select-btn view-btn timeline-toggle" id="timelineBtn" onclick="toggle_timeline_view()" aria-pressed="false">Timeline</button>
+					<button class="select-btn view-btn favorites-toggle" id="favoritesBtn" onclick="toggle_favorites_filter()" aria-pressed="false">Favorites <span class="favorites-count" id="favoritesCount">0</span></button>
+					<button class="select-btn view-btn slideshow-toggle" id="slideshowBtn" onclick="toggle_slideshow()" aria-pressed="false">Slideshow</button>
+					<button class="select-btn view-btn install-toggle" id="installAppBtn" onclick="install_pwa()" hidden>Install app</button>
 					<div class="action-buttons">
 						<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
 						<button class="unselect-btn" id="unselectBtn" onclick="unselectSelection()">Unselect</button>
@@ -173,18 +174,28 @@
 					<p>This folder has no photos or subfolders.</p>
 					<button class="empty-state-btn" type="button" onclick="load_folder('./')">Back to start</button>
 				</div>
-				<div id="map_container" class="map-card is-collapsed">
+				<div id="mapTrigger" class="map-trigger" aria-hidden="true"></div>
+				<div id="map_container" class="map-card" hidden>
 					<div id="map"></div>
-					<div id="mapPlaceholder" class="map-placeholder">
-						<div class="map-placeholder-mark" aria-hidden="true"></div>
-						<h2>Explore these photos on the map</h2>
-						<p>Photos with GPS data in this folder and its subfolders are shown here.</p>
-						<button id="showMapBtn" class="map-load-btn" type="button" onclick="request_map()">Show map</button>
-					</div>
 				</div>
 			</main>
 		</div>
 		<button class="back-to-top" id="backToTop" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Back to top">&#x2191;</button>
+		<div class="mobile-actions" id="mobileActions" hidden>
+			<button class="mobile-actions-backdrop" type="button" onclick="hide_mobile_actions()" aria-label="Close actions"></button>
+			<div class="mobile-actions-sheet" role="dialog" aria-modal="true" aria-label="More actions">
+				<div class="mobile-actions-handle" aria-hidden="true"></div>
+				<div class="mobile-actions-grid">
+					<button class="mobile-action select-mode-toggle" type="button" onclick="toggle_selection_mode(); hide_mobile_actions()">Select</button>
+					<button class="mobile-action timeline-toggle" type="button" aria-pressed="false" onclick="toggle_timeline_view(); hide_mobile_actions()">Timeline</button>
+					<button class="mobile-action favorites-toggle" type="button" aria-pressed="false" onclick="toggle_favorites_filter(); hide_mobile_actions()">Favorites <span class="favorites-count">0</span></button>
+					<button class="mobile-action slideshow-toggle" type="button" aria-pressed="false" onclick="toggle_slideshow(); hide_mobile_actions()">Slideshow</button>
+					<button class="mobile-action download-btn" type="button" onclick="downloadSelected(); hide_mobile_actions()">Download</button>
+					<button class="mobile-action unselect-btn" type="button" onclick="unselectSelection(); hide_mobile_actions()">Unselect</button>
+					<button class="mobile-action install-toggle" type="button" onclick="install_pwa()" hidden>Install app</button>
+				</div>
+			</div>
+		</div>
 		<script>
 			var current_folder_path = <?php echo json_encode($folderPath, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 		</script>

@@ -156,9 +156,9 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
   `THUMBNAIL_CACHE_VERSION`; bump the version whenever rendering changes.
 - Gallery folders are paginated (`GALLERY_PAGE_SIZE`, currently 120) and extend
   through the sentinel/IntersectionObserver infinite-scroll path.
-- The map is lazy: geolist/EXIF scanning must not run until the placeholder is
-  near the viewport or the user requests it. Keep map results limited to the
-  current folder tree.
+- The map is lazy: geolist/EXIF scanning must only run when the map trigger is
+  near the viewport. Do not render an empty map placeholder. Keep map results
+  limited to the current folder tree and hide the map if no photo has GPS data.
 - Video GIF previews use the smaller `VIDEO_THUMBNAIL_MAX_SIZE`.
 - Images below the fold must load lazily through `IntersectionObserver`.
 - Folder changes use async `fetch`; do not reintroduce blocking synchronous AJAX.
@@ -182,7 +182,13 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
 - Keep the lightbox controls and dialogs keyboard accessible; modal focus is
   trapped and restored.
 - Preserve the PWA shell (`sw.js`, `manifest.webmanifest`, icons) and keep its
-  caches same-origin only.
+  caches same-origin only. The PWA icon PNGs are helper assets and must never be
+  listed as gallery photos or search results.
+- Use the configured map tile provider in `create_map_tile_layer()`. Do not use
+  OpenStreetMap volunteer tile servers; they are rate-limited and may block the
+  app. Keep provider attribution visible.
+- On phones, secondary actions collapse into the mobile actions sheet. Do not
+  reintroduce a crowded topbar or desktop-only shortcuts into the phone layout.
 - Every interactive control must have a visible hover/focus/active state.
 - When adding UI, update the Playwright tests and verify both desktop and mobile.
 

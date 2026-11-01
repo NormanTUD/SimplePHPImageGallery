@@ -32,10 +32,7 @@ async function search(page, term, expectedSelector) {
 }
 
 async function ensureMapLoaded(page) {
-  const button = page.locator('#showMapBtn');
-  if (await button.isVisible().catch(() => false)) {
-    await button.click({ timeout: 2000 }).catch(() => {});
-  }
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.locator('#map_container').waitFor({ state: 'visible', timeout: 20000 });
   await page.locator('#map.leaflet-container').waitFor({ state: 'visible', timeout: 15000 });
 }
@@ -191,6 +188,14 @@ test('start page draws the map even with folder=.', async (page) => {
   await page.locator('#gallery .thumbnail_folder').first().waitFor({ state: 'visible', timeout: 15000 });
 
   await ensureMapLoaded(page);
+});
+
+test('map stays hidden when a folder has no GPS photos', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './stadt', '#gallery .thumbnail');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(1500);
+  assert.equal(await page.locator('#map_container').isVisible(), false, 'Map was shown for a folder without GPS');
 });
 
 test('map only shows photos from the current folder and its subfolders', async (page) => {
@@ -457,6 +462,25 @@ test('back to top button appears and scrolls home', async (page) => {
 
   await page.locator('#backToTop').click();
   await page.waitForFunction(() => window.scrollY < 80, { timeout: 10000 });
+});
+
+test('mobile topbar collapses secondary actions into a sheet', async (page) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+
+  for (const selector of ['#timelineBtn', '#favoritesBtn', '#slideshowBtn', '#selectModeBtn', '#shortcutsBtn']) {
+    assert.equal(await page.locator(selector).isVisible(), false, `${selector} still takes space on mobile`);
+  }
+
+  await page.locator('#mobileMoreBtn').click();
+  await page.locator('#mobileActions').waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('#mobileActions .select-mode-toggle').click();
+  await page.locator('#mobileActions').waitFor({ state: 'hidden', timeout: 5000 });
+  assert.equal(await page.evaluate(() => window.enabled_selection_mode), true, 'Mobile action did not enable selection');
+
+  await page.locator('#mobileMoreBtn').click();
+  await page.locator('#mobileActions .select-mode-toggle').click();
+  assert.equal(await page.evaluate(() => window.enabled_selection_mode), false, 'Mobile action did not disable selection');
 });
 
 test('mobile layout has no horizontal overflow and usable search', async (page) => {

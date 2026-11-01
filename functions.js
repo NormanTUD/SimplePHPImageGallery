@@ -133,11 +133,10 @@ function set_checkmark_visibility(container, visible) {
 }
 
 function sync_selection_mode_ui() {
-	var selectButton = document.getElementById("selectModeBtn");
-	if (selectButton) {
+	document.querySelectorAll(".select-mode-toggle").forEach(function (selectButton) {
 		selectButton.textContent = enabled_selection_mode ? "Done" : "Select";
 		selectButton.setAttribute("aria-pressed", enabled_selection_mode ? "true" : "false");
-	}
+	});
 
 	document.body.classList.toggle("selection-mode", enabled_selection_mode);
 }
@@ -271,6 +270,32 @@ function deactivate_modal() {
 	modal_return_focus = null;
 }
 
+function show_mobile_actions() {
+	var container = document.getElementById("mobileActions");
+	var button = document.getElementById("mobileMoreBtn");
+	if (!container) {
+		return;
+	}
+
+	container.hidden = false;
+	if (button) {
+		button.setAttribute("aria-expanded", "true");
+	}
+	activate_modal(container, "More actions");
+}
+
+function hide_mobile_actions() {
+	var container = document.getElementById("mobileActions");
+	var button = document.getElementById("mobileMoreBtn");
+	if (container && !container.hidden) {
+		container.hidden = true;
+		if (button) {
+			button.setAttribute("aria-expanded", "false");
+		}
+		deactivate_modal();
+	}
+}
+
 function load_favorites_store() {
 	if (favorites_loaded) {
 		return;
@@ -333,10 +358,9 @@ function update_favorite_state_for_container(container) {
 }
 
 function update_favorites_count() {
-	var counter = document.getElementById("favoritesCount");
-	if (counter) {
+	document.querySelectorAll(".favorites-count").forEach(function (counter) {
 		counter.textContent = favorites.size;
-	}
+	});
 }
 
 function refresh_all_favorite_states() {
@@ -412,10 +436,9 @@ function toggle_favorites_filter() {
 	favorites_filter_active = !favorites_filter_active;
 	document.body.classList.toggle("favorites-only", favorites_filter_active);
 
-	var button = document.getElementById("favoritesBtn");
-	if (button) {
+	document.querySelectorAll(".favorites-toggle").forEach(function (button) {
 		button.setAttribute("aria-pressed", favorites_filter_active ? "true" : "false");
-	}
+	});
 
 	if (favorites_filter_active && favorites.size === 0) {
 		show_toast("No favorites yet. Tap the heart on a photo.");
@@ -423,10 +446,9 @@ function toggle_favorites_filter() {
 }
 
 function update_timeline_button() {
-	var button = document.getElementById("timelineBtn");
-	if (button) {
+	document.querySelectorAll(".timeline-toggle").forEach(function (button) {
 		button.setAttribute("aria-pressed", timeline_mode ? "true" : "false");
-	}
+	});
 }
 
 function reset_timeline_state() {
@@ -545,11 +567,10 @@ function toggle_timeline_view() {
 }
 
 function update_slideshow_button() {
-	var button = document.getElementById("slideshowBtn");
-	if (button) {
+	document.querySelectorAll(".slideshow-toggle").forEach(function (button) {
 		button.setAttribute("aria-pressed", slideshow_timer ? "true" : "false");
 		button.textContent = slideshow_timer ? "Stop slideshow" : "Slideshow";
-	}
+	});
 
 	var fullscreen_button = document.querySelector(".fullscreen-slideshow");
 	if (fullscreen_button) {
@@ -672,9 +693,7 @@ function show_location_modal(latitude, longitude, path) {
 		}
 
 		location_modal_map = L.map(mapElement).setView([latitude, longitude], 13);
-		L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-			attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-		}).addTo(location_modal_map);
+		create_map_tile_layer().addTo(location_modal_map);
 
 		L.marker([latitude, longitude])
 			.addTo(location_modal_map)
@@ -800,12 +819,10 @@ function highlight_search_matches(root, term) {
 }
 
 function updateDownloadButton() {
-	var downloadBtn = document.getElementById('downloadBtn');
-	if (selectedImages.length > 0 || selectedFolders.length > 0) {
-		downloadBtn.style.visibility = 'inherit';
-	} else {
-		downloadBtn.style.visibility = 'hidden';
-	}
+	var visible = selectedImages.length > 0 || selectedFolders.length > 0;
+	document.querySelectorAll('.download-btn').forEach(function (downloadBtn) {
+		downloadBtn.style.visibility = visible ? 'inherit' : 'hidden';
+	});
 }
 
 function unselectSelection() {
@@ -992,12 +1009,10 @@ function onImageMouseUp(e){
 }
 
 function updateUnselectButton() {
-	var unselectBtn = document.getElementById('unselectBtn');
-	if (selectedImages.length > 0 || selectedFolders.length > 0) {
-		unselectBtn.style.visibility = 'inherit';
-	} else {
-		unselectBtn.style.visibility = 'hidden';
-	}
+	var visible = selectedImages.length > 0 || selectedFolders.length > 0;
+	document.querySelectorAll('.unselect-btn').forEach(function (unselectBtn) {
+		unselectBtn.style.visibility = visible ? 'inherit' : 'hidden';
+	});
 }
 
 function splitArrayIntoSubarrays(arr, n) {
@@ -1273,6 +1288,18 @@ async function get_map_data () {
 	return data;
 }
 
+function create_map_tile_layer() {
+	var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+	var url = dark
+		? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+		: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+
+	return L.tileLayer(url, {
+		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+		maxZoom: 20
+	});
+}
+
 async function draw_map_from_current_images () {
 	var token = ++map_draw_token;
 
@@ -1283,11 +1310,11 @@ async function draw_map_from_current_images () {
 	}
 
 	if (!data || data.length === 0) {
-		$("#map_container").hide();
+		$("#map_container").prop("hidden", true);
 		return;
 	}
 
-	$("#map_container").removeClass("is-collapsed").show();
+	$("#map_container").prop("hidden", false).show();
 
 	let minLat = data[0].latitude;
 	let maxLat = data[0].latitude;
@@ -1310,10 +1337,7 @@ async function draw_map_from_current_images () {
 	// Init map and bounds
 	map = L.map('map').fitBounds([[minLat, minLon], [maxLat, maxLon]]);
 
-	// OSM Layer
-	L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-	}).addTo(map);
+	create_map_tile_layer().addTo(map);
 
 	// Cluster group
 	let markerCluster = L.markerClusterGroup({
@@ -1360,14 +1384,7 @@ function reset_map_ui() {
 	var container = document.getElementById("map_container");
 	if (container) {
 		container.classList.remove("is-loading");
-		container.classList.add("is-collapsed");
-		container.hidden = false;
-	}
-
-	var button = document.getElementById("showMapBtn");
-	if (button) {
-		button.disabled = false;
-		button.textContent = "Show map";
+		container.hidden = true;
 	}
 
 	if (window.map) {
@@ -1378,12 +1395,12 @@ function reset_map_ui() {
 }
 
 function maybe_request_map_if_visible() {
-	var container = document.getElementById("map_container");
-	if (!container || container.hidden || map_loading) {
+	var trigger = document.getElementById("mapTrigger");
+	if (!trigger || map_loading) {
 		return;
 	}
 
-	var rect = container.getBoundingClientRect();
+	var rect = trigger.getBoundingClientRect();
 	if (rect.top < window.innerHeight + 700 && rect.bottom > -700) {
 		request_map();
 	}
@@ -1397,14 +1414,8 @@ async function request_map() {
 	map_loading = true;
 
 	var container = document.getElementById("map_container");
-	var button = document.getElementById("showMapBtn");
-
 	if (container) {
 		container.classList.add("is-loading");
-	}
-	if (button) {
-		button.disabled = true;
-		button.textContent = "Loading map…";
 	}
 
 	try {
@@ -1416,17 +1427,13 @@ async function request_map() {
 		if (container) {
 			container.classList.remove("is-loading");
 		}
-		if (button) {
-			button.disabled = false;
-			button.textContent = "Show map";
-		}
 	}
 }
 
 function setup_map_lazy_observer() {
-	var container = document.getElementById("map_container");
+	var trigger = document.getElementById("mapTrigger");
 
-	if (!container || map_lazy_observer || !("IntersectionObserver" in window)) {
+	if (!trigger || map_lazy_observer || !("IntersectionObserver" in window)) {
 		return;
 	}
 
@@ -1438,7 +1445,7 @@ function setup_map_lazy_observer() {
 		});
 	}, { rootMargin: "700px 0px" });
 
-	map_lazy_observer.observe(container);
+	map_lazy_observer.observe(trigger);
 }
 
 function createBreadcrumb(currentFolderPath) {
@@ -1858,6 +1865,10 @@ function checkKey(e) {
 	} else if (e.keyCode == '39') {
 		next_image();
 	} else if (e.key === "Escape") {
+		if (document.getElementById("mobileActions") && !document.getElementById("mobileActions").hidden) {
+			hide_mobile_actions();
+			return;
+		}
 		if (document.querySelector(".location-overlay")) {
 			hide_location_modal();
 			return;

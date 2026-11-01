@@ -13,6 +13,19 @@
 		return realpath('.');
 	}
 
+	function is_helper_asset($path) {
+		$name = strtolower(basename($path));
+		return in_array($name, [
+			'loading.gif',
+			'error.svg',
+			'search.svg',
+			'save.svg',
+			'icon.svg',
+			'icon-192.png',
+			'icon-512.png',
+		], true);
+	}
+
 	function is_path_within_gallery($path) {
 		if (!is_string($path) || $path === '' || strpos($path, "\0") !== false) {
 			return false;
@@ -193,7 +206,7 @@
 					}
 				} else {
 					$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-					if (in_array($extension, $GLOBALS["FILETYPES"])) {
+					if (in_array($extension, $GLOBALS["FILETYPES"]) && !is_helper_asset($filePath)) {
 						$images[] = $filePath;
 					}
 				}
@@ -308,7 +321,7 @@
 			if (!is_file($candidatePath)) continue;
 
 			$candidateExtension = strtolower(pathinfo($candidate, PATHINFO_EXTENSION));
-			if (in_array($candidateExtension, $GLOBALS["FILETYPES"])) {
+			if (in_array($candidateExtension, $GLOBALS["FILETYPES"]) && !is_helper_asset($candidatePath)) {
 				$base = removeFileExtensionFromString($candidate);
 				if (!isset($imageFileByBase[$base])) {
 					$imageFileByBase[$base] = $candidatePath;
@@ -353,7 +366,7 @@
 				continue;
 			}
 
-			if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+			if (in_array($fileExtension, $GLOBALS["FILETYPES"]) && !is_helper_asset($filePath)) {
 				if (file_or_folder_matches($fileNameBase, $searchTermLower, $normalized, $allowFuzzy)) {
 					$results[] = [
 						'path' => $filePath,
@@ -562,7 +575,7 @@
 		foreach ($images as $image) {
 			$is_valid_file = is_valid_image_or_video_file($image["path"]);
 			$normalized_image_path = preg_replace("#/+#", "/", $image["path"]);
-			if (is_file($image["path"]) && $is_valid_file && $normalized_image_path !== "./loading.gif") {
+			if (is_file($image["path"]) && $is_valid_file && !is_helper_asset($image["path"])) {
 				$items[] = ["type" => "file", "item" => $image];
 			}
 		}
@@ -726,7 +739,7 @@
 
 			$fileExtension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-			if (in_array($fileExtension, $GLOBALS["FILETYPES"])) {
+			if (in_array($fileExtension, $GLOBALS["FILETYPES"]) && !is_helper_asset($filePath)) {
 				$images[] = [
 					'name' => $file,
 					'path' => $filePath
@@ -810,7 +823,7 @@
 						$imageList[] = $subDirectoryImage;
 					}
 				} else {
-					if (is_valid_image_or_video_file($filePath) && !is_cached_already($filePath)) {
+					if (is_valid_image_or_video_file($filePath) && !is_helper_asset($filePath) && !is_cached_already($filePath)) {
 						$imageList[] = $filePath;
 					}
 				}

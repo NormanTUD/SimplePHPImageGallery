@@ -45,18 +45,16 @@ var deferred_install_prompt = null;
 window.addEventListener('beforeinstallprompt', function (event) {
 	event.preventDefault();
 	deferred_install_prompt = event;
-	var button = document.getElementById('installAppBtn');
-	if (button) {
+	document.querySelectorAll('.install-toggle').forEach(function (button) {
 		button.hidden = false;
-	}
+	});
 });
 
 window.addEventListener('appinstalled', function () {
 	deferred_install_prompt = null;
-	var button = document.getElementById('installAppBtn');
-	if (button) {
+	document.querySelectorAll('.install-toggle').forEach(function (button) {
 		button.hidden = true;
-	}
+	});
 });
 
 function install_pwa() {
@@ -67,10 +65,9 @@ function install_pwa() {
 
 	deferred_install_prompt.prompt();
 	deferred_install_prompt = null;
-	var button = document.getElementById('installAppBtn');
-	if (button) {
+	document.querySelectorAll('.install-toggle').forEach(function (button) {
 		button.hidden = true;
-	}
+	});
 }
 
 if ('serviceWorker' in navigator) {
