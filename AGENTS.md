@@ -184,9 +184,9 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
 - Preserve the PWA shell (`sw.js`, `manifest.webmanifest`, icons) and keep its
   caches same-origin only. The PWA icon PNGs are helper assets and must never be
   listed as gallery photos or search results.
-- Use the configured map tile provider in `create_map_tile_layer()`. Do not use
-  OpenStreetMap volunteer tile servers; they are rate-limited and may block the
-  app. Keep provider attribution visible.
+- Use the configured map tile provider in `create_map_tile_layer()` (currently
+  Esri raster tiles). Do not use OpenStreetMap volunteer tile servers or providers
+  that require an API key. Keep provider attribution visible.
 - On phones, secondary actions collapse into the mobile actions sheet. Do not
   reintroduce a crowded topbar or desktop-only shortcuts into the phone layout.
 - Every interactive control must have a visible hover/focus/active state.

@@ -1,5 +1,5 @@
-const SHELL_CACHE = "spg-shell-v1";
-const RUNTIME_CACHE = "spg-runtime-v1";
+const SHELL_CACHE = "spg-shell-v2";
+const RUNTIME_CACHE = "spg-runtime-v2";
 const OFFLINE_KEY = new URL("./index.php", self.registration.scope).href;
 
 const SHELL_ASSETS = [
@@ -68,7 +68,7 @@ async function cache_first(request) {
 
 async function stale_while_revalidate(request) {
 	const cache = await caches.open(SHELL_CACHE);
-	const cached = await cache.match(request);
+	const cached = await cache.match(request, { ignoreSearch: true });
 	const network = fetch(request)
 		.then((response) => {
 			if (response.ok) {

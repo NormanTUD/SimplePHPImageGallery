@@ -43,7 +43,7 @@
 	header('X-Content-Type-Options: nosniff');
 	header('Referrer-Policy: no-referrer');
 	header('X-Frame-Options: SAMEORIGIN');
-	header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self' https://*.basemaps.cartocdn.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+	header("Content-Security-Policy: default-src 'self'; img-src 'self' data: blob: https://server.arcgisonline.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline'; connect-src 'self' https://server.arcgisonline.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
 
 	$GLOBALS["FILETYPES"] = $validTypes;
 	$GLOBALS["valid_file_ending_regex"] = "/\.(" . implode("|", $validTypes) . ")$/i";
@@ -63,6 +63,11 @@
 	}
 
 	include("functions.php");
+
+	function asset_url($file) {
+		$path = __DIR__ . '/' . $file;
+		return $file . '?v=' . (file_exists($path) ? filemtime($path) : '1');
+	}
 
 	if (isset($_GET["file_info"])) {
 		print_file_metadata();
@@ -118,13 +123,13 @@
 		<link rel="icon" href="icon.svg" type="image/svg+xml">
 		<link rel="apple-touch-icon" href="icon-192.png">
 		<title><?php echo htmlspecialchars($servername); ?></title>
-		<script defer src="jquery-3.7.1.min.js"></script>
-		<link rel="stylesheet" href="style.css" />
-		<script defer src="leaflet.js"></script>
+		<script defer src="<?php echo asset_url('jquery-3.7.1.min.js'); ?>"></script>
+		<link rel="stylesheet" href="<?php echo asset_url('style.css'); ?>" />
+		<script defer src="<?php echo asset_url('leaflet.js'); ?>"></script>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
 		<link rel="stylesheet" href="MarkerCluster.Default.css" />
-		<script defer src="leaflet.markercluster.js"></script>
-		<script defer src="functions.js"></script>
+		<script defer src="<?php echo asset_url('leaflet.markercluster.js'); ?>"></script>
+		<script defer src="<?php echo asset_url('functions.js'); ?>"></script>
 	</head>
 	<body>
 		<div class="app-shell">
@@ -200,6 +205,6 @@
 			var current_folder_path = <?php echo json_encode($folderPath, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 		</script>
 
-		<script defer src="main.js"></script>
+		<script defer src="<?php echo asset_url('main.js'); ?>"></script>
 	</body>
 </html>

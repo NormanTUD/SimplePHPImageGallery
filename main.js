@@ -72,9 +72,13 @@ function install_pwa() {
 
 if ('serviceWorker' in navigator) {
 	window.addEventListener('load', function () {
-		navigator.serviceWorker.register('sw.js').catch(function (error) {
-			console.warn('Service worker registration failed:', error);
-		});
+		navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+			.then(function (registration) {
+				return registration.update();
+			})
+			.catch(function (error) {
+				console.warn('Service worker registration failed:', error);
+			});
 	});
 }
 

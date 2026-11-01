@@ -8,6 +8,7 @@ let lazy_image_observer = null;
 let map_draw_token = 0;
 let map_loading = false;
 let map_lazy_observer = null;
+let map_discovery_timer = null;
 let gallery_sentinel_observer = null;
 let favorites_filter_active = false;
 let favorites_loaded = false;
@@ -1291,12 +1292,12 @@ async function get_map_data () {
 function create_map_tile_layer() {
 	var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
 	var url = dark
-		? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-		: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+		? "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+		: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
 
 	return L.tileLayer(url, {
-		attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-		maxZoom: 20
+		attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
+		maxZoom: 19
 	});
 }
 
@@ -1380,6 +1381,7 @@ async function draw_map_from_current_images () {
 
 function reset_map_ui() {
 	map_loading = false;
+	clearTimeout(map_discovery_timer);
 
 	var container = document.getElementById("map_container");
 	if (container) {
@@ -1407,13 +1409,15 @@ function maybe_request_map_if_visible() {
 }
 
 async function request_map() {
-	if (map_loading) {
+	var current_container = document.getElementById("map_container");
+
+	if (map_loading || (window.map && current_container && !current_container.hidden)) {
 		return;
 	}
 
 	map_loading = true;
 
-	var container = document.getElementById("map_container");
+	var container = current_container;
 	if (container) {
 		container.classList.add("is-loading");
 	}
@@ -1446,6 +1450,18 @@ function setup_map_lazy_observer() {
 	}, { rootMargin: "700px 0px" });
 
 	map_lazy_observer.observe(trigger);
+}
+
+function schedule_map_discovery() {
+	clearTimeout(map_discovery_timer);
+
+	map_discovery_timer = setTimeout(function () {
+		var container = document.getElementById("map_container");
+		if (document.hidden || (window.map && container && !container.hidden)) {
+			return;
+		}
+		request_map();
+	}, 1200);
 }
 
 function createBreadcrumb(currentFolderPath) {
@@ -1846,6 +1862,7 @@ async function load_folder (folder, load_map = true) {
 	if (load_map) {
 		reset_map_ui();
 		maybe_request_map_if_visible();
+		schedule_map_discovery();
 	}
 
 	if (has_more) {
@@ -2015,6 +2032,7 @@ async function _start_search() {
 			set_gallery_sentinel(gallery_page_state.hasMore);
 			reset_map_ui();
 			maybe_request_map_if_visible();
+			schedule_map_discovery();
 
 			unselectSelection();
 		}
@@ -2080,6 +2098,7 @@ async function displaySearchResults(searchTerm, results) {
 	lazy_load_images($searchResults[0]);
 	reset_map_ui();
 	maybe_request_map_if_visible();
+	schedule_map_discovery();
 
 	unselectSelection();
 }
