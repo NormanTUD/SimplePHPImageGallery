@@ -81,6 +81,13 @@ function http_request(string $path, array $options = []): array {
 	if (isset($options['method'])) {
 		$curl_options[CURLOPT_CUSTOMREQUEST] = $options['method'];
 	}
+	if (isset($options['headers'])) {
+		$curl_options[CURLOPT_HTTPHEADER] = $options['headers'];
+	}
+	if (isset($options['post'])) {
+		$curl_options[CURLOPT_POST] = true;
+		$curl_options[CURLOPT_POSTFIELDS] = $options['post'];
+	}
 
 	curl_setopt_array($ch, $curl_options);
 
@@ -184,6 +191,21 @@ test('file gallery lists jpg, png and gif assets with safe data-path attributes'
 	assert_not_contains('data-onclick', $response['body'], 'Unsafe inline click handler still rendered');
 });
 
+test('gallery pagination slices large folders', function (): void {
+	$first = http_request('/index.php?' . http_build_query(['gallery' => './sehrviele', 'offset' => 0, 'limit' => 50]));
+	assert_http_status($first, 200);
+	assert_header_contains($first, 'x-gallery-total', '150');
+	assert_header_contains($first, 'x-gallery-next-offset', '50');
+	assert_header_contains($first, 'x-gallery-has-more', '1');
+	assert_same(50, substr_count($first['body'], 'class="thumbnail"'), 'First page has the wrong item count');
+
+	$last = http_request('/index.php?' . http_build_query(['gallery' => './sehrviele', 'offset' => 100, 'limit' => 50]));
+	assert_http_status($last, 200);
+	assert_header_contains($last, 'x-gallery-next-offset', '150');
+	assert_header_contains($last, 'x-gallery-has-more', '0');
+	assert_same(50, substr_count($last['body'], 'class="thumbnail"'), 'Last page has the wrong item count');
+});
+
 test('paths with spaces and apostrophes are escaped and clickable', function (): void {
 	$response = http_request('/index.php?' . http_build_query(['gallery' => './special folder']));
 	assert_http_status($response, 200);
@@ -243,6 +265,20 @@ test('search results include GPS coordinates', function (): void {
 	assert_true(abs($result['longitude'] - 13.7373) < 0.01, 'Longitude looks wrong');
 });
 
+test('search can be filtered by result type', function (): void {
+	$files = http_json(search_path('urlaub') . '&type=file');
+	assert_true(($files['files'] ?? []) !== [], 'File filter returned no results');
+	foreach ($files['files'] as $result) {
+		assert_same('file', $result['type'] ?? null, 'File filter returned a folder');
+	}
+
+	$folders = http_json(search_path('urlaub') . '&type=folder');
+	assert_true(($folders['files'] ?? []) !== [], 'Folder filter returned no results');
+	foreach ($folders['files'] as $result) {
+		assert_same('folder', $result['type'] ?? null, 'Folder filter returned a file');
+	}
+});
+
 test('search with special characters returns the escaped-path asset', function (): void {
 	$data = http_json(search_path('sonderzeichen'));
 	assert_contains("it's a test.jpg", implode(',', result_paths($data)), 'Special path search failed');
@@ -264,7 +300,7 @@ test('preview generates, caches and reuses a JPEG thumbnail', function (): void 
 	assert_header_contains($first, 'cache-control', 'immutable');
 	assert_same("\xFF\xD8", substr($first['body'], 0, 2), 'Preview is not a JPEG');
 
-	$cache_file = $docroot . '/thumbnails_cache/' . md5(preg_replace('/\/+/', '/', $relative)) . '_640.jpg';
+	$cache_file = $docroot . '/thumbnails_cache/' . md5(preg_replace('/\/+/', '/', $relative)) . '_640_2.jpg';
 	assert_true(is_file($cache_file), 'Preview cache file was not created');
 
 	$uncached = http_json('/index.php?list_all=1');
@@ -276,14 +312,41 @@ test('preview generates, caches and reuses a JPEG thumbnail', function (): void 
 	assert_same($first['body'], $second['body'], 'Cached preview differs from generated preview');
 });
 
-test('large images get high resolution thumbnails', function (): void {
-	$response = http_request('/index.php?' . http_build_query(['preview' => './hochaufloesend/gross.jpg']));
+test('responsive thumbnail sizes are generated', function (): void {
+	$path = '/index.php?' . http_build_query(['preview' => './hochaufloesend/gross.jpg', 'size' => 320]);
+	$response = http_request($path);
 	assert_http_status($response, 200);
 	assert_header_contains($response, 'content-type', 'image/jpeg');
 
 	$size = getimagesizefromstring($response['body']);
 	assert_true($size !== false, 'Thumbnail is not a readable image');
-	assert_same(640, max($size[0], $size[1]), 'Thumbnail was not rendered at the high resolution size');
+	assert_same(320, max($size[0], $size[1]), '320px thumbnail has the wrong size');
+
+	$large = http_request('/index.php?' . http_build_query(['preview' => './hochaufloesend/gross.jpg', 'size' => 1280]));
+	assert_http_status($large, 200);
+	$large_size = getimagesizefromstring($large['body']);
+	assert_true($large_size !== false, 'Large thumbnail is not readable');
+	assert_same(1200, max($large_size[0], $large_size[1]), '1280px thumbnail should not upscale beyond the source');
+});
+
+test('browsers can receive WebP thumbnails', function (): void {
+	$response = http_request(
+		'/index.php?' . http_build_query(['preview' => './hochaufloesend/gross.jpg', 'size' => 640]),
+		['headers' => ['Accept: image/webp,image/*']]
+	);
+	assert_http_status($response, 200);
+	assert_header_contains($response, 'content-type', 'image/webp');
+	assert_header_contains($response, 'vary', 'accept');
+	assert_same('RIFF', substr($response['body'], 0, 4), 'WebP thumbnail has no RIFF header');
+});
+
+test('gallery images expose responsive srcset candidates', function (): void {
+	$response = http_request('/index.php?' . http_build_query(['gallery' => './urlaub/strand']));
+	assert_http_status($response, 200);
+	assert_contains('data-srcset="', $response['body'], 'Responsive srcset attribute missing');
+	assert_contains('size=320', $response['body'], '320px srcset candidate missing');
+	assert_contains('size=640', $response['body'], '640px srcset candidate missing');
+	assert_contains('size=1280', $response['body'], '1280px srcset candidate missing');
 });
 
 test('PNG preview is converted to JPEG', function (): void {
@@ -430,6 +493,27 @@ test('path traversal is rejected for previews and galleries', function (): void 
 
 	$gallery = http_request('/index.php?' . http_build_query(['gallery' => '../']));
 	assert_contains('Invalid folder', $gallery['body'], 'Traversal gallery was not rejected');
+});
+
+test('PWA manifest, icons and service worker are available', function (): void {
+	$manifest_response = http_request('/manifest.webmanifest');
+	assert_http_status($manifest_response, 200);
+	$manifest = json_decode($manifest_response['body'], true);
+	assert_true(is_array($manifest), 'Manifest is not valid JSON');
+	assert_same('./', $manifest['start_url'] ?? null, 'Manifest start_url is wrong');
+	assert_true(!empty($manifest['icons']), 'Manifest has no icons');
+
+	$icon_192 = http_request('/icon-192.png');
+	assert_http_status($icon_192, 200);
+	assert_same("\x89PNG", substr($icon_192['body'], 0, 4), '192px icon is not a PNG');
+
+	$icon_512 = http_request('/icon-512.png');
+	assert_http_status($icon_512, 200);
+	assert_same("\x89PNG", substr($icon_512['body'], 0, 4), '512px icon is not a PNG');
+
+	$sw = http_request('/sw.js');
+	assert_http_status($sw, 200);
+	assert_contains('SHELL_CACHE', $sw['body'], 'Service worker content missing');
 });
 
 test('search index endpoint returns JSON and caches the index', function (): void {

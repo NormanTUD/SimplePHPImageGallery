@@ -11,7 +11,7 @@ disk becomes a browsable gallery. The application has no database and no build
 step for production. It uses:
 
 - **PHP 8.2+** for routing, gallery rendering, search, previews, metadata, ZIP
-  downloads and GPS extraction.
+  downloads and GPS extraction. CI runs the latest PHP release (currently 8.4).
 - **jQuery** for DOM/event convenience.
 - **Leaflet + marker clustering** for the map.
 - **GD** for image thumbnails and **EXIF** for metadata/GPS.
@@ -29,6 +29,8 @@ Main files:
 | `style.css` | Responsive light/dark UI |
 | `get_search_index.php` | JSON search index cache |
 | `image.php` | Cached raw image/video delivery with path validation |
+| `sw.js` | Service worker for installable PWA and thumbnail caching |
+| `manifest.webmanifest` | PWA manifest and app icons |
 | `tests/` | Isolated fixtures, HTTP tests and Playwright tests |
 
 ## Mandatory validation
@@ -48,8 +50,9 @@ built-in server with multiple workers. It then runs:
 - `tests/http_tests.php` — endpoint, caching, search, preview, ZIP, metadata,
   map-data, traversal and XSS regression tests.
 - `tests/ui_tests.mjs` — real Chromium tests for clicks, search, fuzzy search,
-  folder navigation, selection, long press, lightbox, details, shortcuts, map,
-  lazy loading, back-to-top, mobile layout and browser errors.
+  search filters, folder navigation, pagination, selection, long press, lightbox,
+  details, shortcuts, favorites, timeline, slideshow, map filtering, PWA
+  registration, lazy loading, back-to-top, mobile layout and browser errors.
 
 Additional checks:
 
@@ -145,8 +148,17 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
 
 ## Performance invariants
 
-- Thumbnails are generated at `THUMBNAIL_MAX_SIZE` (currently 640 px) and served
-  with long-lived immutable cache headers. Keep high-DPI screens sharp.
+- Grid thumbnails are generated at 320, 640 and 1280 px and exposed through
+  `srcset`; the default `THUMBNAIL_MAX_SIZE` is 640 px. Keep high-DPI screens sharp.
+- Thumbnails negotiate WebP/AVIF when the browser and GD support it. Keep
+  `Vary: Accept` and long-lived immutable cache headers.
+- Folder thumbnails are cached by source hash, size and
+  `THUMBNAIL_CACHE_VERSION`; bump the version whenever rendering changes.
+- Gallery folders are paginated (`GALLERY_PAGE_SIZE`, currently 120) and extend
+  through the sentinel/IntersectionObserver infinite-scroll path.
+- The map is lazy: geolist/EXIF scanning must not run until the placeholder is
+  near the viewport or the user requests it. Keep map results limited to the
+  current folder tree.
 - Video GIF previews use the smaller `VIDEO_THUMBNAIL_MAX_SIZE`.
 - Images below the fold must load lazily through `IntersectionObserver`.
 - Folder changes use async `fetch`; do not reintroduce blocking synchronous AJAX.
@@ -167,6 +179,10 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
 - Keep controls labelled for screen readers (`aria-label`, `aria-pressed`).
 - Keep dark mode, reduced-motion support, focus-visible styling and loading/empty
   states.
+- Keep the lightbox controls and dialogs keyboard accessible; modal focus is
+  trapped and restored.
+- Preserve the PWA shell (`sw.js`, `manifest.webmanifest`, icons) and keep its
+  caches same-origin only.
 - Every interactive control must have a visible hover/focus/active state.
 - When adding UI, update the Playwright tests and verify both desktop and mobile.
 
@@ -181,6 +197,8 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
   helpers. Preview URLs are never folder paths.
 - Do not rename public query parameters or endpoint names without updating tests,
   documentation and callers.
+- The application intentionally has no upload/admin mode. Do not add one without
+  an explicit request, authentication, CSRF protection and rate limiting.
 
 ## Adding new behaviour
 

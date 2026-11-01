@@ -42,8 +42,21 @@ bash tests/run.sh
 
 The suite generates example images, folders, TXT keywords and GPS data in a temporary
 document root, starts PHP's built-in server and checks the gallery, search, previews,
-metadata, map data, ZIP downloads, responsive layout and lazy loading.
+metadata, map data, ZIP downloads, responsive layout, infinite scrolling, favorites,
+timeline view, slideshow, PWA support and lazy loading.
 
 CI runs on every pushed commit and pull request. After a successful push build, the
 workflow creates and pushes a tag named after the run and the GitHub Actions runner,
 for example `ci-42-123456789-1-my-runner`.
+
+# Features
+
+- Folder navigation, filename and TXT-keyword search, optional fuzzy search and
+  type filters.
+- Responsive high-DPI thumbnails (320/640/1280 px, JPEG/WebP/AVIF output) with
+  lazy loading and browser caching.
+- Infinite scrolling for very large folders.
+- Lightbox with keyboard/swipe navigation, details, download, favorites, slideshow
+  and "show on map".
+- Map view with lazy loading and clustering, limited to the current folder tree.
+- Timeline view, favorites filter, recent searches and installable PWA support.

@@ -34,6 +34,11 @@ $runtime_files = [
 	'error.svg',
 	'search.svg',
 	'save.svg',
+	'sw.js',
+	'manifest.webmanifest',
+	'icon.svg',
+	'icon-192.png',
+	'icon-512.png',
 ];
 
 function ensure_dir(string $path): void {
@@ -64,6 +69,12 @@ function make_image(string $path, int $width, int $height, array $rgb, string $l
 	}
 
 	imagedestroy($image);
+}
+
+function gps2_jpeg_base64(): string {
+	return <<<'B64'
+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
+B64;
 }
 
 function gps_jpeg_base64(): string {
@@ -105,6 +116,7 @@ try {
 
 	ensure_dir($docroot . '/gps');
 	file_put_contents($docroot . '/gps/dresden.jpg', base64_decode(gps_jpeg_base64()));
+	file_put_contents($docroot . '/urlaub/berge/muenchen.jpg', base64_decode(gps2_jpeg_base64()));
 
 	ensure_dir($docroot . '/leer');
 
@@ -112,6 +124,12 @@ try {
 		$number = str_pad((string) $i, 3, '0', STR_PAD_LEFT);
 		$color = [40 + ($i * 3) % 200, 60 + ($i * 7) % 180, 80 + ($i * 11) % 160];
 		make_image($docroot . '/viele/bild_' . $number . '.jpg', 40, 30, $color);
+	}
+
+	for ($i = 1; $i <= 150; $i++) {
+		$number = str_pad((string) $i, 3, '0', STR_PAD_LEFT);
+		$color = [80 + ($i * 5) % 150, 40 + ($i * 9) % 170, 60 + ($i * 13) % 150];
+		make_image($docroot . '/sehrviele/bild_' . $number . '.jpg', 32, 24, $color);
 	}
 
 	$has_ffmpeg = false;

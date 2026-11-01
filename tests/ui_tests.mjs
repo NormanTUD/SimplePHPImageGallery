@@ -31,6 +31,15 @@ async function search(page, term, expectedSelector) {
   await page.locator(expectedSelector).first().waitFor({ state: 'visible', timeout: 20000 });
 }
 
+async function ensureMapLoaded(page) {
+  const button = page.locator('#showMapBtn');
+  if (await button.isVisible().catch(() => false)) {
+    await button.click({ timeout: 2000 }).catch(() => {});
+  }
+  await page.locator('#map_container').waitFor({ state: 'visible', timeout: 20000 });
+  await page.locator('#map.leaflet-container').waitFor({ state: 'visible', timeout: 15000 });
+}
+
 async function closeFullscreen(page) {
   await page.keyboard.press('Escape');
   await page.locator('.fullscreen').waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
@@ -181,16 +190,26 @@ test('start page draws the map even with folder=.', async (page) => {
   await page.goto(`${baseUrl}/?folder=.`, { waitUntil: 'domcontentloaded' });
   await page.locator('#gallery .thumbnail_folder').first().waitFor({ state: 'visible', timeout: 15000 });
 
-  await page.locator('#map_container').waitFor({ state: 'visible', timeout: 20000 });
-  await page.locator('#map.leaflet-container').waitFor({ state: 'visible', timeout: 10000 });
+  await ensureMapLoaded(page);
 });
 
-test('GPS folder draws the map', async (page) => {
+test('map only shows photos from the current folder and its subfolders', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
-  await openFolder(page, './gps', '#gallery .thumbnail');
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+  await ensureMapLoaded(page);
+  assert.equal(await page.locator('.leaflet-marker-icon').count(), 2, 'Root map should show both GPS photos');
 
-  await page.locator('#map_container').waitFor({ state: 'visible', timeout: 20000 });
-  await page.locator('#map.leaflet-container').waitFor({ state: 'visible', timeout: 10000 });
+  await page.evaluate(() => window.load_folder('./gps'));
+  await page.locator('#gallery .thumbnail').first().waitFor({ state: 'visible', timeout: 15000 });
+  await ensureMapLoaded(page);
+
+  const markers = page.locator('.leaflet-marker-icon');
+  assert.equal(await markers.count(), 1, 'Subfolder map should only show its own GPS photo');
+
+  await markers.first().click();
+  const popupImage = page.locator('.leaflet-popup-content img');
+  await popupImage.waitFor({ state: 'visible', timeout: 10000 });
+  assert.match(await popupImage.getAttribute('src'), /dresden\.jpg/, 'Wrong photo is shown on the subfolder map');
 });
 
 test('select button enables selection, marks cards and clears them', async (page) => {
@@ -260,6 +279,27 @@ test('metadata dialog does not execute HTML from filenames', async (page) => {
   assert.equal(await page.locator('.image-info-table img').count(), 0, 'Filename was interpreted as HTML');
 });
 
+test('modal focus is trapped and restored', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+
+  await page.locator('#shortcutsBtn').click();
+  await page.locator('.shortcuts-overlay').waitFor({ state: 'visible', timeout: 5000 });
+
+  for (let i = 0; i < 8; i++) {
+    await page.keyboard.press('Tab');
+    const focusInside = await page.evaluate(() => {
+      const overlay = document.querySelector('.shortcuts-overlay');
+      return !!overlay && overlay.contains(document.activeElement);
+    });
+    assert.equal(focusInside, true, 'Focus escaped the shortcuts dialog');
+  }
+
+  await page.keyboard.press('Escape');
+  await page.locator('.shortcuts-overlay').waitFor({ state: 'detached', timeout: 5000 });
+  assert.equal(await page.evaluate(() => document.activeElement?.id), 'shortcutsBtn', 'Focus was not restored');
+});
+
 test('shortcuts dialog opens and closes', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openFolder(page, './', '#gallery .thumbnail_folder');
@@ -279,6 +319,16 @@ test('image cards get readable filename labels', async (page) => {
   const label = page.locator('#gallery .thumbnail .thumbnail-name').first();
   await label.waitFor({ state: 'attached', timeout: 5000 });
   assert.match(await label.textContent(), /\.(jpg|png)$/i, 'Filename label is missing');
+});
+
+test('large folders load additional images while scrolling', async (page) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openFolder(page, './sehrviele', '#gallery .thumbnail');
+  await page.waitForFunction(() => document.querySelectorAll('#gallery .thumbnail').length === 120, { timeout: 15000 });
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForFunction(() => document.querySelectorAll('#gallery .thumbnail').length >= 150, { timeout: 20000 });
+  assert.match(await page.locator('#galleryMeta').textContent(), /150/, 'Gallery metadata does not reflect the total item count');
 });
 
 test('thumbnails below the fold are lazy loaded', async (page) => {
@@ -302,6 +352,101 @@ test('thumbnails below the fold are lazy loaded', async (page) => {
     },
     { timeout: 20000 }
   );
+});
+
+test('favorites can be toggled, filtered and persist', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+
+  const favoriteButton = page.locator('#gallery .thumbnail .favorite-btn').first();
+  await favoriteButton.click();
+  assert.equal(await page.locator('.fullscreen').count(), 0, 'Favorite click opened the lightbox');
+  assert.equal(await favoriteButton.getAttribute('aria-pressed'), 'true', 'Favorite was not stored');
+  assert.match(await page.locator('#favoritesCount').textContent(), /1/, 'Favorite counter was not updated');
+
+  await page.locator('#favoritesBtn').click();
+  assert.equal(await page.locator('#gallery .thumbnail:visible').count(), 1, 'Favorites filter did not hide other photos');
+  assert.equal(await page.locator('#favoritesBtn').getAttribute('aria-pressed'), 'true', 'Favorites filter is not active');
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('#gallery .thumbnail').first().waitFor({ state: 'visible', timeout: 15000 });
+  assert.equal(
+    await page.locator('#gallery .thumbnail .favorite-btn').first().getAttribute('aria-pressed'),
+    'true',
+    'Favorite did not survive a reload'
+  );
+});
+
+test('timeline view groups photos and can be disabled', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+
+  await page.locator('#timelineBtn').click();
+  await page.locator('.timeline-heading').first().waitFor({ state: 'visible', timeout: 5000 });
+  assert.equal(await page.locator('#timelineBtn').getAttribute('aria-pressed'), 'true', 'Timeline button is not active');
+
+  await page.locator('#timelineBtn').click();
+  assert.equal(await page.locator('.timeline-heading').count(), 0, 'Timeline was not restored to the gallery');
+  assert.equal(await page.locator('#timelineBtn').getAttribute('aria-pressed'), 'false', 'Timeline button stayed active');
+});
+
+test('slideshow starts and can be stopped', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+
+  await page.locator('#slideshowBtn').click();
+  await page.locator('.fullscreen').waitFor({ state: 'visible', timeout: 5000 });
+  assert.equal(await page.locator('#slideshowBtn').getAttribute('aria-pressed'), 'true', 'Slideshow did not start');
+
+  await page.locator('.fullscreen-slideshow').click();
+  assert.equal(await page.locator('#slideshowBtn').getAttribute('aria-pressed'), 'false', 'Slideshow did not stop');
+  await closeFullscreen(page);
+});
+
+test('lightbox can show the current photo on a map', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './gps', '#gallery .thumbnail');
+
+  await page.locator('#gallery .thumbnail').first().click();
+  await page.locator('.fullscreen').waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('.fullscreen-map').click();
+
+  await page.locator('.location-overlay').waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('.location-map.leaflet-container').waitFor({ state: 'visible', timeout: 10000 });
+  await page.locator('.location-close').click();
+  await page.locator('.location-overlay').waitFor({ state: 'detached', timeout: 5000 });
+});
+
+test('search filters, highlights and remembers terms', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './', '#gallery .thumbnail_folder');
+
+  await page.locator('#searchType').selectOption('file');
+  await search(page, 'urlaub', '#searchResults .thumbnail');
+  assert.equal(await page.locator('#searchResults .thumbnail_folder').count(), 0, 'File filter returned folders');
+
+  await page.locator('#searchType').selectOption('folder');
+  await page.locator('#searchResults .thumbnail_folder').first().waitFor({ state: 'visible', timeout: 20000 });
+  assert.equal(await page.locator('#searchResults .thumbnail').count(), 0, 'Folder filter returned files');
+
+  await page.locator('#searchType').selectOption('all');
+  await search(page, 'sonne', '#searchResults .thumbnail');
+  assert.equal(await page.locator('#searchResults mark').count() > 0, true, 'Search matches were not highlighted');
+
+  const history = await page.locator('#searchHistory option').evaluateAll((options) => options.map((option) => option.value));
+  assert.equal(history.includes('sonne'), true, 'Recent search was not stored');
+});
+
+test('service worker registers for offline support', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(async () => {
+    if (!('serviceWorker' in navigator)) {
+      return false;
+    }
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    return registrations.length > 0;
+  }, { timeout: 20000 });
 });
 
 test('back to top button appears and scrolls home', async (page) => {

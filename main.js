@@ -40,6 +40,47 @@ function update_back_to_top_visibility() {
 window.addEventListener('scroll', update_back_to_top_visibility, { passive: true });
 update_back_to_top_visibility();
 
+var deferred_install_prompt = null;
+
+window.addEventListener('beforeinstallprompt', function (event) {
+	event.preventDefault();
+	deferred_install_prompt = event;
+	var button = document.getElementById('installAppBtn');
+	if (button) {
+		button.hidden = false;
+	}
+});
+
+window.addEventListener('appinstalled', function () {
+	deferred_install_prompt = null;
+	var button = document.getElementById('installAppBtn');
+	if (button) {
+		button.hidden = true;
+	}
+});
+
+function install_pwa() {
+	if (!deferred_install_prompt) {
+		show_toast('Installation is available from your browser menu.');
+		return;
+	}
+
+	deferred_install_prompt.prompt();
+	deferred_install_prompt = null;
+	var button = document.getElementById('installAppBtn');
+	if (button) {
+		button.hidden = true;
+	}
+}
+
+if ('serviceWorker' in navigator) {
+	window.addEventListener('load', function () {
+		navigator.serviceWorker.register('sw.js').catch(function (error) {
+			console.warn('Service worker registration failed:', error);
+		});
+	});
+}
+
 const log = console.log;
 const debug = console.debug;
 const l = log;
@@ -172,6 +213,10 @@ $(document).ready(async function() {
 	$("#delete_search, #searchResults").hide();
 	addLinkHighlightEffect();
 	unselectSelection();
+	load_favorites_store();
+	load_recent_searches();
+	setup_gallery_infinite_scroll();
+	setup_map_lazy_observer();
 
 	await load_folder(getCurrentFolderParameter(), true);
 });
