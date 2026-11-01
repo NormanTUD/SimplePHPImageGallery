@@ -526,7 +526,7 @@ test('search index endpoint returns JSON and caches the index', function (): voi
 	assert_true(is_array($data), 'Search index is not an array');
 	$entry = find_result($data, static fn(array $item): bool => str_ends_with($item['p'] ?? '', 'sonne.jpg'));
 	assert_true($entry !== null, 'sonne.jpg missing from search index');
-	assert_true(is_file($docroot . '/thumbnails_cache/search_index.json'), 'Search index cache file missing');
+	assert_true(is_file($docroot . '/thumbnails_cache/search_index.sqlite'), 'SQLite search index file missing');
 });
 
 $passed = 0;

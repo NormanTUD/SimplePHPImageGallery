@@ -8,6 +8,12 @@
 	if (!defined("THUMBNAIL_CACHE_VERSION")) {
 		define("THUMBNAIL_CACHE_VERSION", "2");
 	}
+	if (!defined("SEARCH_INDEX_TTL")) {
+		define("SEARCH_INDEX_TTL", 300);
+	}
+	if (!defined("SEARCH_INDEX_STAMP_TTL")) {
+		define("SEARCH_INDEX_STAMP_TTL", 5);
+	}
 
 	function gallery_base_path() {
 		return realpath('.');
@@ -861,9 +867,337 @@
 	}
 
 
+	function gallery_tree_signature() {
+		try {
+			$root = '.';
+			$parts = ['.:' . (int) @filemtime($root)];
+
+			$directory = new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS);
+			$filter = new RecursiveCallbackFilterIterator($directory, function ($current) {
+				if ($current->isDir()) {
+					$name = $current->getFilename();
+					return !in_array($name, ['.git', 'thumbnails_cache', 'node_modules'], true);
+				}
+				return true;
+			});
+			$iterator = new RecursiveIteratorIterator($filter, RecursiveIteratorIterator::SELF_FIRST);
+
+			foreach ($iterator as $item) {
+				if ($item->isDir()) {
+					$parts[] = $item->getPathname() . ':' . (int) $item->getMTime();
+				}
+			}
+
+			sort($parts);
+			return sha1(implode('|', $parts));
+		} catch (Throwable $e) {
+			return '';
+		}
+	}
+
+	function build_search_index_entries($directory = '.') {
+		$entries = [];
+		$files = @scandir($directory);
+		if (!is_array($files)) {
+			return $entries;
+		}
+
+		$txt_by_base = [];
+		foreach ($files as $file) {
+			if ($file === '.' || $file === '..' || str_starts_with($file, '.')) {
+				continue;
+			}
+
+			$path = preg_replace('#/+#', '/', $directory . '/' . $file);
+			if (!is_file($path)) {
+				continue;
+			}
+
+			if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'txt') {
+				$content = @file_get_contents($path);
+				if ($content !== false) {
+					$txt_by_base[removeFileExtensionFromString($file)] = normalize_special_characters(sortAndCleanString($content));
+				}
+			}
+		}
+
+		foreach ($files as $file) {
+			if ($file === '.' || $file === '..' || str_starts_with($file, '.')) {
+				continue;
+			}
+
+			$path = preg_replace('#/+#', '/', $directory . '/' . $file);
+
+			if (is_dir($path)) {
+				if (in_array($file, ['thumbnails_cache', 'node_modules'], true)) {
+					continue;
+				}
+
+				$entries[] = [
+					'type' => 'folder',
+					'path' => $path,
+					'name' => $file,
+					'content' => '',
+					'mtime' => (int) @filemtime($path),
+				];
+
+				foreach (build_search_index_entries($path) as $entry) {
+					$entries[] = $entry;
+				}
+				continue;
+			}
+
+			$extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+			if (!in_array($extension, $GLOBALS["FILETYPES"], true) || is_helper_asset($path)) {
+				continue;
+			}
+
+			$base = removeFileExtensionFromString($file);
+			$entries[] = [
+				'type' => 'file',
+				'path' => $path,
+				'name' => $base,
+				'content' => $txt_by_base[$base] ?? '',
+				'mtime' => (int) @filemtime($path),
+			];
+		}
+
+		return $entries;
+	}
+
+	function search_index_db_path() {
+		$dir = is_dir('/docker_tmp/') ? '/docker_tmp' : (__DIR__ . '/thumbnails_cache');
+		if (!is_dir($dir)) {
+			@mkdir($dir, 0777, true);
+		}
+		return $dir . '/search_index.sqlite';
+	}
+
+	function open_search_index_database() {
+		if (!class_exists('SQLite3')) {
+			return null;
+		}
+
+		try {
+			$db = new SQLite3(search_index_db_path(), SQLITE3_OPEN_READWRITE | SQLITE3_OPEN_CREATE);
+			$db->busyTimeout(5000);
+			$db->exec('PRAGMA journal_mode=WAL');
+			$db->exec('PRAGMA synchronous=NORMAL');
+			$db->exec('CREATE TABLE IF NOT EXISTS entries (
+				path TEXT PRIMARY KEY,
+				type TEXT NOT NULL,
+				name TEXT NOT NULL,
+				name_normalized TEXT NOT NULL,
+				content TEXT NOT NULL DEFAULT "",
+				mtime INTEGER NOT NULL DEFAULT 0
+			)');
+			$db->exec('CREATE INDEX IF NOT EXISTS idx_entries_type ON entries(type)');
+			$db->exec('CREATE TABLE IF NOT EXISTS meta (
+				key TEXT PRIMARY KEY,
+				value TEXT NOT NULL
+			)');
+			return $db;
+		} catch (Throwable $e) {
+			return null;
+		}
+	}
+
+	function search_index_meta_get($db, $key) {
+		$stmt = $db->prepare('SELECT value FROM meta WHERE key = :key');
+		$stmt->bindValue(':key', $key, SQLITE3_TEXT);
+		$result = $stmt->execute();
+		$row = $result ? $result->fetchArray(SQLITE3_ASSOC) : false;
+		return $row ? $row['value'] : null;
+	}
+
+	function search_index_meta_set($db, $key, $value) {
+		$stmt = $db->prepare('INSERT OR REPLACE INTO meta (key, value) VALUES (:key, :value)');
+		$stmt->bindValue(':key', $key, SQLITE3_TEXT);
+		$stmt->bindValue(':value', (string) $value, SQLITE3_TEXT);
+		$stmt->execute();
+	}
+
+	function sync_search_index($db, $force = false) {
+		$now = time();
+		$checked = (int) (search_index_meta_get($db, 'checked_at') ?? 0);
+
+		if (!$force && $now - $checked < SEARCH_INDEX_STAMP_TTL) {
+			return;
+		}
+
+		$signature = gallery_tree_signature();
+		$stored_signature = search_index_meta_get($db, 'signature') ?? '';
+		$built = (int) (search_index_meta_get($db, 'built_at') ?? 0);
+
+		if (!$force && $signature !== '' && $stored_signature === $signature && $now - $built < SEARCH_INDEX_TTL) {
+			search_index_meta_set($db, 'checked_at', $now);
+			return;
+		}
+
+		if (!$db->exec('BEGIN IMMEDIATE')) {
+			return;
+		}
+
+		$now = time();
+		$stored_signature = search_index_meta_get($db, 'signature') ?? '';
+		$built = (int) (search_index_meta_get($db, 'built_at') ?? 0);
+
+		if (!$force && $signature !== '' && $stored_signature === $signature && $now - $built < SEARCH_INDEX_TTL) {
+			search_index_meta_set($db, 'checked_at', $now);
+			$db->exec('COMMIT');
+			return;
+		}
+
+		try {
+			$entries = build_search_index_entries('.');
+
+			$db->exec('DELETE FROM entries');
+			$stmt = $db->prepare('INSERT OR REPLACE INTO entries
+				(path, type, name, name_normalized, content, mtime)
+				VALUES (:path, :type, :name, :name_normalized, :content, :mtime)');
+
+			foreach ($entries as $entry) {
+				$stmt->bindValue(':path', $entry['path'], SQLITE3_TEXT);
+				$stmt->bindValue(':type', $entry['type'], SQLITE3_TEXT);
+				$stmt->bindValue(':name', $entry['name'], SQLITE3_TEXT);
+				$stmt->bindValue(':name_normalized', normalize_special_characters($entry['name']), SQLITE3_TEXT);
+				$stmt->bindValue(':content', $entry['content'], SQLITE3_TEXT);
+				$stmt->bindValue(':mtime', (int) $entry['mtime'], SQLITE3_INTEGER);
+				$stmt->execute();
+				$stmt->reset();
+			}
+
+			search_index_meta_set($db, 'built_at', time());
+			search_index_meta_set($db, 'signature', $signature);
+			search_index_meta_set($db, 'checked_at', time());
+			$db->exec('COMMIT');
+		} catch (Throwable $e) {
+			@$db->exec('ROLLBACK');
+		}
+	}
+
+	function search_result_from_index_row($row) {
+		$type = $row['type'] ?? '';
+		$path = $row['path'] ?? '';
+
+		if (!is_path_within_gallery($path) || is_helper_asset($path)) {
+			return null;
+		}
+
+		if ($type === 'folder') {
+			if (!is_dir($path)) {
+				return null;
+			}
+			$randomImage = getRandomImageFromSubfolders($path);
+			return [
+				'path' => $path,
+				'type' => 'folder',
+				'thumbnail' => $randomImage['path'] ?? '',
+				'mtime' => (int) ($row['mtime'] ?? 0),
+			];
+		}
+
+		if (!is_file($path)) {
+			return null;
+		}
+
+		return [
+			'path' => $path,
+			'type' => 'file',
+			'mtime' => (int) ($row['mtime'] ?? @filemtime($path)),
+		];
+	}
+
+	function search_sqlite_results($db, $searchTerm, $allowFuzzy, $searchType = 'all') {
+		$force = isset($_GET['refresh_index']) && $_GET['refresh_index'] === '1';
+		sync_search_index($db, $force);
+
+		$type_sql = '1 = 1';
+		if ($searchType === 'file') {
+			$type_sql = "type = 'file'";
+		} elseif ($searchType === 'folder') {
+			$type_sql = "type = 'folder'";
+		}
+
+		$results = [];
+
+		if (!$allowFuzzy) {
+			$normalized_term = normalize_special_characters(sortAndCleanString($searchTerm));
+			$words = preg_split('/\s+/', $normalized_term, -1, PREG_SPLIT_NO_EMPTY);
+
+			if (empty($words)) {
+				return [];
+			}
+
+			$conditions = [];
+			$params = [];
+			foreach ($words as $index => $word) {
+				$placeholder = ':word' . $index;
+				$conditions[] = '(instr(name_normalized, ' . $placeholder . ') > 0 OR instr(content, ' . $placeholder . ') > 0)';
+				$params[$placeholder] = $word;
+			}
+
+			$sql = 'SELECT path, type, name, mtime FROM entries WHERE ' . $type_sql
+				. ' AND (' . implode(' AND ', $conditions) . ')'
+				. " ORDER BY CASE type WHEN 'folder' THEN 0 ELSE 1 END, path ASC";
+			$stmt = $db->prepare($sql);
+			foreach ($params as $key => $value) {
+				$stmt->bindValue($key, $value, SQLITE3_TEXT);
+			}
+			$result = $stmt->execute();
+
+			while ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
+				$result_row = search_result_from_index_row($row);
+				if ($result_row) {
+					$results[] = $result_row;
+				}
+			}
+			return $results;
+		}
+
+		$searchTermLower = strtolower(sortAndCleanString($searchTerm));
+		$normalized = normalize_special_characters($searchTerm);
+		$result = $db->query('SELECT path, type, name, content, mtime FROM entries WHERE ' . $type_sql
+			. " ORDER BY CASE type WHEN 'folder' THEN 0 ELSE 1 END, path ASC");
+
+		while ($result && ($row = $result->fetchArray(SQLITE3_ASSOC))) {
+			$name_matches = file_or_folder_matches($row['name'] ?? '', $searchTermLower, $normalized, true);
+			$content_matches = ($row['type'] ?? '') === 'file'
+				&& file_or_folder_matches($row['content'] ?? '', $searchTermLower, $normalized, true);
+
+			if (!$name_matches && !$content_matches) {
+				continue;
+			}
+
+			$result_row = search_result_from_index_row($row);
+			if ($result_row) {
+				$results[] = $result_row;
+			}
+		}
+
+		return $results;
+	}
+
+	function search_indexed_results($searchTerm, $allowFuzzy, $searchType = 'all') {
+		$db = open_search_index_database();
+		if (!$db) {
+			return searchFiles('.', $searchTerm, $allowFuzzy);
+		}
+
+		try {
+			return search_sqlite_results($db, $searchTerm, $allowFuzzy, $searchType);
+		} finally {
+			$db->close();
+		}
+	}
+
 	function search_and_print_results ($searchTerm, $allowFuzzy, $searchType = "all") {
 		$results = array();
-		$results["files"] = searchFiles('.', $searchTerm, $allowFuzzy);
+		try {
+			$results["files"] = search_indexed_results($searchTerm, $allowFuzzy, $searchType);
+		} catch (Throwable $e) {
+			$results["files"] = searchFiles('.', $searchTerm, $allowFuzzy);
+		}
 
 		$seen = [];
 		$unique_results = [];

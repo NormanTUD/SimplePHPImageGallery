@@ -11,6 +11,7 @@ RUN apt-get install libjpeg62-turbo-dev \
  libpng-dev \
  libgd-dev \
  libpng-dev \
+ libsqlite3-dev \
  zlib1g-dev \
  ffmpeg \
  ca-certificates \
@@ -20,6 +21,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 RUN docker-php-ext-install exif
 RUN docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype
 RUN docker-php-ext-install gd
+RUN docker-php-ext-install pdo_sqlite sqlite3
 
 # Configure Apache
 RUN sed -ri -e 's!/var/www/html!/var/www/html/!g' /etc/apache2/sites-available/*.conf

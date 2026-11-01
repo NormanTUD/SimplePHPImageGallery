@@ -80,10 +80,18 @@
 	}
 
 	if (isset($_GET['search'])) {
-		$enable_fuzzy = isset($_GET["allowFuzzy"]) && $_GET["allowFuzzy"] == "true";
-		$search_type = $_GET["type"] ?? "all";
-		search_and_print_results($_GET['search'], $enable_fuzzy, $search_type);
-		exit(0);
+		$accept = strtolower($_SERVER['HTTP_ACCEPT'] ?? '');
+		$requested_with = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '');
+		$is_browser_navigation = strpos($accept, 'text/html') !== false && $requested_with !== 'xmlhttprequest';
+
+		// Browser navigations render the app shell for search deep links.
+		// API/search clients keep the JSON response behaviour.
+		if (!$is_browser_navigation) {
+			$enable_fuzzy = isset($_GET["allowFuzzy"]) && $_GET["allowFuzzy"] == "true";
+			$search_type = $_GET["type"] ?? "all";
+			search_and_print_results($_GET['search'], $enable_fuzzy, $search_type);
+			exit(0);
+		}
 	}
 
 	if (isset($_GET['list_all'])) {
@@ -159,6 +167,7 @@
 					<button class="select-btn view-btn timeline-toggle" id="timelineBtn" onclick="toggle_timeline_view()" aria-pressed="false">Timeline</button>
 					<button class="select-btn view-btn favorites-toggle" id="favoritesBtn" onclick="toggle_favorites_filter()" aria-pressed="false">Favorites <span class="favorites-count" id="favoritesCount">0</span></button>
 					<button class="select-btn view-btn slideshow-toggle" id="slideshowBtn" onclick="toggle_slideshow()" aria-pressed="false">Slideshow</button>
+					<button class="select-btn view-btn warm-cache-toggle" id="warmCacheBtn" onclick="toggle_cache_warmup()" aria-pressed="false">Warm cache</button>
 					<button class="select-btn view-btn install-toggle" id="installAppBtn" onclick="install_pwa()" hidden>Install app</button>
 					<div class="action-buttons">
 						<button class="download-btn" id="downloadBtn" onclick="downloadSelected()">Download</button>
@@ -186,6 +195,11 @@
 			</main>
 		</div>
 		<button class="back-to-top" id="backToTop" type="button" onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" aria-label="Back to top">&#x2191;</button>
+		<div id="cacheProgress" class="cache-progress" role="status" aria-live="polite" hidden>
+			<span class="cache-progress-spinner" aria-hidden="true"></span>
+			<span id="cacheProgressText">Warming cache…</span>
+			<button type="button" class="cache-progress-cancel" aria-label="Stop warming cache" onclick="cancel_cache_warmup()">&#x2715;</button>
+		</div>
 		<div class="mobile-actions" id="mobileActions" hidden>
 			<button class="mobile-actions-backdrop" type="button" onclick="hide_mobile_actions()" aria-label="Close actions"></button>
 			<div class="mobile-actions-sheet" role="dialog" aria-modal="true" aria-label="More actions">
@@ -197,6 +211,7 @@
 					<button class="mobile-action slideshow-toggle" type="button" aria-pressed="false" onclick="toggle_slideshow(); hide_mobile_actions()">Slideshow</button>
 					<button class="mobile-action download-btn" type="button" onclick="downloadSelected(); hide_mobile_actions()">Download</button>
 					<button class="mobile-action unselect-btn" type="button" onclick="unselectSelection(); hide_mobile_actions()">Unselect</button>
+					<button class="mobile-action warm-cache-toggle" type="button" aria-pressed="false" onclick="toggle_cache_warmup(); hide_mobile_actions()">Warm cache</button>
 					<button class="mobile-action install-toggle" type="button" onclick="install_pwa()" hidden>Install app</button>
 				</div>
 			</div>

@@ -163,7 +163,13 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
 - Images below the fold must load lazily through `IntersectionObserver`.
 - Folder changes use async `fetch`; do not reintroduce blocking synchronous AJAX.
 - Search requests are debounced, stale requests are aborted and stale responses are
-  ignored.
+  ignored. The SQLite search index lives in the gallery cache folder
+  (`search_index.sqlite`) and must stay automatic/incremental; never regenerate it
+  from a user-supplied path.
+- Browser navigations with `?search=` render the app shell; API/search clients get
+  JSON. Keep that Accept-header distinction when touching the search endpoint.
+- Thumbnail cache warming uses at most two parallel requests and must never block
+  navigation or map loading.
 - Map rendering must not block clicks or folder navigation.
 - Avoid `array_merge` in recursive loops where appending is enough.
 - Avoid re-reading EXIF for known non-GPS files; negative GPS results are cached.
@@ -180,13 +186,16 @@ Treat every query parameter, filename, folder name and TXT content as untrusted.
 - Keep dark mode, reduced-motion support, focus-visible styling and loading/empty
   states.
 - Keep the lightbox controls and dialogs keyboard accessible; modal focus is
-  trapped and restored.
+  trapped and restored. Preserve image preloading and pinch/double-click zoom.
+- Keep search deep links (`?search=…&type=…&fuzzy=true`) working on desktop and
+  mobile.
 - Preserve the PWA shell (`sw.js`, `manifest.webmanifest`, icons) and keep its
   caches same-origin only. The PWA icon PNGs are helper assets and must never be
   listed as gallery photos or search results.
 - Use the configured map tile provider in `create_map_tile_layer()` (currently
-  Esri raster tiles). Do not use OpenStreetMap volunteer tile servers or providers
-  that require an API key. Keep provider attribution visible.
+  Esri raster tiles, capped at zoom 16 because the provider has no deeper data in
+  many areas). Do not use OpenStreetMap volunteer tile servers or providers that
+  require an API key. Keep provider attribution visible.
 - On phones, secondary actions collapse into the mobile actions sheet. Do not
   reintroduce a crowded topbar or desktop-only shortcuts into the phone layout.
 - Every interactive control must have a visible hover/focus/active state.

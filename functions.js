@@ -18,6 +18,15 @@ let timeline_original_order = null;
 let slideshow_timer = null;
 let location_modal_map = null;
 let modal_return_focus = null;
+let fullscreen_scale = 1;
+let fullscreen_tx = 0;
+let fullscreen_ty = 0;
+let fullscreen_pinch_distance = 0;
+let fullscreen_pinch_scale = 1;
+let fullscreen_drag_start = null;
+let cache_warmup_running = false;
+let cache_warmup_cancelled = false;
+let cache_warmup_controller = null;
 const FAVORITES_STORAGE_KEY = "spg_favorites_v1";
 const SEARCH_HISTORY_STORAGE_KEY = "spg_searches_v1";
 const GALLERY_PAGE_SIZE = 120;
@@ -882,75 +891,182 @@ function downloadSelected() {
 	}
 }
 
-async function fill_cache (nr=5) {
-	var promises = [];
-	var imageList = await getListAllJSON();
-	if(imageList.length == 0) {
-		log("No uncached images");
-		return;
-	}
-	var num_total_items = imageList.length;
-
-	var sub_arrays = splitArrayIntoSubarrays(imageList, nr);
-
-	for (var i = 0; i < nr; i++) {
-		promises.push(_fill_cache(sub_arrays[i], i, num_total_items));
-	}
-
-	await Promise.all(promises);
-
-	$("#fill_cache_percentage").remove();
-	log("Done filling cache");
+function update_cache_warmup_buttons() {
+	document.querySelectorAll(".warm-cache-toggle").forEach(function (button) {
+		button.textContent = cache_warmup_running ? "Stop cache" : "Warm cache";
+		button.setAttribute("aria-pressed", cache_warmup_running ? "true" : "false");
+	});
 }
 
-async function _fill_cache(imageList, id, num_total_items) {
-	try {
-		if(id == 0) {
-			percentage_element = document.createElement('div');
-			percentage_element.setAttribute('id', 'fill_cache_percentage');
-			document.body.appendChild(percentage_element);
-		}
-
-		const container = document.createElement('div');
-		container.setAttribute('id', 'image-container_' + id);
-		document.body.appendChild(container);
-
-		var percentage_element = null;
-
-		for (let i = 0; i < imageList.length; i++) {
-			const imageUrl = `index.php?preview=${imageList[i]}`;
-			if (!fill_cache_images.includes(imageUrl)) {
-				const imageElement = document.createElement('img');
-				imageElement.setAttribute('src', imageUrl);
-
-				await new Promise((resolve, reject) => {
-					imageElement.addEventListener('load', () => {
-						container.appendChild(imageElement);
-						setTimeout(() => {
-							container.removeChild(imageElement);
-							resolve();
-						}, 1000);
-					});
-					imageElement.addEventListener('error', () => {
-						console.warn('Fehler beim Laden des Bildes:', imageUrl);
-						reject('Bildladefehler');
-					});
-				});
-
-				fill_cache_images.push(imageUrl);
-
-				var percent = Math.round((fill_cache_images.length / num_total_items) * 100);
-
-				$("#fill_cache_percentage").html(
-					`Cache-filling: ${fill_cache_images.length}/${num_total_items} (${percent}%)`
-				);
-			}
-		}
-
-		document.body.removeChild(container);
-	} catch (error) {
-		console.error('Fehler beim Anzeigen der Bilder:', error);
+function ensure_cache_progress_ui() {
+	var progress = document.getElementById("cacheProgress");
+	if (progress) {
+		return progress;
 	}
+
+	progress = document.createElement("div");
+	progress.id = "cacheProgress";
+	progress.className = "cache-progress";
+	progress.setAttribute("role", "status");
+	progress.setAttribute("aria-live", "polite");
+
+	var spinner = document.createElement("span");
+	spinner.className = "cache-progress-spinner";
+	spinner.setAttribute("aria-hidden", "true");
+
+	var text = document.createElement("span");
+	text.id = "cacheProgressText";
+	text.textContent = "Warming cache…";
+
+	var cancel = document.createElement("button");
+	cancel.type = "button";
+	cancel.className = "cache-progress-cancel";
+	cancel.setAttribute("aria-label", "Stop warming cache");
+	cancel.innerHTML = "&#x2715;";
+	cancel.addEventListener("click", cancel_cache_warmup);
+
+	progress.appendChild(spinner);
+	progress.appendChild(text);
+	progress.appendChild(cancel);
+	document.body.appendChild(progress);
+	return progress;
+}
+
+function update_cache_progress(completed, total) {
+	var progress = ensure_cache_progress_ui();
+	progress.hidden = false;
+	var text = document.getElementById("cacheProgressText");
+	if (text) {
+		text.textContent = `Warming cache ${completed}/${total}`;
+	}
+}
+
+function hide_cache_progress() {
+	var progress = document.getElementById("cacheProgress");
+	if (progress) {
+		progress.hidden = true;
+	}
+}
+
+function cancel_cache_warmup() {
+	cache_warmup_cancelled = true;
+	if (cache_warmup_controller) {
+		cache_warmup_controller.abort();
+	}
+	var text = document.getElementById("cacheProgressText");
+	if (text) {
+		text.textContent = "Stopping cache warming…";
+	}
+}
+
+function cache_warmup_urls_for_visible_cards() {
+	var urls = [];
+	var seen = {};
+
+	$("#gallery .thumbnail img[data-original-url], #gallery .thumbnail_folder img[data-original-url]").each(function () {
+		if (urls.length >= 24) {
+			return false;
+		}
+
+		var path = get_media_path(this.closest(".thumbnail, .thumbnail_folder"), this.closest(".thumbnail_folder") !== null);
+		if (!path || /\.(mp4|mov)$/i.test(path)) {
+			return;
+		}
+
+		var url = `index.php?preview=${encodeURIComponent(path)}&size=640`;
+		if (!seen[url]) {
+			seen[url] = true;
+			urls.push(url);
+		}
+	});
+
+	return urls;
+}
+
+async function start_cache_warmup(manual = false) {
+	if (cache_warmup_running) {
+		return;
+	}
+
+	var urls = [];
+
+	if (manual) {
+		var imageList = await getListAllJSON();
+		if (!Array.isArray(imageList) || imageList.length === 0) {
+			show_toast("Thumbnail cache is already up to date.");
+			return;
+		}
+
+		urls = imageList.map(function (path) {
+			return `index.php?preview=${encodeURIComponent(path)}&size=640`;
+		});
+	} else {
+		urls = cache_warmup_urls_for_visible_cards();
+	}
+
+	if (urls.length === 0) {
+		return;
+	}
+
+	cache_warmup_running = true;
+	cache_warmup_cancelled = false;
+	cache_warmup_controller = new AbortController();
+	update_cache_warmup_buttons();
+	update_cache_progress(0, urls.length);
+
+	var nextIndex = 0;
+	var completed = 0;
+	var total = urls.length;
+
+	async function worker() {
+		while (!cache_warmup_cancelled) {
+			var index = nextIndex++;
+			if (index >= urls.length) {
+				return;
+			}
+
+			try {
+				await fetch(urls[index], {
+					cache: "no-store",
+					signal: cache_warmup_controller.signal
+				});
+			} catch (error) {
+				if (error.name === "AbortError") {
+					return;
+				}
+			}
+
+			completed++;
+			update_cache_progress(completed, total);
+		}
+	}
+
+	try {
+		await Promise.all([worker(), worker()]);
+	} finally {
+		cache_warmup_running = false;
+		cache_warmup_controller = null;
+		update_cache_warmup_buttons();
+		hide_cache_progress();
+
+		if (cache_warmup_cancelled) {
+			show_toast("Cache warming stopped.");
+		} else {
+			show_toast(`Thumbnail cache ready (${completed}).`);
+		}
+	}
+}
+
+function toggle_cache_warmup() {
+	if (cache_warmup_running) {
+		cancel_cache_warmup();
+	} else {
+		start_cache_warmup(true);
+	}
+}
+
+async function fill_cache(nr = 5) {
+	await start_cache_warmup(true);
 }
 
 function onFolderMouseDown(e){
@@ -1297,7 +1413,7 @@ function create_map_tile_layer() {
 
 	return L.tileLayer(url, {
 		attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors',
-		maxZoom: 19
+		maxZoom: 16
 	});
 }
 
@@ -1545,18 +1661,42 @@ function url_content (strUrl) {
 
 function updateUrlParameter(folder) {
 	try {
-		let currentUrl = window.location.href;
-
-		if (currentUrl.includes('?folder=')) {
-			currentUrl = currentUrl.replace(/(\?|&)folder=[^&]*/, `$1folder=${encodeURIComponent(folder)}`);
-		} else {
-			const separator = currentUrl.includes('?') ? '&' : '?';
-			currentUrl += `${separator}folder=${encodeURIComponent(folder)}`;
-		}
-
-		window.history.replaceState(null, null, currentUrl);
+		const url = new URL(window.location.href);
+		url.searchParams.set('folder', folder);
+		url.searchParams.delete('search');
+		url.searchParams.delete('type');
+		url.searchParams.delete('fuzzy');
+		window.history.replaceState(null, null, url.pathname + url.search + url.hash);
 	} catch (error) {
 		console.warn('An error occurred while updating URL parameter "folder":', error);
+	}
+}
+
+function update_search_url(term, type, fuzzy) {
+	try {
+		const url = new URL(window.location.href);
+
+		if (term && term.trim() !== '') {
+			url.searchParams.set('search', term);
+			if (type && type !== 'all') {
+				url.searchParams.set('type', type);
+			} else {
+				url.searchParams.delete('type');
+			}
+			if (fuzzy) {
+				url.searchParams.set('fuzzy', 'true');
+			} else {
+				url.searchParams.delete('fuzzy');
+			}
+		} else {
+			url.searchParams.delete('search');
+			url.searchParams.delete('type');
+			url.searchParams.delete('fuzzy');
+		}
+
+		window.history.replaceState(null, null, url.pathname + url.search + url.hash);
+	} catch (error) {
+		console.warn('An error occurred while updating search URL parameters:', error);
 	}
 }
 
@@ -1928,6 +2068,7 @@ function checkKey(e) {
 			hide_shortcuts();
 			return;
 		}
+		reset_fullscreen_zoom();
 		$(fullscreen).remove();
 		current_fullscreen_image = "";
 		stop_slideshow();
@@ -1989,6 +2130,7 @@ async function _start_search() {
 	}
 
 	lastSearch = `${searchTerm}___${is_fuzzy}___${search_type}`;
+	update_search_url(searchTerm, search_type, is_fuzzy);
 
 	function abortPreviousRequest() {
 		if (searchTimer) {
@@ -2146,6 +2288,155 @@ function isSwipeDevice() {
 	return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 }
 
+function fullscreen_media_element() {
+	return document.querySelector(".fullscreen img, .fullscreen video");
+}
+
+function is_lightbox_zoomed() {
+	return fullscreen_scale > 1.01;
+}
+
+function clamp_fullscreen_translation() {
+	var media = fullscreen_media_element();
+	if (!media) {
+		return;
+	}
+
+	var max_x = Math.max(0, (media.clientWidth * fullscreen_scale - window.innerWidth) / 2);
+	var max_y = Math.max(0, (media.clientHeight * fullscreen_scale - window.innerHeight) / 2);
+	fullscreen_tx = Math.max(-max_x, Math.min(max_x, fullscreen_tx));
+	fullscreen_ty = Math.max(-max_y, Math.min(max_y, fullscreen_ty));
+}
+
+function apply_fullscreen_transform() {
+	var media = fullscreen_media_element();
+	var container = document.querySelector(".fullscreen");
+	if (!media) {
+		return;
+	}
+
+	clamp_fullscreen_translation();
+	media.style.transform = `translate(${fullscreen_tx}px, ${fullscreen_ty}px) scale(${fullscreen_scale})`;
+	media.style.cursor = fullscreen_scale > 1.01 ? "grab" : "zoom-in";
+	if (container) {
+		container.classList.toggle("is-zoomed", fullscreen_scale > 1.01);
+	}
+}
+
+function reset_fullscreen_zoom() {
+	fullscreen_scale = 1;
+	fullscreen_tx = 0;
+	fullscreen_ty = 0;
+	fullscreen_pinch_distance = 0;
+	fullscreen_pinch_scale = 1;
+	fullscreen_drag_start = null;
+	apply_fullscreen_transform();
+}
+
+function set_fullscreen_scale(scale) {
+	fullscreen_scale = Math.max(1, Math.min(4, scale));
+	if (fullscreen_scale <= 1.01) {
+		fullscreen_scale = 1;
+		fullscreen_tx = 0;
+		fullscreen_ty = 0;
+	}
+	apply_fullscreen_transform();
+}
+
+function toggle_fullscreen_zoom() {
+	if (is_lightbox_zoomed()) {
+		reset_fullscreen_zoom();
+	} else {
+		set_fullscreen_scale(2.5);
+	}
+}
+
+function preload_adjacent_images(currentPath) {
+	var images = $(".thumbnail").toArray().map(function (thumbnail) {
+		return get_media_path(thumbnail, false);
+	}).filter(Boolean);
+
+	var index = images.indexOf(currentPath);
+	if (index === -1) {
+		return;
+	}
+
+	[index - 1, index + 1].forEach(function (adjacentIndex) {
+		if (images.length < 2) {
+			return;
+		}
+		var wrappedIndex = (adjacentIndex + images.length) % images.length;
+		var path = images[wrappedIndex];
+		if (!path || /\.(mp4|mov)$/i.test(path)) {
+			return;
+		}
+		var preload = new Image();
+		preload.decoding = "async";
+		preload.src = path;
+	});
+}
+
+function setup_fullscreen_gestures(container) {
+	container.addEventListener("dblclick", function (event) {
+		if (event.target.closest("button, a, .toggle-switch")) {
+			return;
+		}
+		event.preventDefault();
+		event.stopPropagation();
+		toggle_fullscreen_zoom();
+	});
+
+	container.addEventListener("wheel", function (event) {
+		if (event.target.closest("button, a, .toggle-switch")) {
+			return;
+		}
+		event.preventDefault();
+		set_fullscreen_scale(fullscreen_scale + (event.deltaY < 0 ? 0.25 : -0.25));
+	}, { passive: false });
+
+	container.addEventListener("touchstart", function (event) {
+		if (event.touches.length === 2) {
+			var dx = event.touches[0].clientX - event.touches[1].clientX;
+			var dy = event.touches[0].clientY - event.touches[1].clientY;
+			fullscreen_pinch_distance = Math.hypot(dx, dy);
+			fullscreen_pinch_scale = fullscreen_scale;
+			fullscreen_drag_start = null;
+			event.preventDefault();
+		} else if (event.touches.length === 1 && fullscreen_scale > 1.01) {
+			fullscreen_drag_start = {
+				x: event.touches[0].clientX,
+				y: event.touches[0].clientY,
+				tx: fullscreen_tx,
+				ty: fullscreen_ty
+			};
+		}
+	}, { passive: false });
+
+	container.addEventListener("touchmove", function (event) {
+		if (event.touches.length === 2 && fullscreen_pinch_distance > 0) {
+			var dx = event.touches[0].clientX - event.touches[1].clientX;
+			var dy = event.touches[0].clientY - event.touches[1].clientY;
+			var distance = Math.hypot(dx, dy);
+			set_fullscreen_scale(fullscreen_pinch_scale * (distance / fullscreen_pinch_distance));
+			event.preventDefault();
+		} else if (event.touches.length === 1 && fullscreen_drag_start && fullscreen_scale > 1.01) {
+			fullscreen_tx = fullscreen_drag_start.tx + (event.touches[0].clientX - fullscreen_drag_start.x);
+			fullscreen_ty = fullscreen_drag_start.ty + (event.touches[0].clientY - fullscreen_drag_start.y);
+			apply_fullscreen_transform();
+			event.preventDefault();
+		}
+	}, { passive: false });
+
+	container.addEventListener("touchend", function () {
+		fullscreen_pinch_distance = 0;
+		fullscreen_pinch_scale = fullscreen_scale;
+		fullscreen_drag_start = null;
+		if (fullscreen_scale < 1.05) {
+			reset_fullscreen_zoom();
+		}
+	}, { passive: true });
+}
+
 function update_fullscreen_favorite_button(button, path) {
 	if (!button) {
 		return;
@@ -2188,6 +2479,7 @@ function add_fullscreen_controls(container, imagePath) {
 	closeButton.addEventListener("click", function (event) {
 		event.stopPropagation();
 		current_fullscreen_image = "";
+		reset_fullscreen_zoom();
 		stop_slideshow();
 		container.remove();
 	});
@@ -2296,6 +2588,7 @@ function add_fullscreen_meta(container, imagePath) {
 }
 
 function showImage(imagePath) {
+	reset_fullscreen_zoom();
 	$(fullscreen).remove();
 
 	fullscreen = document.createElement('div');
@@ -2326,6 +2619,10 @@ function showImage(imagePath) {
 	add_fullscreen_controls(fullscreen, decodedPath);
 	add_fullscreen_meta(fullscreen, decodedPath);
 
+	if (!decodedPath.match(/\.(mp4|mov)$/i)) {
+		setup_fullscreen_gestures(fullscreen);
+	}
+
 	if (decodedPath.match(/\.(mp4|mov)$/i)) {
 		var video = document.createElement('video');
 		video.controls = true;
@@ -2347,6 +2644,8 @@ function showImage(imagePath) {
 		var img = new Image();
 		img.onload = function () {
 			fullscreen.replaceChild(img, image);
+			apply_fullscreen_transform();
+			preload_adjacent_images(decodedPath);
 		};
 		img.onerror = function () {
 			console.warn("Failed to load image:", decodedPath);
@@ -2355,9 +2654,12 @@ function showImage(imagePath) {
 		img.src = decodedPath;
 	}
 
+	preload_adjacent_images(decodedPath);
+
 	$(fullscreen).on("click", function (i) {
 		if (!["INPUT", "IMG", "LABEL", "VIDEO", "A", "BUTTON"].includes(i.target.nodeName) && i.target.id != "swipe_toggle") {
 			current_fullscreen_image = "";
+			reset_fullscreen_zoom();
 			stop_slideshow();
 			$(fullscreen).remove();
 		}

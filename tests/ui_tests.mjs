@@ -169,6 +169,17 @@ test('long press selects an image and the checkmark is visible', async (page) =>
   assert.equal(await page.evaluate(() => window.selectedImages.length), 0, 'Unselect did not clear the selection');
 });
 
+test('search deep links restore query, type and results', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${baseUrl}/?search=sonne&type=file`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#searchResults .thumbnail').first().waitFor({ state: 'visible', timeout: 20000 });
+
+  assert.equal(await page.locator('#searchInput').inputValue(), 'sonne', 'Search term was not restored');
+  assert.equal(await page.locator('#searchType').inputValue(), 'file', 'Search type was not restored');
+  assert.equal(await page.locator('#searchResults .thumbnail_folder').count(), 0, 'Deep link ignored the type filter');
+  assert.match(page.url(), /search=sonne/, 'Search URL was not preserved');
+});
+
 test('special characters in search results can be opened', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openFolder(page, './', '#gallery .thumbnail_folder');
@@ -392,6 +403,35 @@ test('slideshow starts and can be stopped', async (page) => {
   await closeFullscreen(page);
 });
 
+test('lightbox zooms and preloads the next photo', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './urlaub/strand', '#gallery .thumbnail');
+  await page.waitForFunction(() => document.querySelectorAll('#gallery .thumbnail').length >= 2, { timeout: 10000 });
+
+  const paths = await page.locator('#gallery .thumbnail').evaluateAll((elements) =>
+    elements.map((element) => element.getAttribute('data-path'))
+  );
+
+  await page.locator('#gallery .thumbnail').first().click();
+  await page.locator('.fullscreen').waitFor({ state: 'visible', timeout: 5000 });
+
+  await page.waitForFunction(
+    (nextPath) => {
+      const normalized = nextPath.replace(/^\.\//, '');
+      return performance.getEntriesByType('resource').some((entry) => entry.name.endsWith(normalized));
+    },
+    paths[1],
+    { timeout: 10000 }
+  );
+
+  const image = page.locator('.fullscreen img');
+  await image.dblclick();
+  assert.match(await image.getAttribute('style') || '', /scale\(2\.5\)/, 'Double click did not zoom the image');
+  await image.dblclick();
+  assert.match(await image.getAttribute('style') || '', /scale\(1\)/, 'Double click did not reset the zoom');
+  await closeFullscreen(page);
+});
+
 test('lightbox can show the current photo on a map', async (page) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await openFolder(page, './gps', '#gallery .thumbnail');
@@ -428,6 +468,23 @@ test('search filters, highlights and remembers terms', async (page) => {
   );
   const history = await page.locator('#searchHistory option').evaluateAll((options) => options.map((option) => option.value));
   assert.equal(history.includes('sonne'), true, 'Recent search was not stored');
+});
+
+test('cache warming shows progress and can be cancelled', async (page) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await openFolder(page, './stadt', '#gallery .thumbnail');
+
+  await page.route('**/index.php?preview=*', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await route.continue();
+  });
+
+  await page.evaluate(() => { start_cache_warmup(false); });
+  await page.locator('#cacheProgress').waitFor({ state: 'visible', timeout: 5000 });
+  assert.equal(await page.evaluate(() => cache_warmup_running), true, 'Cache warming did not start');
+  await page.locator('.cache-progress-cancel').click();
+  await page.locator('#cacheProgress').waitFor({ state: 'hidden', timeout: 5000 });
+  assert.equal(await page.evaluate(() => cache_warmup_running), false, 'Cache warming did not stop');
 });
 
 test('service worker registers for offline support', async (page) => {

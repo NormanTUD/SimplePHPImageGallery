@@ -725,6 +725,15 @@ a:focus-visible {
 	border-radius: var(--radius-sm);
 	box-shadow: var(--shadow-lg);
 	animation: lightbox-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+	touch-action: none;
+	cursor: zoom-in;
+	will-change: transform;
+	transition: transform 0.14s ease-out;
+}
+
+.fullscreen.is-zoomed img,
+.fullscreen.is-zoomed video {
+	cursor: grab;
 }
 
 .fullscreen-nav,
@@ -1766,6 +1775,53 @@ mark {
 	color: inherit;
 	background: color-mix(in srgb, var(--accent) 38%, transparent);
 	border-radius: 4px;
+}
+
+.cache-progress {
+	position: fixed;
+	left: max(16px, env(safe-area-inset-left));
+	bottom: calc(18px + env(safe-area-inset-bottom));
+	z-index: 10020;
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	max-width: min(360px, calc(100vw - 32px));
+	padding: 9px 10px 9px 14px;
+	color: var(--text);
+	font-size: 0.8rem;
+	font-weight: 700;
+	background: var(--surface-solid);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	box-shadow: var(--shadow);
+}
+
+.cache-progress[hidden] {
+	display: none !important;
+}
+
+.cache-progress-spinner {
+	width: 16px;
+	height: 16px;
+	border: 2px solid color-mix(in srgb, var(--text) 16%, transparent);
+	border-top-color: var(--accent-3);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+	flex: 0 0 auto;
+}
+
+.cache-progress-cancel {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	color: var(--muted);
+	background: var(--surface-2);
+	border: 1px solid var(--border);
+	border-radius: 50%;
+	cursor: pointer;
+	flex: 0 0 auto;
 }
 
 .toast-region {

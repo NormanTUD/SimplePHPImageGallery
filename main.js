@@ -179,7 +179,7 @@ $(document).ready(async function() {
 	}
 
 	function handleSwipe() {
-		if (!getToggleSwitchValue()) {
+		if (!getToggleSwitchValue() || (typeof is_lightbox_zoomed === 'function' && is_lightbox_zoomed())) {
 			return
 		}
 		const deltaX = touchEndX - touchStartX;
@@ -219,5 +219,27 @@ $(document).ready(async function() {
 	setup_gallery_infinite_scroll();
 	setup_map_lazy_observer();
 
-	await load_folder(getCurrentFolderParameter(), true);
+	const initial_params = new URLSearchParams(window.location.search);
+	const initial_search = (initial_params.get('search') || '').trim();
+
+	if (initial_search !== '') {
+		$('#searchInput').val(initial_search);
+		const initial_type = initial_params.get('type');
+		if (['all', 'file', 'folder'].includes(initial_type)) {
+			$('#searchType').val(initial_type);
+		}
+		if (initial_params.get('fuzzy') === 'true') {
+			$('#fuzzy_search').prop('checked', true);
+		}
+		createBreadcrumb(getCurrentFolderParameter());
+		await _start_search();
+	} else {
+		await load_folder(getCurrentFolderParameter(), true);
+	}
+
+	setTimeout(function () {
+		if (!navigator.webdriver) {
+			start_cache_warmup(false);
+		}
+	}, 4000);
 });

@@ -51,12 +51,12 @@ for example `ci-42-123456789-1-my-runner`.
 
 # Features
 
-- Folder navigation, filename and TXT-keyword search, optional fuzzy search and
-  type filters.
+- Folder navigation plus a fully automatic SQLite search index with filename/TXT
+  search, fuzzy matching, type filters and shareable deep links.
 - Responsive high-DPI thumbnails (320/640/1280 px, JPEG/WebP/AVIF output) with
   lazy loading and browser caching.
 - Infinite scrolling for very large folders.
-- Lightbox with keyboard/swipe navigation, details, download, favorites, slideshow
-  and "show on map".
+- Lightbox with keyboard/swipe navigation, preloading, pinch/double-click zoom,
+  details, download, favorites, slideshow and "show on map".
 - Map view with lazy loading and clustering, limited to the current folder tree.
 - Timeline view, favorites filter, recent searches and installable PWA support.
